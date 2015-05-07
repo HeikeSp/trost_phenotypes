@@ -4,7 +4,7 @@ BBCH data analysis for MPI trials
 ## Set working directory  
 ```{r set working directory}
 #getwd()
-setwd("D:/work/repos/trost_phenotypes")
+#setwd("D:/work/repos/trost_phenotypes")
 ```
 
 [solution for issue with working directory and knitr](https://github.com/yihui/knitr/issues/277)
@@ -30,7 +30,7 @@ opts_knit$set(root.dir = 'D:/work/repos/trost_phenotypes/')
 
 
 ## Source R functions
-```{r source R functions}
+```{r source R functions, include=FALSE}
 source("../libpurzel/func_get_bbch_data.R")
 source("../libpurzel/func_modify_bbch_data.R")
 source("../libpurzel/func_bbch_plots.R")
@@ -38,11 +38,11 @@ source("../libpurzel/colors.R")
 ```
 
 
-## Execute Query from D:\work\TROST\Database\2014-07-29-bbch_query.sql to get information about BBCH and meta data
+## Execute Query from `D:\work\TROST\Database\2014-07-29-bbch_query.sql` to get information about BBCH and meta data
 ### BBCH data of four TROST experiments (MPI Test1.2, MPI Test2, MPI Feld 2011, MPI Feld 2012)
 ```{r get data from trost database}
 # use old version of function
-# bbch_query_result_48656 <- func_get_bbch_data_old('48656')
+# bbch_trost_mpi_48656 <- func_get_bbch_data_old('48656')
 
 bbch_trost_mpi <- func_get_bbch_data( experiment_id = c('48656', '51790', '44443', '56726') )
 
@@ -64,11 +64,25 @@ dim(bbch_mpi_fgh_2014)
 
 ### Modification of BBCH dataset
 ```{r modification of BBCH dataset}
+# TROST data
 bbch_trost_mpi_mod <- func_modify_bbch_data(bbch_trost_mpi)
 pander(table(bbch_trost_mpi_mod$experiment_name, bbch_trost_mpi_mod$timepoint))
 
+# VALDIS data
 bbch_mpi_fgh_2014_mod <- func_modify_bbch_data(bbch_mpi_fgh_2014)
 
+# timepoints
+table(bbch_mpi_fgh_2014_mod$date)
+pander(head(table(bbch_mpi_fgh_2014_mod$line_id, bbch_mpi_fgh_2014_mod$date)))
+
+bbch_mpi_fgh_2014_mod$timepoint <- rep("only cultivars", nrow(bbch_mpi_fgh_2014_mod))
+bbch_mpi_fgh_2014_mod$timepoint[bbch_mpi_fgh_2014_mod$date == "2014-05-12"] <- "early"
+bbch_mpi_fgh_2014_mod$timepoint[bbch_mpi_fgh_2014_mod$date == "2014-05-26"] <- "late"
+bbch_mpi_fgh_2014_mod$timepoint[bbch_mpi_fgh_2014_mod$date == "2014-05-27"] <- "late"
+bbch_mpi_fgh_2014_mod$timepoint <- as.factor(bbch_mpi_fgh_2014_mod$timepoint)
+table(bbch_mpi_fgh_2014_mod$timepoint)
+
+# export datasets
 write.table(bbch_trost_mpi, "data/bbch_trost_mpi.txt", sep="\t")
 write.table(bbch_mpi_fgh_2014, "data/bbch_mpi_fgh_2014.txt", sep="\t")
 ```
@@ -89,27 +103,29 @@ bbch_mpi_test2 <- droplevels( subset(bbch_trost_mpi_mod, bbch_trost_mpi_mod$expe
 levels(bbch_mpi_test2$timepoint)
 
 # MPI FELD 2011
-bbch_mpi_feld2011 <- droplevels( subset(bbch_query_result, bbch_query_result$experiment_id == "44443") )
+bbch_mpi_feld2011 <- droplevels( subset(bbch_trost_mpi_mod, bbch_trost_mpi_mod$experiment_id == "44443") )
 # ONLY CHECK CULTIVARS
-bbch_mpi_feld2011_check <- subset(bbch_mpi_feld2011, bbch_mpi_feld2011$cultivar %in% c("ALEGRIA", "MILVA", "DESIREE", "SATURNA"))
-bbch_mpi_feld2011_check$cultivar <- droplevels(bbch_mpi_feld2011_check$cultivar)
+bbch_mpi_feld2011_check <- droplevels (subset(bbch_mpi_feld2011, bbch_mpi_feld2011$cultivar %in% c("ALEGRIA", "MILVA", "DESIREE", "SATURNA")) )
 levels(bbch_mpi_feld2011_check$cultivar) <- c("Alegria", "Desiree", "Milva", "Saturna")
 # ONLY CHECK CULTIVARS + LATE
-bbch_mpi_feld2011_check_late <- subset(bbch_mpi_feld2011_check, bbch_mpi_feld2011_check$timepoint == "late")
-bbch_mpi_feld2011_check_late$timepoint <- droplevels(bbch_mpi_feld2011_check_late$timepoint)
-
+bbch_mpi_feld2011_check_late <- droplevels( subset(bbch_mpi_feld2011_check, bbch_mpi_feld2011_check$timepoint == "late") )
 # ONLY LATE
-bbch_mpi_feld2011_late <- subset(bbch_mpi_feld2011, bbch_mpi_feld2011$timepoint == "late")
-bbch_mpi_feld2011_late$timepoint <- droplevels(bbch_mpi_feld2011_late$timepoint)
-
+bbch_mpi_feld2011_late <- droplevels( subset(bbch_mpi_feld2011, bbch_mpi_feld2011$timepoint == "late") )
 
 # MPI FELD 2012
-bbch_mpi_feld2012 <- subset(bbch_query_result, bbch_query_result$experiment_id == "56726")
-bbch_mpi_feld2012$timepoint <- droplevels(bbch_mpi_feld2012$timepoint)
+bbch_mpi_feld2012 <- droplevels( subset(bbch_trost_mpi_mod, bbch_trost_mpi_mod$experiment_id == "56726") )
 # ONLY CHECK CULTIVARS 
-bbch_mpi_feld2012_check <- subset(bbch_mpi_feld2012, bbch_mpi_feld2012$cultivar %in% c("ALEGRIA", "MILVA", "DESIREE", "SATURNA"))
-bbch_mpi_feld2012_check$cultivar <- droplevels(bbch_mpi_feld2012_check$cultivar)
+bbch_mpi_feld2012_check <- droplevels( subset(bbch_mpi_feld2012, bbch_mpi_feld2012$cultivar %in% c("ALEGRIA", "MILVA", "DESIREE", "SATURNA")) )
 levels(bbch_mpi_feld2012_check$cultivar) <- c("Alegria", "Desiree", "Milva", "Saturna")
+```
+
+### VALDIS subsets
+```{r VALDIS subsets}
+# MPI FGH 2014
+# ONLY LATE TIMEPOINT
+bbch_mpi_fgh_2014_late <- droplevels (subset(bbch_mpi_fgh_2014_mod, bbch_mpi_fgh_2014_mod$timepoint=="late") )
+# ONLY EARLY TIMEPOINT
+bbch_mpi_fgh_2014_early <- droplevels (subset(bbch_mpi_fgh_2014_mod, bbch_mpi_fgh_2014_mod$timepoint=="early") )
 ```
 
 
@@ -128,19 +144,19 @@ bbch_mpi_feld2012_check_late_part <- bbch_mpi_feld2012_check[,c("treatment","bbc
 table(bbch_mpi_feld2012_check_late_part$bbch)
 
 
-pdf("../figures/bbch_mpi_test_1_2_late.pdf", width=6, height=6)
+pdf("figures/bbch_mpi_test_1_2_late.pdf", width=6, height=6)
 func_bbch_plots(bbch_mpi_test1_2_late_part) 
 dev.off()
 
-pdf("../figures/bbch_mpi_test_1_2_early.pdf", width=6, height=6)
+pdf("figures/bbch_mpi_test_1_2_early.pdf", width=6, height=6)
 func_bbch_plots(bbch_mpi_test1_2_late_part) 
 dev.off()
 
-pdf("../figures/bbch_mpi_feld_2011_check_late.pdf")
+pdf("figures/bbch_mpi_feld_2011_check_late.pdf")
 func_bbch_plots(bbch_mpi_feld2011_check_late_part) 
 dev.off()
 
-pdf("../figures/bbch_mpi_feld_2012_check_late.pdf")
+pdf("figures/bbch_mpi_feld_2012_check_late.pdf")
 func_bbch_plots(bbch_mpi_feld2012_check_late_part) 
 dev.off()
 ```
@@ -148,21 +164,35 @@ dev.off()
 
 ```{r for phd-thesis}
 # for phd-thesis:
-pdf("~/work/Doktorarbeit/figures/bbch_mpitest1_late.pdf", width=6, height=6)
+#pdf("~/work/Doktorarbeit/figures/bbch_mpitest1_late.pdf", width=6, height=6)
 func_bbch_density_plot(bbch_mpi_test1_2_late_part)
-dev.off()
+#dev.off()
 
-
-pdf("~/work/Doktorarbeit/figures/bbch_mpi_field_2011_check_late.pdf", width=6, height=6)
+#pdf("~/work/Doktorarbeit/figures/bbch_mpi_field_2011_check_late.pdf", width=6, height=6)
 func_bbch_density_plot(bbch_mpi_feld2011_check_late_part)
-dev.off()
+#dev.off()
 
-pdf("~/work/Doktorarbeit/figures/bbch_mpi_field_2011_late.pdf", width=6, height=6)
+#pdf("~/work/Doktorarbeit/figures/bbch_mpi_field_2011_late.pdf", width=6, height=6)
 func_bbch_density_plot(bbch_mpi_feld2011_late_part)
+#dev.off()
+
+#pdf("~/work/Doktorarbeit/figures/bbch_mpi_field_2012_late.pdf", width=6, height=6)
+func_bbch_density_plot(bbch_mpi_feld2012_check_late_part)
+#dev.off()
+```
+
+
+```{r valdis BBCH plots}
+bbch_mpi_fgh_2014_late_part <- bbch_mpi_fgh_2014_late[,c("treatment","bbch")]
+bbch_mpi_fgh_2014_early_part <- bbch_mpi_fgh_2014_early[,c("treatment","bbch")]
+
+
+pdf("figures/bbch_mpi_fgh_2014_mod_late.pdf", width=6, height=6)
+func_bbch_plots(bbch_mpi_fgh_2014_late_part) 
 dev.off()
 
-pdf("~/work/Doktorarbeit/figures/bbch_mpi_field_2012_late.pdf", width=6, height=6)
-func_bbch_density_plot(bbch_mpi_feld2012_check_late_part)
+pdf("figures/bbch_mpi_fgh_2014_mod_early.pdf", width=6, height=6)
+func_bbch_plots(bbch_mpi_fgh_2014_early_part) 
 dev.off()
 ```
 
@@ -170,46 +200,58 @@ dev.off()
 ### aggregate data --> median and sd
 ```{r aggregate data}
 # aggregate by cultivar, experiment_id, treatment, timepoint --> median + sd
-bbch_query_result_median <- aggregate(bbch_query_result$bbch, by=list(bbch_query_result$cultivar, bbch_query_result$experiment_id, bbch_query_result$treatment, bbch_query_result$timepoint), median)
+bbch_trost_mpi_median <- aggregate(bbch_trost_mpi_mod$bbch, 
+                                   by=list(bbch_trost_mpi_mod$cultivar, 
+                                           bbch_trost_mpi_mod$experiment_id, 
+                                           bbch_trost_mpi_mod$treatment, 
+                                           bbch_trost_mpi_mod$timepoint), 
+                                   median)
 
-bbch_query_result_sd <- aggregate(bbch_query_result$bbch, by=list(bbch_query_result$cultivar, bbch_query_result$experiment_id, bbch_query_result$treatment, bbch_query_result$timepoint), sd)
+bbch_trost_mpi_sd <- aggregate(bbch_trost_mpi_mod$bbch, 
+                               by=list(bbch_trost_mpi_mod$cultivar, 
+                                       bbch_trost_mpi_mod$experiment_id, 
+                                       bbch_trost_mpi_mod$treatment, 
+                                       bbch_trost_mpi_mod$timepoint), 
+                               sd)
 
-dim(bbch_query_result_median)
+dim(bbch_trost_mpi_median)
 # 228 5
-head(bbch_query_result_median)
-colnames(bbch_query_result_median) <- c("cultivar", "experiment_id", "treatment", "timepoint", "median") 
-colnames(bbch_query_result_sd) <- c("cultivar", "experiment_id", "treatment", "timepoint", "sd")
-head(bbch_query_result_sd)
+
+colnames(bbch_trost_mpi_median) <- c("cultivar", "experiment_id", "treatment", "timepoint", "median") 
+colnames(bbch_trost_mpi_sd) <- c("cultivar", "experiment_id", "treatment", "timepoint", "sd")
+
+pander(head(bbch_trost_mpi_median))
+pander(head(bbch_trost_mpi_sd))
 
 
 # convert treatment column into 2 columns (1 for control, 1 for stress)
-bbch_query_result_median <- cast(bbch_query_result_median, 
+bbch_trost_mpi_median <- cast(bbch_trost_mpi_median, 
                                        cultivar + experiment_id + timepoint ~ treatment, 
                                        value="median")
 
-bbch_query_result_sd <- cast(bbch_query_result_sd, 
+bbch_trost_mpi_sd <- cast(bbch_trost_mpi_sd, 
                                      cultivar + experiment_id + timepoint ~ treatment, 
                                      value="sd")
 
-colnames(bbch_query_result_median)[5] <- "drought_stress"
-colnames(bbch_query_result_sd)[5] <- "drought_stress"
+colnames(bbch_trost_mpi_median)[5] <- "drought_stress"
+colnames(bbch_trost_mpi_sd)[5] <- "drought_stress"
 
 # combine median and sd
-bbch_query_result_agg <- cbind(bbch_query_result_median, 
-                                       bbch_query_result_sd$control,
-                                       bbch_query_result_sd$drought_stress)
+bbch_trost_mpi_agg <- cbind(bbch_trost_mpi_median, 
+                                       bbch_trost_mpi_sd$control,
+                                       bbch_trost_mpi_sd$drought_stress)
 
-colnames(bbch_query_result_agg)[6:7] <- c("sd_control", "sd_stress")
-head(bbch_query_result_agg)
+colnames(bbch_trost_mpi_agg)[6:7] <- c("sd_control", "sd_stress")
+pander(head(bbch_trost_mpi_agg))
 
 # only late timepoint, and only check cultivars
-bbch_subset <- subset(bbch_query_result_agg, 
-           bbch_query_result_agg$timepoint=="late" & 
-             bbch_query_result_agg$cultivar %in% c("ALEGRIA", "MILVA", "DESIREE", "SATURNA"))
+bbch_subset <- subset(bbch_trost_mpi_agg, 
+           bbch_trost_mpi_agg$timepoint=="late" & 
+             bbch_trost_mpi_agg$cultivar %in% c("ALEGRIA", "MILVA", "DESIREE", "SATURNA"))
 dim(bbch_subset)
-bbch_subset
+pander(bbch_subset)
 
-write.table(bbch_subset, "../output/bbch_late_check_cultivars.txt", sep="\t", quote=F, col.names=NA)
+write.table(bbch_subset, "output/bbch_late_check_cultivars.txt", sep="\t", quote=F, col.names=NA)
 ```
 
 

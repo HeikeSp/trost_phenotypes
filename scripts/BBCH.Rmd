@@ -3,8 +3,8 @@ BBCH data analysis for MPI trials
 
 ## Set working directory  
 ```{r set working directory}
-#getwd()
-#setwd("D:/work/repos/trost_phenotypes")
+getwd()
+setwd("D:/work/repos/trost_phenotypes")
 ```
 
 [solution for issue with working directory and knitr](https://github.com/yihui/knitr/issues/277)
@@ -25,7 +25,7 @@ opts_chunk$set(fig.width=5, fig.height=5, cache=FALSE, highlight = TRUE, fig.sho
 opts_knit$set(root.dir = 'D:/work/repos/trost_phenotypes/')
 
 # load workspace
-#load("BBCH.RData")
+load("BBCH.RData")
 ```
 
 
@@ -134,6 +134,8 @@ bbch_mpi_fgh_2014_early <- droplevels (subset(bbch_mpi_fgh_2014_mod, bbch_mpi_fg
 bbch_mpi_test1_2_late_part <- bbch_mpi_test1_2_late[,c("treatment","bbch")]
 bbch_mpi_test1_2_early_part <- bbch_mpi_test1_2_early[,c("treatment","bbch")]
 
+bbch_mpi_test2_part <- bbch_mpi_test2[,c("treatment","bbch")]
+
 bbch_mpi_feld2011_check_late_part <- bbch_mpi_feld2011_check_late[,c("treatment","bbch")]
 table(bbch_mpi_feld2011_check_late_part$bbch)
 
@@ -149,7 +151,11 @@ func_bbch_plots(bbch_mpi_test1_2_late_part)
 dev.off()
 
 pdf("figures/bbch_mpi_test_1_2_early.pdf", width=6, height=6)
-func_bbch_plots(bbch_mpi_test1_2_late_part) 
+func_bbch_plots(bbch_mpi_test1_2_early_part) 
+dev.off()
+
+pdf("figures/bbch_mpi_test_2_early.pdf", width=6, height=6)
+func_bbch_plots(bbch_mpi_test2_part) 
 dev.off()
 
 pdf("figures/bbch_mpi_feld_2011_check_late.pdf")

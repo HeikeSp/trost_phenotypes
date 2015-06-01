@@ -1,0 +1,163 @@
+---
+title: "Sensor Data MPI Field 2013"
+author: "Heike Sprenger"
+date: "Monday, June 01, 2015"
+output: html_document
+---
+
+
+```{r setup}
+library(knitr)
+opts_knit$set(root.dir = 'D:/work/repos/trost_phenotypes/')
+```
+
+
+### Set working directory  
+```{r set working directory}
+#getwd()
+#setwd("D:/work/repos/trost_phenotypes")
+```
+
+
+[solution for issue with working directory and knitr](https://github.com/yihui/knitr/issues/277)
+
+### Load workspace, packages and scripts
+```{r load workspace, message=FALSE}
+# load packages
+library(ggplot2)
+library(reshape)
+library(pander)
+library(plyr)
+
+# set options for pander
+panderOptions('table.split.table', 200)
+
+# set options for knitr
+opts_chunk$set(fig.width=5, fig.height=5, cache=FALSE, highlight = TRUE, fig.show="asis")
+
+# load workspace
+#load("sensor_mpi_field_2013.RData")
+
+source("../libpurzel/func_plot_moisture.R")
+```
+
+
+### read data table
+```{r read data table}
+raw <- read.table("data/sensors_logger1_2013_05_17-2013_08_14.txt", header=T, fill=T)
+
+# meta information
+meta <- read.table("data/sensors_metadata_logger_sensor_channel.txt", header=T)
+meta_sub <- droplevels( subset(meta, meta$Study_ID==62326))
+
+# order meta information
+meta_sub_ordered <- meta_sub[order(meta_sub$Logger, meta_sub$Kanal_ID),]
+
+# add column for Logger and Kanal ID
+meta_sub_ordered <- cbind("variable"=paste("L",meta_sub_ordered$Logger,"_", "K", meta_sub_ordered$Kanal_ID, sep=""), meta_sub_ordered)
+meta_sub_ordered2 <- meta_sub_ordered[,c("variable","Treatment", "Cultivar")]
+
+table(meta_sub_ordered2$Cultivar)
+```
+
+
+### convert date
+```{r convert date}
+raw$Date <- as.Date( as.character(raw$Date_Time), "%d.%m.%y")
+```
+
+
+### subset of raw data (moisture)
+```{r subset of raw data}
+# subset after 2013-05-17 and before 2013-08-14
+raw_sub <- subset(raw, Date > as.Date("2013-05-17") & Date < as.Date("2013-08-14") )
+
+colnames(raw_sub)
+
+# only the first 39 moisture columns (every second column from 2 to 78)
+moisture <- raw_sub[, c(seq(2, 78, by=2))]
+
+# change colnames
+colnames(moisture) <- paste("L",meta_sub_ordered$Logger,"_", "K", meta_sub_ordered$Kanal_ID, sep="")
+```
+
+
+### format Date_Time
+```{r format Date_Time, fig.width=10}
+head(raw_sub$Date_Time)
+
+class(raw_sub$Date_Time)
+# factor
+
+Date_Time_charac <- as.character(raw_sub$Date_Time)
+class(Date_Time_charac)
+# character
+
+head(Date_Time_charac)
+
+# strptime: Date-time Conversion Functions to and from Character
+Date_Time <- strptime(Date_Time_charac, "%d.%m.%y_%H:%M:%S")
+class(Date_Time)
+# "POSIXlt" "POSIXt"
+head(Date_Time)
+
+plot(table(as.Date(Date_Time)), las=2)
+# missing data for:
+# 2013-06-16
+```
+
+
+### only data at 12:00
+```{r only data at 12:00, fig.width=10}
+
+# return list of moisture values at 12:00
+moisture_12_list <- func_plot_moisture_for_hour(hour_value = 12, 
+                                                  return_table = TRUE)
+# return boxplot
+func_plot_moisture_for_hour(hour_value = 12, 
+                            return_table = FALSE)
+```
+
+
+### only data at 9:00
+```{r only data at 9:00, fig.width=10}
+
+# return subset of moisture values at 9:00
+moisture_9_list <- func_plot_moisture_for_hour(hour_value = 9, 
+                                                  return_table = TRUE)
+
+# return boxplot
+func_plot_moisture_for_hour(hour_value = 9, 
+                            return_table = FALSE)
+```
+
+
+### only data at different timepoints
+```{r only data at different timepoints, fig.width=10}
+pdf("figures/sensors_moisture_mpi_field_2013.pdf", width=12, height=8)
+
+for(i in c(0,3,6,9,12,15,18,21) )
+  {func_plot_moisture_for_hour(hour_value = i, return_table = FALSE,
+                            moisture_values = moisture)
+  }
+
+dev.off()
+```
+
+
+### only Desiree values at 12:00
+```{r only Desiree values at 12:00, fig.width=10}
+moisture_12_joined_desiree <- subset(moisture_12_list$sub_joined, 
+                                     moisture_12_list$sub_joined$Cultivar=="Desiree")
+
+boxplot(moisture_12_joined_desiree$value ~ moisture_12_joined_desiree$Treatment * moisture_12_joined_desiree$Date,  
+        col=c("#4F81BD","#B94441"), xaxt="n", main="Desiree sensors at 12:00", ylim=c(0,600))
+axis(1, at = moisture_12_list$xaxis_ticks, labels = moisture_12_list$xaxis_labels, las=2, cex.axis=0.8)
+```
+
+
+### save workspace
+```{r save workspace}
+save.image("sensor_mpi_field_2013.RData")
+```
+

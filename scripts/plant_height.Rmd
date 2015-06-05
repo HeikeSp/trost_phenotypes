@@ -4,7 +4,7 @@ Plant height data analysis for MPI greenhouse and field trials
 ### Set working directory  
 ```{r set working directory}
 getwd()
-setwd("D:/work/repos/trost_phenotypes")
+#setwd("D:/work/repos/trost_phenotypes")
 ```
 
 
@@ -27,7 +27,7 @@ opts_chunk$set(fig.width=5, fig.height=5, cache=FALSE, highlight = TRUE, fig.sho
 opts_knit$set(root.dir = 'D:/work/repos/trost_phenotypes/')
 
 # load workspace
-load("plant_height.RData")
+#load("plant_height.RData")
 ```
 
 
@@ -453,16 +453,16 @@ colnames(plant_height_query_result_mean2)[1:3] <- c("treatment", "description", 
 # aggregated subsets #
 ######################
 
-rwc_test_trials_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id %in% c("48656", "51790"))
-
-rwc_pruef_trials_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id %in% c("56575", "58243", "60319"))
-
-rwc_test1_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "48656")
-rwc_test2_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "51790")
-
-rwc_pruef1_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "56575")
-rwc_pruef2_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "58243")
-rwc_pruef3_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "60319")
+# rwc_test_trials_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id %in% c("48656", "51790"))
+# 
+# rwc_pruef_trials_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id %in% c("56575", "58243", "60319"))
+# 
+# rwc_test1_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "48656")
+# rwc_test2_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "51790")
+# 
+# rwc_pruef1_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "56575")
+# rwc_pruef2_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "58243")
+# rwc_pruef3_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "60319")
 ```
 
 

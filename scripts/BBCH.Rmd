@@ -4,7 +4,7 @@ BBCH data analysis for MPI trials
 ## Set working directory  
 ```{r set working directory}
 getwd()
-setwd("D:/work/repos/trost_phenotypes")
+#setwd("D:/work/repos/trost_phenotypes")
 ```
 
 [solution for issue with working directory and knitr](https://github.com/yihui/knitr/issues/277)
@@ -16,6 +16,7 @@ library(knitr)
 library(ggplot2)
 library(reshape)
 library(pander)
+library(plyr)
 
 # set options for pander
 panderOptions('table.split.table', 200)
@@ -25,7 +26,7 @@ opts_chunk$set(fig.width=5, fig.height=5, cache=FALSE, highlight = TRUE, fig.sho
 opts_knit$set(root.dir = 'D:/work/repos/trost_phenotypes/')
 
 # load workspace
-load("BBCH.RData")
+#load("BBCH.RData")
 ```
 
 
@@ -35,6 +36,8 @@ source("../libpurzel/func_get_bbch_data.R")
 source("../libpurzel/func_modify_bbch_data.R")
 source("../libpurzel/func_bbch_plots.R")
 source("../libpurzel/colors.R")
+source("../libpurzel/names.R")
+source("../libpurzel/func_anova_v2.R")
 ```
 
 
@@ -93,30 +96,49 @@ write.table(bbch_mpi_fgh_2014, "data/bbch_mpi_fgh_2014.txt", sep="\t")
 ```{r TROST subsets}
 # MPI TEST 1.2
 bbch_mpi_test1_2 <- droplevels( subset(bbch_trost_mpi_mod, bbch_trost_mpi_mod$experiment_id == "48656") )
+# reorder cultivar factor
+levels(bbch_mpi_test1_2$cultivar) <- c("Alegria", "Desiree", "Milva", "Saturna")
+bbch_mpi_test1_2$cultivar <- factor(bbch_mpi_test1_2$cultivar, levels = c("Alegria", "Milva", "Desiree", "Saturna"))
+
 # ONLY LATE TIMEPOINT
 bbch_mpi_test1_2_late <- droplevels (subset(bbch_mpi_test1_2, bbch_mpi_test1_2$timepoint=="late") )
 # ONLY EARLY TIMEPOINT
 bbch_mpi_test1_2_early <- droplevels( subset(bbch_mpi_test1_2, bbch_mpi_test1_2$timepoint=="early") )
 
+
 # MPI TEST 2 (only early exists)
 bbch_mpi_test2 <- droplevels( subset(bbch_trost_mpi_mod, bbch_trost_mpi_mod$experiment_id == "51790") )
-levels(bbch_mpi_test2$timepoint)
+# reorder cultivar factor
+levels(bbch_mpi_test2$cultivar) <- c("Alegria", "Desiree", "Milva", "Saturna")
+bbch_mpi_test2$cultivar <- factor(bbch_mpi_test2$cultivar, levels = c("Alegria", "Milva", "Desiree", "Saturna"))
+
 
 # MPI FELD 2011
 bbch_mpi_feld2011 <- droplevels( subset(bbch_trost_mpi_mod, bbch_trost_mpi_mod$experiment_id == "44443") )
 # ONLY CHECK CULTIVARS
-bbch_mpi_feld2011_check <- droplevels (subset(bbch_mpi_feld2011, bbch_mpi_feld2011$cultivar %in% c("ALEGRIA", "MILVA", "DESIREE", "SATURNA")) )
+bbch_mpi_feld2011_check <- droplevels (subset(bbch_mpi_feld2011, 
+                                              bbch_mpi_feld2011$cultivar %in% c("ALEGRIA", "MILVA", "DESIREE", "SATURNA")) )
+# reorder cultivar factor
 levels(bbch_mpi_feld2011_check$cultivar) <- c("Alegria", "Desiree", "Milva", "Saturna")
+bbch_mpi_feld2011_check$cultivar <- factor(bbch_mpi_feld2011_check$cultivar, levels = c("Alegria", "Milva", "Desiree", "Saturna"))
+
 # ONLY CHECK CULTIVARS + LATE
-bbch_mpi_feld2011_check_late <- droplevels( subset(bbch_mpi_feld2011_check, bbch_mpi_feld2011_check$timepoint == "late") )
+bbch_mpi_feld2011_check_late <- droplevels( subset(bbch_mpi_feld2011_check, 
+                                                   bbch_mpi_feld2011_check$timepoint == "late") )
 # ONLY LATE
-bbch_mpi_feld2011_late <- droplevels( subset(bbch_mpi_feld2011, bbch_mpi_feld2011$timepoint == "late") )
+bbch_mpi_feld2011_late <- droplevels( subset(bbch_mpi_feld2011, 
+                                             bbch_mpi_feld2011$timepoint == "late") )
+
 
 # MPI FELD 2012
-bbch_mpi_feld2012 <- droplevels( subset(bbch_trost_mpi_mod, bbch_trost_mpi_mod$experiment_id == "56726") )
+bbch_mpi_feld2012 <- droplevels( subset(bbch_trost_mpi_mod, 
+                                        bbch_trost_mpi_mod$experiment_id == "56726") )
 # ONLY CHECK CULTIVARS 
-bbch_mpi_feld2012_check <- droplevels( subset(bbch_mpi_feld2012, bbch_mpi_feld2012$cultivar %in% c("ALEGRIA", "MILVA", "DESIREE", "SATURNA")) )
+bbch_mpi_feld2012_check <- droplevels( subset(bbch_mpi_feld2012, 
+                                              bbch_mpi_feld2012$cultivar %in% c("ALEGRIA", "MILVA", "DESIREE", "SATURNA")) )
+# reorder cultivar factor
 levels(bbch_mpi_feld2012_check$cultivar) <- c("Alegria", "Desiree", "Milva", "Saturna")
+bbch_mpi_feld2012_check$cultivar <- factor(bbch_mpi_feld2012_check$cultivar, levels = c("Alegria", "Milva", "Desiree", "Saturna"))
 ```
 
 ### VALDIS subsets
@@ -259,6 +281,191 @@ pander(bbch_subset)
 
 write.table(bbch_subset, "output/bbch_late_check_cultivars.txt", sep="\t", quote=F, col.names=NA)
 ```
+
+
+### rank transformation
+```{r rank transformation}
+# MPI greenhouse trial 1.2 (late)
+dim(bbch_mpi_test1_2_late)
+head(bbch_mpi_test1_2_late)
+plot(density(bbch_mpi_test1_2_late$bbch, freq=F))
+plot(density(rank(bbch_mpi_test1_2_late$bbch), freq=F))
+shapiro.test(bbch_mpi_test1_2_late$bbch)
+shapiro.test(rank(bbch_mpi_test1_2_late$bbch))
+
+bbch_mpi_test1_2_late$bbch_rank <- rank(bbch_mpi_test1_2_late$bbch)
+
+# MPI field 2011 (late)
+dim(bbch_mpi_feld2011_check_late)
+head(bbch_mpi_feld2011_check_late)
+plot(density(bbch_mpi_feld2011_check_late$bbch, freq=F))
+plot(density(rank(bbch_mpi_feld2011_check_late$bbch), freq=F))
+shapiro.test(bbch_mpi_feld2011_check_late$bbch)
+shapiro.test(rank(bbch_mpi_feld2011_check_late$bbch))
+
+bbch_mpi_feld2011_check_late$bbch_rank <- rank(bbch_mpi_feld2011_check_late$bbch)
+
+# MPI field 2012 (late)
+dim(bbch_mpi_feld2012_check)
+head(bbch_mpi_feld2012_check)
+plot(density(bbch_mpi_feld2012_check$bbch, freq=F))
+plot(density(rank(bbch_mpi_feld2012_check$bbch), freq=F))
+shapiro.test(bbch_mpi_feld2012_check$bbch)
+shapiro.test(rank(bbch_mpi_feld2012_check$bbch))
+
+bbch_mpi_feld2012_check$bbch_rank <- rank(bbch_mpi_feld2012_check$bbch)
+```
+
+
+### ggplot2 density plot of ranks
+```{r ggplot2 density plot of ranks}
+bbch_mpi_test1_2_late_rank <- bbch_mpi_test1_2_late[,c("treatment","bbch_rank")]
+colnames(bbch_mpi_test1_2_late_rank)[2] <- "bbch"
+
+bbch_mpi_feld2011_check_late_rank <- bbch_mpi_feld2011_check_late[,c("treatment","bbch_rank")]
+colnames(bbch_mpi_feld2011_check_late_rank)[2] <- "bbch"
+
+bbch_mpi_feld2012_check_late_rank <- bbch_mpi_feld2012_check[,c("treatment","bbch_rank")]
+colnames(bbch_mpi_feld2012_check_late_rank)[2] <- "bbch"
+
+
+pdf("figures/bbch_mpi_test_1_2_late_rank.pdf", width=6, height=6)
+func_bbch_plots(bbch_mpi_test1_2_late_rank, min=0, max=200) 
+dev.off()
+
+pdf("figures/bbch_mpi_feld_2011_check_late_rank.pdf")
+func_bbch_plots(bbch_mpi_feld2011_check_late_rank, min=0, max=260) 
+dev.off()
+
+pdf("figures/bbch_mpi_feld_2012_check_late_rank.pdf")
+func_bbch_plots(bbch_mpi_feld2012_check_late_rank, min=0, max=130) 
+dev.off()
+```
+
+### ANOVA
+```{r ANOVA of ranks}
+bbch_mpi_test1_2_late_rank_anova <- func_anova_2fac_ia(bbch_mpi_test1_2_late, "bbch_rank", "cultivar", "treatment", 0.01)
+  
+bbch_mpi_feld2011_check_late_rank_anova <- func_anova_2fac_ia(bbch_mpi_feld2011_check_late, "bbch_rank", "cultivar", "treatment", 0.01)
+
+bbch_mpi_feld2012_check_late_rank_anova <- func_anova_2fac_ia(bbch_mpi_feld2012_check, "bbch_rank", "cultivar", "treatment", 0.01)
+```
+
+
+### kruskal wallis test of ranks
+```{r kruskal wallis test of ranks}
+kruskal.test(bbch_mpi_test1_2_late$bbch_rank ~ bbch_mpi_test1_2_late$treatment)$p.value
+kruskal.test(bbch_mpi_test1_2_late$bbch_rank ~ bbch_mpi_test1_2_late$treatment)$statistic
+kruskal.test(bbch_mpi_test1_2_late$bbch_rank ~ bbch_mpi_test1_2_late$cultivar)$p.value
+kruskal.test(bbch_mpi_test1_2_late$bbch_rank ~ bbch_mpi_test1_2_late$cultivar)$statistic
+
+kruskal.test(bbch_mpi_feld2011_check_late$bbch_rank ~ bbch_mpi_feld2011_check_late$treatment)$p.value
+kruskal.test(bbch_mpi_feld2011_check_late$bbch_rank ~ bbch_mpi_feld2011_check_late$treatment)$statistic
+kruskal.test(bbch_mpi_feld2011_check_late$bbch_rank ~ bbch_mpi_feld2011_check_late$cultivar)$p.value
+kruskal.test(bbch_mpi_feld2011_check_late$bbch_rank ~ bbch_mpi_feld2011_check_late$cultivar)$statistic
+
+kruskal.test(bbch_mpi_feld2012_check$bbch_rank ~ bbch_mpi_feld2012_check$treatment)
+kruskal.test(bbch_mpi_feld2012_check$bbch_rank ~ bbch_mpi_feld2012_check$cultivar)
+```
+
+
+### boxplots per treatment and cultivar of ranked BBCH
+```{r boxplots per treatment and cultivar of ranked BBCH}
+# MPI test 1.2 late
+
+pdf("figures/bbch_mpi_test_1_2_late_rank_boxplot.pdf")
+par(mar=c(7, 4.1, 4.1, 2.1))
+boxplot(bbch_mpi_test1_2_late$bbch_rank ~
+          bbch_mpi_test1_2_late$treatment * bbch_mpi_test1_2_late$cultivar,
+        las = 2, names = names_treatment_cultivar, col = cols_treatment,
+        main = "ranked BBCH")
+
+boxplot(bbch_mpi_test1_2_late$bbch ~
+          bbch_mpi_test1_2_late$treatment * bbch_mpi_test1_2_late$cultivar,
+        las = 2, names = names_treatment_cultivar, col = cols_treatment,
+        main = "original BBCH (no ranking)")
+dev.off()
+
+
+# MPI field 2011 (late)
+
+pdf("figures/bbch_mpi_feld_2011_check_late_rank_boxplot.pdf")
+par(mar=c(7, 4.1, 4.1, 2.1))
+boxplot(bbch_mpi_feld2011_check_late$bbch_rank ~ 
+          bbch_mpi_feld2011_check_late$treatment * bbch_mpi_feld2011_check_late$cultivar,
+        las = 2, names = names_treatment_cultivar, col = cols_treatment,
+        main = "ranked BBCH")
+
+boxplot(bbch_mpi_feld2011_check_late$bbch ~ 
+          bbch_mpi_feld2011_check_late$treatment * bbch_mpi_feld2011_check_late$cultivar,
+        las = 2, names = names_treatment_cultivar, col = cols_treatment,
+        main = "original BBCH (no ranking)")
+dev.off()
+
+
+# MPI field 2012 (late)
+
+pdf("figures/bbch_mpi_feld_2012_check_late_rank_boxplot.pdf")
+par(mar=c(7, 4.1, 4.1, 2.1))
+boxplot(bbch_mpi_feld2012_check$bbch_rank ~ 
+          bbch_mpi_feld2012_check$treatment * bbch_mpi_feld2012_check$cultivar,
+        las = 2, names = names_treatment_cultivar, col = cols_treatment,
+        main = "ranked BBCH")
+
+boxplot(bbch_mpi_feld2012_check$bbch ~ 
+          bbch_mpi_feld2012_check$treatment * bbch_mpi_feld2012_check$cultivar,
+        las = 2, names = names_treatment_cultivar, col = cols_treatment,
+        main = "original BBCH (no ranking)")
+dev.off()
+```
+
+
+### aggregate ranked BBCH --> median and sd
+#### aggregate by cultivar and treatment --> median + sd
+```{r aggregate ranked BBCH}
+# MPI greenhouse trial 1.2 (late)
+bbch_mpi_test1_2_late_rank_agg <- ddply(bbch_mpi_test1_2_late, c("cultivar", "treatment"), summarise,
+                                        N    = length(bbch_rank),
+                                        mean = mean(bbch_rank),
+                                        median = median(bbch_rank),
+                                        sd   = sd(bbch_rank),
+                                        se   = sd / sqrt(N) )
+
+pander(bbch_mpi_test1_2_late_rank_agg)
+write.table(bbch_mpi_test1_2_late_rank_agg, 
+            "output/bbch_mpi_test1_2_late_rank_agg.txt",
+            sep="\t", quote=F, col.names=NA)
+
+
+# MPI field 2011 (late)
+bbch_mpi_feld2011_check_late_rank_agg <- ddply(bbch_mpi_feld2011_check_late, c("cultivar", "treatment"), summarise,
+                                        N    = length(bbch_rank),
+                                        mean = mean(bbch_rank),
+                                        median = median(bbch_rank),
+                                        sd   = sd(bbch_rank),
+                                        se   = sd / sqrt(N) )
+
+pander(bbch_mpi_feld2011_check_late_rank_agg)
+write.table(bbch_mpi_feld2011_check_late_rank_agg, 
+            "output/bbch_mpi_feld2011_check_late_rank_agg.txt", 
+            sep="\t", quote=F, col.names=NA)
+
+
+# MPI field 2012 (late)
+bbch_mpi_feld2012_check_late_rank_agg <- ddply(bbch_mpi_feld2012_check, c("cultivar", "treatment"), summarise,
+                                        N    = length(bbch_rank),
+                                        mean = mean(bbch_rank),
+                                        median = median(bbch_rank),
+                                        sd   = sd(bbch_rank),
+                                        se   = sd / sqrt(N) )
+
+pander(bbch_mpi_feld2012_check_late_rank_agg)
+write.table(bbch_mpi_feld2012_check_late_rank_agg, 
+            "output/bbch_mpi_feld2012_check_late_rank_agg.txt", 
+            sep="\t", quote=F, col.names=NA)
+```
+
+
 
 
 ### save workspace

@@ -190,12 +190,18 @@ pdf("figures/plant_height_mpi_test_trials.pdf", width=7, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
 
 # mpi test 1.2
-boxplot(plant_height_mpi_test1_2$height~plant_height_mpi_test1_2$treatment, col=cols_treatment, main="MPI test trial 1.2")
-boxplot(plant_height_mpi_test1_2$height~plant_height_mpi_test1_2$treatment * plant_height_mpi_test1_2$timepoint, col=cols_treatment, las=2, names=names_treatment_sample_time, ylab="plant height (in cm)", main="MPI test trial 1.2")
+boxplot(plant_height_mpi_test1_2$height ~ plant_height_mpi_test1_2$treatment, 
+        col=cols_treatment, main="MPI test trial 1.2")
+boxplot(plant_height_mpi_test1_2$height ~ plant_height_mpi_test1_2$treatment * 
+          plant_height_mpi_test1_2$timepoint, col=cols_treatment, las=2, 
+        names=names_treatment_sample_time, ylab="plant height (in cm)", main="MPI test trial 1.2")
 
 # mpi test 2
-boxplot(plant_height_mpi_test2$height~plant_height_mpi_test2$treatment, col=cols_treatment, main="MPI test trial 2")
-boxplot(plant_height_mpi_test2$height~plant_height_mpi_test2$treatment * plant_height_mpi_test2$timepoint, col=cols_treatment, las=2, names=names_treatment_sample_time, ylab="plant height (in cm)", main="MPI test trial 2")
+boxplot(plant_height_mpi_test2$height ~ plant_height_mpi_test2$treatment, 
+        col=cols_treatment, main="MPI test trial 2")
+boxplot(plant_height_mpi_test2$height ~ plant_height_mpi_test2$treatment * 
+          plant_height_mpi_test2$timepoint, col=cols_treatment, las=2, 
+        names=names_treatment_sample_time, ylab="plant height (in cm)", main="MPI test trial 2")
 
 dev.off()
 ```
@@ -205,15 +211,25 @@ dev.off()
 ```{r plot MPI test trials per cultivar}
 pdf("figures/plant_height_mpi_test_trials_cultivar.pdf", width=12, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
-boxplot(plant_height_mpi_test1_2$height~plant_height_mpi_test1_2$treatment * plant_height_mpi_test1_2$timepoint * plant_height_mpi_test1_2$cultivar, col=cols_treatment_sample_time, las=2, ylab="plant height (in cm)", main="MPI test trial 1", names=names_treatment_sample_time_cultivar)
+boxplot(plant_height_mpi_test1_2$height ~ plant_height_mpi_test1_2$treatment * 
+          plant_height_mpi_test1_2$timepoint * plant_height_mpi_test1_2$cultivar, 
+        col=cols_treatment_sample_time, las=2, ylab="plant height (in cm)", 
+        main="MPI test trial 1", names=names_treatment_sample_time_cultivar)
 
-boxplot(plant_height_mpi_test2$height~plant_height_mpi_test2$treatment * plant_height_mpi_test2$timepoint * plant_height_mpi_test2$cultivar, col=cols_treatment_sample_time, las=2, ylab="plant height (in cm)", main="MPI test trial 2", names=names_treatment_sample_time_cultivar)
+boxplot(plant_height_mpi_test2$height ~ plant_height_mpi_test2$treatment * 
+          plant_height_mpi_test2$timepoint * plant_height_mpi_test2$cultivar, 
+        col=cols_treatment_sample_time, las=2, ylab="plant height (in cm)", 
+        main="MPI test trial 2", names=names_treatment_sample_time_cultivar)
 
 # ONLY LATE!
-boxplot(plant_height_mpi_test1_2_late$height ~ plant_height_mpi_test1_2_late$treatment * plant_height_mpi_test1_2_late$cultivar, col=cols_treatment, las=2, ylab="plant height (in cm)", main="MPI test trial 1 (only late)", names=names_treatment_cultivar)
+boxplot(plant_height_mpi_test1_2_late$height ~ plant_height_mpi_test1_2_late$treatment * 
+          plant_height_mpi_test1_2_late$cultivar, col=cols_treatment, las=2, 
+        ylab="plant height (in cm)", main="MPI test trial 1 (only late)", names=names_treatment_cultivar)
 legend("topright", legend=levels(plant_height_mpi_test2_late$treatment), fill=cols_treatment)
 
-boxplot(plant_height_mpi_test2_late$height ~ plant_height_mpi_test2_late$treatment * plant_height_mpi_test2_late$cultivar, col=cols_treatment, las=2, ylab="plant height (in cm)", main="MPI test trial 2 (only late)", names=names_treatment_cultivar)
+boxplot(plant_height_mpi_test2_late$height ~ plant_height_mpi_test2_late$treatment * 
+          plant_height_mpi_test2_late$cultivar, col=cols_treatment, las=2, 
+        ylab="plant height (in cm)", main="MPI test trial 2 (only late)", names=names_treatment_cultivar)
 legend("topright", legend=levels(plant_height_mpi_test2_late$treatment), fill=cols_treatment)
 dev.off()
 ```
@@ -223,11 +239,15 @@ dev.off()
 ```{r plot MPI test trial for phd-thesis}
 # rename and reorder levels
 levels(plant_height_mpi_test1_2_late$cultivar) <- c("Alegria", "Desiree", "Milva", "Saturna")
-plant_height_mpi_test1_2_late$cultivar <- factor(plant_height_mpi_test1_2_late$cultivar, levels=c("Alegria", "Milva", "Desiree", "Saturna"))
+plant_height_mpi_test1_2_late$cultivar <- factor(plant_height_mpi_test1_2_late$cultivar, 
+                                                 levels=c("Alegria", "Milva", "Desiree", "Saturna"))
 
 pdf("~/work/Doktorarbeit/figures/plant_height_mpitest1_late.pdf", width=6, height=6)
 par(mar=c(7.5, 4.5, 0.5, 0.5))
-boxplot(plant_height_mpi_test1_2_late$height ~ plant_height_mpi_test1_2_late$treatment * plant_height_mpi_test1_2_late$cultivar, col=cols_treatment, las=2, ylab="plant height (in cm)", names=names_treatment_cultivar_reordered, cex.lab=1.4, cex.axis=1.2, ylim=c(15,55))
+boxplot(plant_height_mpi_test1_2_late$height ~ plant_height_mpi_test1_2_late$treatment * 
+          plant_height_mpi_test1_2_late$cultivar, col=cols_treatment, las=2, 
+        ylab="plant height (in cm)", names=names_treatment_cultivar_reordered, 
+        cex.lab=1.4, cex.axis=1.2, ylim=c(15,55))
 legend("topright", levels(plant_height_mpi_test1_2_late$treatment), fill=cols_treatment, cex=1, bty="n")
 dev.off()
 ```
@@ -244,12 +264,14 @@ boxplot(plant_height_jki_test_1$height_15.07.2011 ~ plant_height_jki_test_1$trea
         col=cols_treatment, main="JKI test trial 1")
 
 # all timepoints
-boxplot(plant_height_jki_test_1_melt$value ~ plant_height_jki_test_1_melt$treatment * plant_height_jki_test_1_melt$variable, 
+boxplot(plant_height_jki_test_1_melt$value ~ plant_height_jki_test_1_melt$treatment * 
+          plant_height_jki_test_1_melt$variable, 
         col=cols_treatment, main="JKI test trial 1 (7 different timepoints)", las=2, 
         names=names_treatment_sample_time_jki, ylab="plant height (in cm)")
 
 # per cultivar, only sampling timepoint
-boxplot(plant_height_jki_test_1$height_15.07.2011 ~ plant_height_jki_test_1$treatment * plant_height_jki_test_1$cultivar, 
+boxplot(plant_height_jki_test_1$height_15.07.2011 ~ plant_height_jki_test_1$treatment * 
+          plant_height_jki_test_1$cultivar, 
         col=cols_treatment, las=2, ylab="plant height (in cm)", 
         main="JKI test trial 1", names=names_treatment_cultivar)
 legend("topright", legend=levels(plant_height_jki_test_1$treatment), fill=cols_treatment)
@@ -262,22 +284,33 @@ dev.off()
 ```{r plot MPI field trials}
 pdf("figures/plant_height_mpi_field_trials.pdf", width=7, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
-boxplot(plant_height_mpi_feld2011_check$height~plant_height_mpi_feld2011_check$treatment, col=cols_treatment, main="MPI field trial 2011")
-boxplot(plant_height_mpi_feld2011_check$height~plant_height_mpi_feld2011_check$treatment *plant_height_mpi_feld2011_check$timepoint, col=cols_treatment, main="MPI field trial 2011")
+boxplot(plant_height_mpi_feld2011_check$height ~ plant_height_mpi_feld2011_check$treatment, 
+        col=cols_treatment, main="MPI field trial 2011")
+boxplot(plant_height_mpi_feld2011_check$height ~ plant_height_mpi_feld2011_check$treatment *
+          plant_height_mpi_feld2011_check$timepoint, col=cols_treatment, main="MPI field trial 2011")
 
-boxplot(plant_height_mpi_feld2012_check$height~plant_height_mpi_feld2012_check$treatment, col=cols_treatment, main="MPI field trial 2012 (only late)")
-boxplot(plant_height_mpi_feld2012_check$height~plant_height_mpi_feld2012_check$treatment *plant_height_mpi_feld2012_check$timepoint, col=cols_treatment, main="MPI field trial 2012")
+boxplot(plant_height_mpi_feld2012_check$height ~ plant_height_mpi_feld2012_check$treatment, 
+        col=cols_treatment, main="MPI field trial 2012 (only late)")
+boxplot(plant_height_mpi_feld2012_check$height ~ plant_height_mpi_feld2012_check$treatment *
+          plant_height_mpi_feld2012_check$timepoint, col=cols_treatment, main="MPI field trial 2012")
 dev.off()
 
 # PER CULTIVAR
 
 pdf("figures/plant_height_mpi_field_trials_cultivar.pdf", width=12, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
-boxplot(plant_height_mpi_feld2011_check$height~plant_height_mpi_feld2011_check$treatment*plant_height_mpi_feld2011_check$timepoint * plant_height_mpi_feld2011_check$cultivar, col=cols_treatment_sample_time, main="MPI field trial 2011", names=names_treatment_sample_time_cultivar, las=2)
+boxplot(plant_height_mpi_feld2011_check$height ~ plant_height_mpi_feld2011_check$treatment*
+          plant_height_mpi_feld2011_check$timepoint * plant_height_mpi_feld2011_check$cultivar, 
+        col=cols_treatment_sample_time, main="MPI field trial 2011", 
+        names=names_treatment_sample_time_cultivar, las=2)
 
-boxplot(plant_height_mpi_feld2011_check_late$height~plant_height_mpi_feld2011_check_late$treatment*plant_height_mpi_feld2011_check_late$cultivar, col=cols_treatment, main="MPI field trial 2011 (only late)", names=names_treatment_cultivar, las=2)
+boxplot(plant_height_mpi_feld2011_check_late$height ~ plant_height_mpi_feld2011_check_late$treatment*
+          plant_height_mpi_feld2011_check_late$cultivar, col=cols_treatment, 
+        main="MPI field trial 2011 (only late)", names=names_treatment_cultivar, las=2)
 
-boxplot(plant_height_mpi_feld2012_check$height~plant_height_mpi_feld2012_check$treatment*plant_height_mpi_feld2012_check$cultivar, col=cols_treatment, main="MPI field trial 2012", names=names_treatment_cultivar, las=2)
+boxplot(plant_height_mpi_feld2012_check$height ~ plant_height_mpi_feld2012_check$treatment* 
+          plant_height_mpi_feld2012_check$cultivar, col=cols_treatment, main="MPI field trial 2012", 
+        names=names_treatment_cultivar, las=2)
 dev.off()
 ```
 
@@ -290,13 +323,17 @@ range(plant_height_mpi_feld2012_check$height)
 # for phd-thesis:
 pdf("~/work/Doktorarbeit/figures/plant_height_mpi_field_2011_check_late.pdf", width=6, height=6)
 par(mar=c(7.5, 4.5, 0.5, 0.5))
-boxplot(plant_height_mpi_feld2011_check_late$height ~ plant_height_mpi_feld2011_check_late$treatment * plant_height_mpi_feld2011_check_late$cultivar, col=cols_treatment, las=2, ylab="plant height (in cm)", names=names_treatment_cultivar_reordered, cex.lab=1.4, cex.axis=1.2)
+boxplot(plant_height_mpi_feld2011_check_late$height ~ plant_height_mpi_feld2011_check_late$treatment * 
+          plant_height_mpi_feld2011_check_late$cultivar, col=cols_treatment, las=2, 
+        ylab="plant height (in cm)", names=names_treatment_cultivar_reordered, cex.lab=1.4, cex.axis=1.2)
 legend("topleft", levels(plant_height_mpi_feld2011_check_late$treatment), fill=cols_treatment, cex=1, bty="n")
 dev.off()
 
 pdf("~/work/Doktorarbeit/figures/plant_height_mpi_field_2012_check_late.pdf", width=6, height=6)
 par(mar=c(7.5, 4.5, 0.5, 0.5))
-boxplot(plant_height_mpi_feld2012_check$height ~ plant_height_mpi_feld2012_check$treatment * plant_height_mpi_feld2012_check$cultivar, col=cols_treatment, las=2, ylab="plant height (in cm)", names=names_treatment_cultivar_reordered, cex.lab=1.4, cex.axis=1.2)
+boxplot(plant_height_mpi_feld2012_check$height ~ plant_height_mpi_feld2012_check$treatment * 
+          plant_height_mpi_feld2012_check$cultivar, col=cols_treatment, las=2, 
+        ylab="plant height (in cm)", names=names_treatment_cultivar_reordered, cex.lab=1.4, cex.axis=1.2)
 legend("topleft", levels(plant_height_mpi_feld2012_check$treatment), fill=cols_treatment, cex=1, bty="n")
 dev.off()
 
@@ -324,7 +361,8 @@ boxplot(plant_height_jki_field_2012_check_melt$value ~ plant_height_jki_field_20
         col=cols_treatment, main="JKI field trial 2012 (only check cultivars)")
 
 # per check cultivar
-boxplot(plant_height_jki_field_2012_check_melt$value ~ plant_height_jki_field_2012_check_melt$treatment * plant_height_jki_field_2012_check_melt$cultivar, 
+boxplot(plant_height_jki_field_2012_check_melt$value ~ plant_height_jki_field_2012_check_melt$treatment * 
+          plant_height_jki_field_2012_check_melt$cultivar, 
         col=cols_treatment, las=2, ylab="plant height (in cm)", 
         main="JKI field trial 2012", names=names_treatment_cultivar)
 legend("topright", legend=levels(plant_height_jki_test_1$treatment), fill=cols_treatment)
@@ -393,18 +431,24 @@ write.table(plant_height_subset, "output/plant_height_late_check_cultivars.txt",
 # aggregated subsets #
 ######################
 
-plant_height_mpi_test_agg <- subset(plant_height_query_result_agg, plant_height_query_result_agg$experiment_id %in% c("48656", "51790"))
+plant_height_mpi_test_agg <- subset(plant_height_query_result_agg, 
+                                    plant_height_query_result_agg$experiment_id %in% c("48656", "51790"))
 
-plant_height_mpi_feld_agg <- subset(plant_height_query_result_agg, plant_height_query_result_agg$experiment_id %in% c("44443", "56726"))
+plant_height_mpi_feld_agg <- subset(plant_height_query_result_agg, 
+                                    plant_height_query_result_agg$experiment_id %in% c("44443", "56726"))
 
-plant_height_mpi_test1_2_agg <- subset(plant_height_query_result_agg, plant_height_query_result_agg$experiment_id == "48656")
-plant_height_mpi_test2_agg <- subset(plant_height_query_result_agg, plant_height_query_result_agg$experiment_id == "51790")
+plant_height_mpi_test1_2_agg <- subset(plant_height_query_result_agg, 
+                                       plant_height_query_result_agg$experiment_id == "48656")
+plant_height_mpi_test2_agg <- subset(plant_height_query_result_agg, 
+                                     plant_height_query_result_agg$experiment_id == "51790")
 dim(plant_height_mpi_test2_agg)
 # 16 5
 plant_height_mpi_test2_agg
 
-plant_height_mpi_feld2011_agg <- subset(plant_height_query_result_agg, plant_height_query_result_agg$experiment_id == "44443")
-plant_height_mpi_feld2012_agg <- subset(plant_height_query_result_agg, plant_height_query_result_agg$experiment_id == "51790")
+plant_height_mpi_feld2011_agg <- subset(plant_height_query_result_agg, 
+                                        plant_height_query_result_agg$experiment_id == "44443")
+plant_height_mpi_feld2012_agg <- subset(plant_height_query_result_agg, 
+                                        plant_height_query_result_agg$experiment_id == "51790")
 ```
 
 
@@ -468,7 +512,8 @@ plant_height_anova7 <- func_combine_anova_res7(plant_height_mpi_test1_2_early_an
 
 rownames(plant_height_anova7) <- c("MPI-MP greenhouse trial 1 early", "MPI-MP greenhouse trial 1 late", 
                                    "MPI-MP greenhouse trial 2 early", "MPI-MP greenhouse trial 2 late",
-                                   "MPI-MP field trial 2011 early", "MPI-MP field trial 2011 late", "MPI-MP field trial 2012 late")
+                                   "MPI-MP field trial 2011 early", "MPI-MP field trial 2011 late", 
+                                   "MPI-MP field trial 2012 late")
 write.table(plant_height_anova7, "output/plant_height_anova7.txt", sep="\t", quote=F, row.names=T, col.names=NA)
 
 ####################################################################################

@@ -38,6 +38,7 @@ source("../libpurzel/colors.R")
 source("../libpurzel/names.R")
 source("../libpurzel/func_get_fw_dw_data.R")
 source("../libpurzel/func_anova_v2.R")
+source("../libpurzel/func_relevel_factors.R")
 ```
 
 ## Load Data
@@ -87,14 +88,14 @@ write.table(fw_dw_all, "data/fw_dw_result_all.txt", sep="\t")
 ### subsets: only check cultivars at late or late/before
 ```{r subsets: only check cultivars at late or late/before}
 # G1: MPI greenhouse trial 1.2
-fw_dw_g1 <- subset(fw_dw_all, 
-                   fw_dw_all$experiment_id == "48656" & 
-                     fw_dw_all$description == "late/before")
+fw_dw_g1 <- droplevels(subset(fw_dw_all, 
+                              fw_dw_all$experiment_id == "48656" & 
+                                fw_dw_all$description == "late/before"))
 
 # G2: MPI greenhouse trial 2
-fw_dw_g2 <- subset(fw_dw_all, 
-                   fw_dw_all$experiment_id == "51790" & 
-                     fw_dw_all$description == "late/before")
+fw_dw_g2 <- droplevels(subset(fw_dw_all, 
+                              fw_dw_all$experiment_id == "51790" & 
+                                fw_dw_all$description == "late/before"))
 
 # G3: JKI greenhouse trial 1
 fw_dw_g3 <- droplevels(subset(fw_dw_all, 
@@ -116,6 +117,17 @@ fw_dw_f3 <- droplevels(subset(fw_dw_all,
 fw_dw_f4 <- droplevels(subset(fw_dw_all, 
                               fw_dw_all$experiment_id == "56875" & 
                                 fw_dw_all$cultivar %in% c("DESIREE", "ALEGRIA", "MILVA", "SATURNA")))
+```
+
+### relevel cultivar and treatment
+```{r relevel cultivar and treatment}
+
+fw_dw_g1 <- func_relevel_factors_2(fw_dw_g1)
+fw_dw_g2 <- func_relevel_factors_2(fw_dw_g2)
+fw_dw_g3 <- func_relevel_factors_2(fw_dw_g3)
+fw_dw_f1 <- func_relevel_factors_2(fw_dw_f1)
+fw_dw_f3 <- func_relevel_factors_2(fw_dw_f3)
+fw_dw_f4 <- func_relevel_factors_2(fw_dw_f4)
 ```
 
 

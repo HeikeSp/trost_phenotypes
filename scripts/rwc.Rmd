@@ -1,30 +1,60 @@
 RWC data analysis for MPI greenhouse trials
 ========================================================
 
-```{r set up}
-setwd("~/work/TROST/Auswertung/RWC/scripts/")
-load("rwc.RData")
+### set working directory
+```{r set working directory}
+# setwd("D:/work/repos/trost_phenotypes")
+```
 
-source("colors.R")
+[solution for issue with working directory and knitr](https://github.com/yihui/knitr/issues/277)
+
+### Load workspace, packages and scripts
+```{r load workspace, message=FALSE}
+# load packages
+library(knitr)
+library(ggplot2)
+library(reshape)
+library(reshape2)
+library(pander)
+library(plyr)
+
+# set options for pander
+panderOptions('table.split.table', 200)
+
+# set options for knitr
+opts_chunk$set(fig.width=5, fig.height=5, cache=FALSE, highlight = TRUE, fig.show="asis")
+opts_knit$set(root.dir = 'D:/work/repos/trost_phenotypes/')
+
+# load workspace
+#load("rwc.RData")
 ```
 
 
-### Execute Query from H:\work\TROST\Database\2014-07-07-plant_height_query.sql to get information about RWC and meta data
+### source R functions
+```{r source R functions, include=FALSE}
+source("../libpurzel/func_get_rwc_data.R")
+source("../libpurzel/colors.R")
+source("../libpurzel/names.R")
+source("../libpurzel/func_anova_v2.R")
+```
+
+
+### Execute Query from D:\work\repos\database_scripts\rwc_query-2014-06-24.sql to get information about RWC and meta data
 ```{r get data from trost database}
-source("../functions/func_get_rwc_data.R")
 rwc_query_result <- func_get_rwc_data()
 
 head(rwc_query_result)
 dim(rwc_query_result)
 # 3212 13
 
-write.table(rwc_query_result, "../data/rwc_query_result.txt", sep="\t")
+write.table(rwc_query_result, "data/rwc_query_result.txt", sep="\t")
 ```
 
 
 ### factors
 ```{r factors}
 levels(rwc_query_result$treatment)
+# rename treatment levels
 levels(rwc_query_result$treatment) <- c("control", "drought stress")
 
 levels(rwc_query_result$description)
@@ -50,19 +80,23 @@ rwc_query_result[which(rwc_query_result$RWC>1.1),]
 which(rwc_query_result$RWC>1.1)
 rwc_query_result <- rwc_query_result[-c(803, 903, 2494),]
 
-write.table(rwc_query_result, "../data/rwc_query_result.txt", sep="\t")
+write.table(rwc_query_result, "data/rwc_query_result_corrected.txt", sep="\t")
 ```
+
 
 ### subsets
 ```{r subsets}
-rwc_test_trials <- subset(rwc_query_result, rwc_query_result$experiment_id %in% c("48656", "51790"))
+rwc_test_trials <- subset(rwc_query_result, 
+                          rwc_query_result$experiment_id %in% c("48656", "51790"))
 
 # rename and reorder cultivar factor
 rwc_test_trials$cultivar <- droplevels(rwc_test_trials$cultivar)
 levels(rwc_test_trials$cultivar) <- c("Alegria", "Desiree", "Milva", "Saturna")
-rwc_test_trials$cultivar <- factor(rwc_test_trials$cultivar, levels=c("Alegria", "Milva", "Desiree", "Saturna"))
+rwc_test_trials$cultivar <- factor(rwc_test_trials$cultivar, 
+                                   levels=c("Alegria", "Milva", "Desiree", "Saturna"))
 
-rwc_pruef_trials <- subset(rwc_query_result, rwc_query_result$experiment_id %in% c("56575", "58243", "60319"))
+rwc_pruef_trials <- subset(rwc_query_result, 
+                           rwc_query_result$experiment_id %in% c("56575", "58243", "60319"))
 
 rwc_test1 <- subset(rwc_test_trials, rwc_test_trials$experiment_id == "48656")
 rwc_test2 <- subset(rwc_test_trials, rwc_test_trials$experiment_id == "51790")
@@ -73,6 +107,7 @@ rwc_pruef3 <- subset(rwc_query_result, rwc_query_result$experiment_id == "60319"
 ```
 
 
+### subsets --> timepoints
 ```{r subsets --> timepoints}
 rwc_test1_early_before <- subset(rwc_test1, rwc_test1$description == "early/before")
 rwc_test2_early_before <- subset(rwc_test2, rwc_test2$description == "early/before")
@@ -93,76 +128,136 @@ rwc_test1_desiree$description
 ```
 
 
-
-### names for plot labels
-```{r names for plot labels}
-names_treatment_sample_time <- c("control \n early/before", "drought stress \n early/before", "control \n early/after", "drought stress \n early/after", "control \n late/before", "drought stress \n late/before", "control \n late/after", "drought stress \n late/after")
-
-names_treatment_cultivar_reordered <- c("control \n Alegria", 
-                              "drought stress \n Alegria", 
-                              "control \n Milva", 
-                              "drought stress \n Milva", 
-                              "control \n Desiree", 
-                              "drought stress \n Desiree",
-                              "control \n Saturna", 
-                              "drought stress \n Saturna")
-```
-
-
 ### plots test trials
 ```{r plots test trials}
-pdf("../figures/rwc_test_trials.pdf", width=7, height=8)
+pdf("figures/rwc_test_trials.pdf", width=7, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
 
-boxplot(rwc_test_trials$RWC~rwc_test_trials$treatment, col=c("blue", "red"), ylab=" relative water content (RWC)", las=2)
-boxplot(rwc_test_trials$RWC~rwc_test_trials$treatment * rwc_test_trials$description, col=c("blue", "red"), las=2, names=names_treatment_sample_time, ylab=" relative water content (RWC)")
+boxplot(rwc_test_trials$RWC ~ rwc_test_trials$treatment, 
+        col = cols_treatment, ylab = "relative water content (RWC)", las = 2)
+
+boxplot(rwc_test_trials$RWC ~ rwc_test_trials$treatment * 
+          rwc_test_trials$description, col = cols_treatment, las = 2, 
+        names = names_treatment_sample_time_2, ylab = "relative water content (RWC)")
+
 
 # mpi test 1.2
-boxplot(rwc_test1$RWC~rwc_test1$treatment, col=c("blue", "red"), main="MPI test trial 1.2")
-boxplot(rwc_test1$RWC~rwc_test1$treatment * rwc_test1$description, col=c("blue", "red"), las=2, names=names_treatment_sample_time, ylab=" relative water content (RWC)", main="MPI test trial 1.2")
-boxplot(rwc_test1$RWC~rwc_test1$treatment * rwc_test1$cultivar, col=c("blue", "red"), las=2, ylab=" relative water content (RWC)", main="MPI test trial 1")
-boxplot(rwc_test1_late_before$RWC~rwc_test1_late_before$treatment * rwc_test1_late_before$cultivar, col=c("blue", "red"), las=2, ylab=" relative water content (RWC)", main="MPI test trial 1 (late/before)", names=names_treatment_cultivar_reordered)
+boxplot(rwc_test1$RWC ~ rwc_test1$treatment, 
+        col = cols_treatment, main = "MPI test trial 1.2")
 
-boxplot(rwc_test1_desiree$RWC ~ rwc_test1_desiree$treatment * rwc_test1_desiree$description, col=c("blue", "red"), las=2, ylab="relative water content (RWC)", names=names_treatment_sample_time, cex.lab=1.4, cex.axis=1.2, main="MPI test trial 1.2 (Desiree)")
+boxplot(rwc_test1$RWC ~ rwc_test1$treatment * rwc_test1$description, 
+        col = cols_treatment, las = 2, names = names_treatment_sample_time_2, 
+        ylab = "relative water content (RWC)", main = "MPI test trial 1.2")
+
+boxplot(rwc_test1$RWC ~ rwc_test1$treatment * rwc_test1$cultivar, 
+        col = cols_treatment, las = 2, ylab = "relative water content (RWC)", 
+        main = "MPI test trial 1")
+
+boxplot(rwc_test1_late_before$RWC ~ rwc_test1_late_before$treatment * 
+          rwc_test1_late_before$cultivar, 
+        col = cols_treatment, las = 2, 
+        ylab = "relative water content (RWC)", 
+        main = "MPI test trial 1 (late/before)", 
+        names = names_treatment_cultivar_reordered)
+
+boxplot(rwc_test1_desiree$RWC ~ rwc_test1_desiree$treatment * 
+          rwc_test1_desiree$description, 
+        col = cols_treatment, las = 2, ylab = "relative water content (RWC)", 
+        names = names_treatment_sample_time_2, cex.lab=1.4, cex.axis=1.2, 
+        main = "MPI test trial 1.2 (Desiree)")
 
 # mpi test 2
-boxplot(rwc_test2$RWC~rwc_test2$treatment, col=c("blue", "red"), main="MPI test trial 2")
-boxplot(rwc_test2$RWC~rwc_test2$treatment * rwc_test2$description, col=c("blue", "red"), las=2, names=names_treatment_sample_time, ylab=" relative water content (RWC)", main="MPI test trial 2")
-boxplot(rwc_test2$RWC~rwc_test2$treatment * rwc_test2$cultivar, col=c("blue", "red"), las=2, ylab=" relative water content (RWC)", main="MPI test trial 2")
-boxplot(rwc_test2_late_before$RWC~rwc_test2_late_before$treatment * rwc_test2_late_before$cultivar, col=c("blue", "red"), las=2, ylab=" relative water content (RWC)", main="MPI test trial 2 (late/before)", names=names_treatment_cultivar_reordered)
-dev.off()
+boxplot(rwc_test2$RWC ~ rwc_test2$treatment, 
+        col = cols_treatment, main = "MPI test trial 2")
+boxplot(rwc_test2$RWC ~ rwc_test2$treatment * 
+          rwc_test2$description, 
+        col = cols_treatment, las = 2, 
+        names = names_treatment_sample_time_2, 
+        ylab = "relative water content (RWC)", 
+        main = "MPI test trial 2")
 
+boxplot(rwc_test2$RWC ~ rwc_test2$treatment * 
+          rwc_test2$cultivar, 
+        col = cols_treatment, las = 2, 
+        ylab = "relative water content (RWC)", 
+        main = "MPI test trial 2")
 
-# for phd-thesis:
-pdf("~/work/Doktorarbeit/figures/rwc_mpitest1_late_before.pdf", width=6, height=6)
-par(mar=c(7.5, 4.5, 0.5, 0.5))
-boxplot(rwc_test1_late_before$RWC~rwc_test1_late_before$treatment * rwc_test1_late_before$cultivar, col=cols_treatment, las=2, ylab=" relative water content (RWC)", names=names_treatment_cultivar_reordered, cex.lab=1.4, cex.axis=1.2)
-legend("topright", levels(rwc_test1_late_before$treatment), fill=cols_treatment, cex=1, bty="n")
+boxplot(rwc_test2_late_before$RWC ~ rwc_test2_late_before$treatment * 
+          rwc_test2_late_before$cultivar, 
+        col = cols_treatment, las = 2, 
+        ylab = "relative water content (RWC)", 
+        main = "MPI test trial 2 (late/before)", 
+        names = names_treatment_cultivar_reordered)
 dev.off()
 ```
+
+
+### plot for phd thesis
+```{r plot for phd thesis}
+# for phd-thesis:
+#pdf("~/work/Doktorarbeit/figures/rwc_mpitest1_late_before.pdf", width=6, height=6)
+par(mar=c(7.5, 4.5, 0.5, 0.5))
+boxplot(rwc_test1_late_before$RWC ~ rwc_test1_late_before$treatment * 
+          rwc_test1_late_before$cultivar, 
+        col = cols_treatment, las = 2, 
+        ylab = "relative water content (RWC)", 
+        names = names_treatment_cultivar_reordered, 
+        cex.lab = 1.4, cex.axis = 1.2)
+legend("topright", 
+       levels(rwc_test1_late_before$treatment), 
+       fill = cols_treatment, 
+       cex = 1, bty = "n")
+#dev.off()
+```
+
 
 ### plots pruef trials
 ```{r plots pruef trials}
-pdf("../figures/rwc_pruef_trials.pdf", width=7, height=8)
+pdf("figures/rwc_pruef_trials.pdf", width=7, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
-boxplot(rwc_pruef_trials$RWC~rwc_pruef_trials$treatment, col=c("blue", "red"), ylab=" relative water content (RWC)", las=2)
-boxplot(rwc_pruef_trials$RWC~rwc_pruef_trials$treatment * rwc_pruef_trials$description, col=c("blue", "red"), las=2, names=names_treatment_sample_time, ylab=" relative water content (RWC)")
+boxplot(rwc_pruef_trials$RWC ~ rwc_pruef_trials$treatment, 
+        col = cols_treatment, 
+        ylab = "relative water content (RWC)", las = 2)
 
-boxplot(rwc_pruef1$RWC~rwc_pruef1$treatment, col=c("blue", "red"), main="pruef1")
-boxplot(rwc_pruef1$RWC~rwc_pruef1$treatment * rwc_pruef1$description, col=c("blue", "red"), main="pruef1")
+boxplot(rwc_pruef_trials$RWC ~ rwc_pruef_trials$treatment * 
+          rwc_pruef_trials$description, 
+        col = cols_treatment, las = 2, 
+        names = names_treatment_sample_time_2, 
+        ylab = "relative water content (RWC)")
 
-boxplot(rwc_pruef2$RWC~rwc_pruef2$treatment, col=c("blue", "red"), main="pruef2")
-boxplot(rwc_pruef2$RWC~rwc_pruef2$treatment * rwc_pruef2$description, col=c("blue", "red"), main="pruef2")
+boxplot(rwc_pruef1$RWC ~ rwc_pruef1$treatment, 
+        col = cols_treatment, main = "pruef1")
 
-boxplot(rwc_pruef3$RWC~rwc_pruef3$treatment, col=c("blue", "red"), main="pruef3")
-boxplot(rwc_pruef3$RWC~rwc_pruef3$treatment * rwc_pruef3$description, col=c("blue", "red"), main="pruef3")
+boxplot(rwc_pruef1$RWC ~ rwc_pruef1$treatment * 
+          rwc_pruef1$description, 
+        col = cols_treatment, main = "pruef1")
+
+boxplot(rwc_pruef2$RWC ~ rwc_pruef2$treatment, 
+        col = cols_treatment, main = "pruef2")
+
+boxplot(rwc_pruef2$RWC ~ rwc_pruef2$treatment * 
+          rwc_pruef2$description, 
+        col = cols_treatment, main = "pruef2")
+
+
+boxplot(rwc_pruef3$RWC ~ rwc_pruef3$treatment, 
+        col = cols_treatment, main = "pruef3")
+
+boxplot(rwc_pruef3$RWC ~ rwc_pruef3$treatment * 
+          rwc_pruef3$description, 
+        col = cols_treatment, main = "pruef3")
 dev.off()
 ```
 
 ### aggregate data per trial, timepoint, cultivar and treatment
 ```{r aggregate data per trial, timepoint, cultivar and treatment}
 # aggregate by experiment_id, cultivar, treatment, description
-rwc_query_result_agg <- aggregate(rwc_query_result[,10:13], by=list(rwc_query_result$experiment_id, rwc_query_result$cultivar, rwc_query_result$treatment, rwc_query_result$description), mean)
+rwc_query_result_agg <- aggregate(rwc_query_result[,10:13], 
+                                  by = list(rwc_query_result$experiment_id, 
+                                            rwc_query_result$cultivar,
+                                            rwc_query_result$treatment, 
+                                            rwc_query_result$description), 
+                                  mean)
 
 dim(rwc_query_result_agg)
 head(rwc_query_result_agg)
@@ -173,23 +268,37 @@ colnames(rwc_query_result_agg)[1:4] <- c("experiment_id", "cultivar", "treatment
 # aggregated subsets #
 ######################
 
-rwc_test_trials_agg <- subset(rwc_query_result_agg, rwc_query_result_agg$experiment_id %in% c("48656", "51790"))
+rwc_test_trials_agg <- subset(rwc_query_result_agg, 
+                              rwc_query_result_agg$experiment_id %in% c("48656", "51790"))
 
-rwc_pruef_trials_agg <- subset(rwc_query_result_agg, rwc_query_result_agg$experiment_id %in% c("56575", "58243", "60319"))
+rwc_pruef_trials_agg <- subset(rwc_query_result_agg, 
+                               rwc_query_result_agg$experiment_id %in% c("56575", "58243", "60319"))
 
-rwc_test1_agg <- subset(rwc_query_result_agg, rwc_query_result_agg$experiment_id == "48656")
-rwc_test2_agg <- subset(rwc_query_result_agg, rwc_query_result_agg$experiment_id == "51790")
+rwc_test1_agg <- subset(rwc_query_result_agg, 
+                        rwc_query_result_agg$experiment_id == "48656")
 
-rwc_pruef1_agg <- subset(rwc_query_result_agg, rwc_query_result_agg$experiment_id == "56575")
-rwc_pruef2_agg <- subset(rwc_query_result_agg, rwc_query_result_agg$experiment_id == "58243")
-rwc_pruef3_agg <- subset(rwc_query_result_agg, rwc_query_result_agg$experiment_id == "60319")
+rwc_test2_agg <- subset(rwc_query_result_agg, 
+                        rwc_query_result_agg$experiment_id == "51790")
+
+rwc_pruef1_agg <- subset(rwc_query_result_agg, 
+                         rwc_query_result_agg$experiment_id == "56575")
+
+rwc_pruef2_agg <- subset(rwc_query_result_agg, 
+                         rwc_query_result_agg$experiment_id == "58243")
+
+rwc_pruef3_agg <- subset(rwc_query_result_agg, 
+                         rwc_query_result_agg$experiment_id == "60319")
 ```
 
 
 ### aggregate data per trial, timepoint and treatment
 ```{r aggregate data per trial, timepoint and treatment}
 # aggregate by experiment_id, cultivar, treatment, description
-rwc_query_result_agg2 <- aggregate(rwc_query_result[,10:13], by=list(rwc_query_result$treatment, rwc_query_result$description, rwc_query_result$experiment_id), mean)
+rwc_query_result_agg2 <- aggregate(rwc_query_result[,10:13], 
+                                   by = list(rwc_query_result$treatment, 
+                                             rwc_query_result$description, 
+                                             rwc_query_result$experiment_id), 
+                                   mean)
 
 dim(rwc_query_result_agg2)
 head(rwc_query_result_agg2)
@@ -200,50 +309,58 @@ colnames(rwc_query_result_agg2)[1:3] <- c("treatment", "description", "experimen
 # aggregated subsets #
 ######################
 
-rwc_test_trials_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id %in% c("48656", "51790"))
+rwc_test_trials_agg2 <- subset(rwc_query_result_agg2, 
+                               rwc_query_result_agg2$experiment_id %in% c("48656", "51790"))
 
-rwc_pruef_trials_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id %in% c("56575", "58243", "60319"))
+rwc_pruef_trials_agg2 <- subset(rwc_query_result_agg2, 
+                                rwc_query_result_agg2$experiment_id %in% c("56575", "58243", "60319"))
 
-rwc_test1_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "48656")
-rwc_test2_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "51790")
+rwc_test1_agg2 <- subset(rwc_query_result_agg2, 
+                         rwc_query_result_agg2$experiment_id == "48656")
 
-rwc_pruef1_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "56575")
-rwc_pruef2_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "58243")
-rwc_pruef3_agg2 <- subset(rwc_query_result_agg2, rwc_query_result_agg2$experiment_id == "60319")
+rwc_test2_agg2 <- subset(rwc_query_result_agg2, 
+                         rwc_query_result_agg2$experiment_id == "51790")
+
+rwc_pruef1_agg2 <- subset(rwc_query_result_agg2, 
+                          rwc_query_result_agg2$experiment_id == "56575")
+
+rwc_pruef2_agg2 <- subset(rwc_query_result_agg2, 
+                          rwc_query_result_agg2$experiment_id == "58243")
+
+rwc_pruef3_agg2 <- subset(rwc_query_result_agg2, 
+                          rwc_query_result_agg2$experiment_id == "60319")
 ```
 
 
 ### ANOVA 
 ```{r ANOVA}
-source("../functions/func_anova.R")
-
-rwc_test1_early_before_anova <- func_anova_2fac_ia(rwc_test1_early_before, "RWC", "cultivar", "treatment", 0.01)
-rwc_test2_early_before_anova <- func_anova_2fac_ia(rwc_test2_early_before, "RWC", "cultivar", "treatment", 0.01)
-
-rwc_test1_early_after_anova <- func_anova_2fac_ia(rwc_test1_early_after, "RWC", "cultivar", "treatment", 0.01)
-rwc_test2_early_after_anova <- func_anova_2fac_ia(rwc_test2_early_after, "RWC", "cultivar", "treatment", 0.01)
-
-rwc_test1_late_before_anova <- func_anova_2fac_ia(rwc_test1_late_before, "RWC", "cultivar", "treatment", 0.01)
-rwc_test2_late_before_anova <- func_anova_2fac_ia(rwc_test2_late_before, "RWC", "cultivar", "treatment", 0.01)
-
-rwc_test1_late_after_anova <- func_anova_2fac_ia(rwc_test1_late_after, "RWC", "cultivar", "treatment", 0.01)
-rwc_test2_late_after_anova <- func_anova_2fac_ia(rwc_test2_late_after, "RWC", "cultivar", "treatment", 0.01)
-
-
-# combine anova results of 4 experiments
-rwc_anova <- func_combine_anova_res(rwc_test1_early_before_anova, 
-                                             rwc_test1_early_after_anova,
-                                             rwc_test1_late_before_anova,
-                                             rwc_test1_late_after_anova,
-                                             rwc_test2_early_before_anova, 
-                                             rwc_test2_early_after_anova,
-                                             rwc_test2_late_before_anova,
-                                             rwc_test2_late_after_anova,
-                                             "f_value","p_value", "treatment", "cultivar")
-
-rownames(rwc_anova) <- c("mpitest1_early/before", "mpitest1_early/after", "mpitest1_late/before", "mpitest1_late/after",
-                         "mpitest2_early/before", "mpitest2_early/after", "mpitest2_late/before", "mpitest2_late/after")
-write.table(rwc_anova, "../output/rwc_anova.txt", sep="\t", quote=F, row.names=T, col.names=NA)
+# rwc_test1_early_before_anova <- func_anova_2fac_ia(rwc_test1_early_before, "RWC", "cultivar", "treatment", 0.01)
+# rwc_test2_early_before_anova <- func_anova_2fac_ia(rwc_test2_early_before, "RWC", "cultivar", "treatment", 0.01)
+# 
+# rwc_test1_early_after_anova <- func_anova_2fac_ia(rwc_test1_early_after, "RWC", "cultivar", "treatment", 0.01)
+# rwc_test2_early_after_anova <- func_anova_2fac_ia(rwc_test2_early_after, "RWC", "cultivar", "treatment", 0.01)
+# 
+# rwc_test1_late_before_anova <- func_anova_2fac_ia(rwc_test1_late_before, "RWC", "cultivar", "treatment", 0.01)
+# rwc_test2_late_before_anova <- func_anova_2fac_ia(rwc_test2_late_before, "RWC", "cultivar", "treatment", 0.01)
+# 
+# rwc_test1_late_after_anova <- func_anova_2fac_ia(rwc_test1_late_after, "RWC", "cultivar", "treatment", 0.01)
+# rwc_test2_late_after_anova <- func_anova_2fac_ia(rwc_test2_late_after, "RWC", "cultivar", "treatment", 0.01)
+# 
+# 
+# # combine anova results of 4 experiments
+# rwc_anova <- func_combine_anova_res(rwc_test1_early_before_anova, 
+#                                              rwc_test1_early_after_anova,
+#                                              rwc_test1_late_before_anova,
+#                                              rwc_test1_late_after_anova,
+#                                              rwc_test2_early_before_anova, 
+#                                              rwc_test2_early_after_anova,
+#                                              rwc_test2_late_before_anova,
+#                                              rwc_test2_late_after_anova,
+#                                              "f_value","p_value", "treatment", "cultivar")
+# 
+# rownames(rwc_anova) <- c("mpitest1_early/before", "mpitest1_early/after", "mpitest1_late/before", "mpitest1_late/after",
+#                          "mpitest2_early/before", "mpitest2_early/after", "mpitest2_late/before", "mpitest2_late/after")
+# write.table(rwc_anova, "output/rwc_anova.txt", sep="\t", quote=F, row.names = T, col.names = NA)
 ```
 
 

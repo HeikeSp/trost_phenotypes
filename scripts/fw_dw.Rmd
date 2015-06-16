@@ -213,6 +213,31 @@ dev.off()
 ```
 
 
+
+```{r aggregate with ddply}
+# G1: MPI test 1.2 (late/before)
+fw_dw_g1_agg <- ddply(fw_dw_g1, c("cultivar", "treatment"), summarise,
+                      N    = sum(!is.na(FW_DW)),
+                      mean = mean(FW_DW, na.rm=TRUE),
+                      median = median(FW_DW, na.rm=TRUE),
+                      sd   = sd(FW_DW, na.rm=TRUE),
+                      se   = sd / sqrt(N) )
+pander(fw_dw_g1_agg)
+
+
+# G2: MPI test 2 (late/before)
+fw_dw_g2_agg <- ddply(fw_dw_g2, c("cultivar", "treatment"), summarise,
+                      N    = sum(!is.na(FW_DW)),
+                      mean = mean(FW_DW, na.rm=TRUE),
+                      median = median(FW_DW, na.rm=TRUE),
+                      sd   = sd(FW_DW, na.rm=TRUE),
+                      se   = sd / sqrt(N) )
+pander(fw_dw_g2_agg)
+```
+
+
+
+
 ```{r save workspace}
 save.image("fw_dw.RData")
 ```

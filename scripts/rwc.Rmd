@@ -334,33 +334,40 @@ rwc_pruef3_agg2 <- subset(rwc_query_result_agg2,
 
 ### ANOVA 
 ```{r ANOVA}
-# rwc_test1_early_before_anova <- func_anova_2fac_ia(rwc_test1_early_before, "RWC", "cultivar", "treatment", 0.01)
-# rwc_test2_early_before_anova <- func_anova_2fac_ia(rwc_test2_early_before, "RWC", "cultivar", "treatment", 0.01)
-# 
-# rwc_test1_early_after_anova <- func_anova_2fac_ia(rwc_test1_early_after, "RWC", "cultivar", "treatment", 0.01)
-# rwc_test2_early_after_anova <- func_anova_2fac_ia(rwc_test2_early_after, "RWC", "cultivar", "treatment", 0.01)
-# 
-# rwc_test1_late_before_anova <- func_anova_2fac_ia(rwc_test1_late_before, "RWC", "cultivar", "treatment", 0.01)
-# rwc_test2_late_before_anova <- func_anova_2fac_ia(rwc_test2_late_before, "RWC", "cultivar", "treatment", 0.01)
-# 
-# rwc_test1_late_after_anova <- func_anova_2fac_ia(rwc_test1_late_after, "RWC", "cultivar", "treatment", 0.01)
-# rwc_test2_late_after_anova <- func_anova_2fac_ia(rwc_test2_late_after, "RWC", "cultivar", "treatment", 0.01)
-# 
-# 
-# # combine anova results of 4 experiments
-# rwc_anova <- func_combine_anova_res(rwc_test1_early_before_anova, 
-#                                              rwc_test1_early_after_anova,
-#                                              rwc_test1_late_before_anova,
-#                                              rwc_test1_late_after_anova,
-#                                              rwc_test2_early_before_anova, 
-#                                              rwc_test2_early_after_anova,
-#                                              rwc_test2_late_before_anova,
-#                                              rwc_test2_late_after_anova,
-#                                              "f_value","p_value", "treatment", "cultivar")
-# 
-# rownames(rwc_anova) <- c("mpitest1_early/before", "mpitest1_early/after", "mpitest1_late/before", "mpitest1_late/after",
-#                          "mpitest2_early/before", "mpitest2_early/after", "mpitest2_late/before", "mpitest2_late/after")
-# write.table(rwc_anova, "output/rwc_anova.txt", sep="\t", quote=F, row.names = T, col.names = NA)
+rwc_test1_early_before_anova <- func_anova_2fac_ia(rwc_test1_early_before, "RWC", "cultivar", "treatment", 0.01)
+rwc_test2_early_before_anova <- func_anova_2fac_ia(rwc_test2_early_before, "RWC", "cultivar", "treatment", 0.01)
+
+rwc_test1_early_after_anova <- func_anova_2fac_ia(rwc_test1_early_after, "RWC", "cultivar", "treatment", 0.01)
+rwc_test2_early_after_anova <- func_anova_2fac_ia(rwc_test2_early_after, "RWC", "cultivar", "treatment", 0.01)
+
+rwc_test1_late_before_anova <- func_anova_2fac_ia(rwc_test1_late_before, "RWC", "cultivar", "treatment", 0.01)
+rwc_test2_late_before_anova <- func_anova_2fac_ia(rwc_test2_late_before, "RWC", "cultivar", "treatment", 0.01)
+
+rwc_test1_late_after_anova <- func_anova_2fac_ia(rwc_test1_late_after, "RWC", "cultivar", "treatment", 0.01)
+rwc_test2_late_after_anova <- func_anova_2fac_ia(rwc_test2_late_after, "RWC", "cultivar", "treatment", 0.01)
+
+
+# combine anova results of 4 timepoints of MPI test 1.2
+rwc_test1_anova <- func_combine_anova_res(rwc_test1_early_before_anova, 
+                                          rwc_test1_early_after_anova,
+                                          rwc_test1_late_before_anova,
+                                          rwc_test1_late_after_anova,
+                                          "f_value","p_value", "treatment", "cultivar")
+
+rwc_test2_anova <- func_combine_anova_res(rwc_test2_early_before_anova, 
+                                          rwc_test2_early_after_anova,
+                                          rwc_test2_late_before_anova,
+                                          rwc_test2_late_after_anova,
+                                          "f_value","p_value", "treatment", "cultivar")
+
+rownames(rwc_test1_anova) <- c("mpitest1_early/before", "mpitest1_early/after", 
+                               "mpitest1_late/before", "mpitest1_late/after")
+
+rownames(rwc_test2_anova) <- c("mpitest2_early/before", "mpitest2_early/after", 
+                               "mpitest2_late/before", "mpitest2_late/after")
+
+write.table(rwc_test1_anova, "output/rwc_mpi_test1_2_anova.txt", sep="\t", quote=F, row.names = T, col.names = NA)
+write.table(rwc_test2_anova, "output/rwc_mpi_test2_anova.txt", sep="\t", quote=F, row.names = T, col.names = NA)
 ```
 
 

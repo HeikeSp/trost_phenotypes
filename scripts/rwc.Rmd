@@ -250,7 +250,7 @@ dev.off()
 ```
 
 ### aggregate data per trial, timepoint, cultivar and treatment
-```{r aggregate data per trial, timepoint, cultivar and treatment}
+```{r aggregate data per trial- timepoint- cultivar and treatment}
 # aggregate by experiment_id, cultivar, treatment, description
 rwc_query_result_agg <- aggregate(rwc_query_result[,10:13], 
                                   by = list(rwc_query_result$experiment_id, 
@@ -292,7 +292,7 @@ rwc_pruef3_agg <- subset(rwc_query_result_agg,
 
 
 ### aggregate data per trial, timepoint and treatment
-```{r aggregate data per trial, timepoint and treatment}
+```{r aggregate data per trial- timepoint and treatment}
 # aggregate by experiment_id, cultivar, treatment, description
 rwc_query_result_agg2 <- aggregate(rwc_query_result[,10:13], 
                                    by = list(rwc_query_result$treatment, 

@@ -529,6 +529,19 @@ plant_height_anova6 <- func_combine_anova_res6(plant_height_mpi_test1_2_late_ano
 
 rownames(plant_height_anova6) <- c("G1", "G2", "G3", "F1", "F3", "F4")
 write.table(plant_height_anova6, "output/plant_height_anova_pub.txt", sep="\t", quote=F, row.names=T, col.names=NA)
+
+
+#### with interactions!
+
+plant_height_anova6_ia <- func_combine_anova_res6_ia(plant_height_mpi_test1_2_late_anova,
+                                             plant_height_mpi_test2_late_anova, 
+                                             plant_height_jki_test1_late_anova,
+                                             plant_height_mpi_feld2011_check_late_anova,
+                                             plant_height_mpi_feld2012_check_anova,
+                                             plant_height_jki_field_2012_check_anova,
+                                             "f_value","p_value", "treatment", "cultivar")
+rownames(plant_height_anova6_ia) <- c("G1", "G2", "G3", "F1", "F3", "F4")
+write.table(plant_height_anova6_ia, "output/plant_height_anova_pub_with_ia.txt", sep="\t", quote=F, row.names=T, col.names=NA)
 ```
 
 

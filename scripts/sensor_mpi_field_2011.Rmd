@@ -8,7 +8,6 @@ output: html_document
 
 ```{r setup}
 library(knitr)
-# opts_knit$set(root.dir = 'D:/work/repos/trost_phenotypes/')
 opts_knit$set(root.dir = '../')
 ```
 

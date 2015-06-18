@@ -23,7 +23,7 @@ panderOptions('table.split.table', 200)
 
 # set options for knitr
 opts_chunk$set(fig.width=5, fig.height=5, cache=FALSE, highlight = TRUE, fig.show="asis")
-opts_knit$set(root.dir = 'D:/work/repos/trost_phenotypes/')
+opts_knit$set(root.dir = '../')
 
 # load workspace
 #load("BBCH.RData")

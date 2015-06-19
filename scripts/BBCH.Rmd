@@ -38,6 +38,8 @@ source("../libpurzel/func_bbch_plots.R")
 source("../libpurzel/colors.R")
 source("../libpurzel/names.R")
 source("../libpurzel/func_anova_v2.R")
+source("../libpurzel/func_aggregate_values.R")
+source("../libpurzel/func_wilcoxon_test.R")
 ```
 
 
@@ -69,6 +71,7 @@ dim(bbch_mpi_fgh_2014)
 ```{r modification of BBCH dataset}
 # TROST data
 bbch_trost_mpi_mod <- func_modify_bbch_data(bbch_trost_mpi)
+bbch_trost_mpi_mod$cultivar <- as.factor(bbch_trost_mpi_mod$cultivar)
 pander(table(bbch_trost_mpi_mod$experiment_name, bbch_trost_mpi_mod$timepoint))
 
 # VALDIS data
@@ -266,8 +269,8 @@ colnames(bbch_trost_mpi_sd)[5] <- "drought_stress"
 
 # combine median and sd
 bbch_trost_mpi_agg <- cbind(bbch_trost_mpi_median, 
-                                       bbch_trost_mpi_sd$control,
-                                       bbch_trost_mpi_sd$drought_stress)
+                            bbch_trost_mpi_sd$control,
+                            bbch_trost_mpi_sd$drought_stress)
 
 colnames(bbch_trost_mpi_agg)[6:7] <- c("sd_control", "sd_stress")
 pander(head(bbch_trost_mpi_agg))
@@ -330,15 +333,15 @@ colnames(bbch_mpi_feld2012_check_late_rank)[2] <- "bbch"
 
 
 pdf("figures/bbch_mpi_test_1_2_late_rank.pdf", width=6, height=6)
-func_bbch_plots(bbch_mpi_test1_2_late_rank, min=0, max=200) 
+func_bbch_plots(bbch_mpi_test1_2_late_rank, min=0, max=200, label_xaxis = "rank-transformed developmental stage (BBCH)") 
 dev.off()
 
 pdf("figures/bbch_mpi_feld_2011_check_late_rank.pdf")
-func_bbch_plots(bbch_mpi_feld2011_check_late_rank, min=0, max=260) 
+func_bbch_plots(bbch_mpi_feld2011_check_late_rank, min=0, max=260, label_xaxis = "rank-transformed developmental stage (BBCH)") 
 dev.off()
 
 pdf("figures/bbch_mpi_feld_2012_check_late_rank.pdf")
-func_bbch_plots(bbch_mpi_feld2012_check_late_rank, min=0, max=130) 
+func_bbch_plots(bbch_mpi_feld2012_check_late_rank, min=0, max=130, label_xaxis = "rank-transformed developmental stage (BBCH)") 
 dev.off()
 ```
 
@@ -466,7 +469,50 @@ write.table(bbch_mpi_feld2012_check_late_rank_agg,
 ```
 
 
+### combine mean and sd
+```{r combine mean and sd}
+# G1:
+mpi_test_1_2_median_sd <- func_combine_mean_sd(bbch_mpi_test1_2_late, variable_name = "bbch_rank", func = "median")
 
+# F1:
+mpi_feld2011_check_late_median_sd <- func_combine_mean_sd(bbch_mpi_feld2011_check_late, variable_name = "bbch_rank", func = "median")
+
+# F3:
+bbch_mpi_feld2012_check_median_sd <- func_combine_mean_sd(bbch_mpi_feld2012_check, variable_name = "bbch_rank", func = "median")
+```
+
+
+### compare control and stress by wilcoxon test
+```{r compare control and stress by wilcoxon test}
+wilcoxon_test_res <- c(func_wilcoxon_test_treatment(bbch_mpi_test1_2_late, variable_name = "bbch_rank"), #G1
+                       func_wilcoxon_test_treatment(bbch_mpi_feld2011_check_late, variable_name = "bbch_rank")) #F1
+
+```
+
+**warning because of ties, for further information see**
+[here](https://www.biostars.org/p/2524/)
+[or here](http://r.789695.n4.nabble.com/What-are-ties-Wilcox-u-test-td857059.html)
+
+
+### combine median and sd results of 2 experiments (for publication)
+```{r combine median and sd results of 2 experiments}
+
+bbch_check_median_sd <- rbind(mpi_test_1_2_median_sd, #G1
+                              mpi_feld2011_check_late_median_sd) #F1
+
+bbch_check_median_sd$trial <- c( rep("G1", 4), rep("F1", 4))
+
+bbch_check_median_sd$percentage <- bbch_check_median_sd$median_drought_stress * 100 /
+                                         bbch_check_median_sd$median_control
+
+bbch_check_median_sd$p_value <- wilcoxon_test_res
+
+pander(bbch_check_median_sd)
+
+write.table(bbch_check_median_sd,
+            "output/bbch_check_median_sd_pub.txt",
+            sep="\t", quote=F, col.names = NA)
+```
 
 ### save workspace
 ```{r save workspace}

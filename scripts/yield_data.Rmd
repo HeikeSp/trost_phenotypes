@@ -5,6 +5,7 @@ Yield data analysis
 ```{r set working directory}
 getwd()
 #setwd("D:/work/repos/trost_phenotypes")
+#setwd("~/work/repos/trost_phenotypes/")
 ```
 
 
@@ -18,6 +19,7 @@ library(ggplot2)
 library(reshape)
 library(pander)
 library(multcomp)
+library(extrafont)
 
 # set options for pander
 panderOptions('table.split.table', 200)
@@ -37,6 +39,8 @@ source("../libpurzel/names.R")
 source("../libpurzel/colors.R")
 source("../libpurzel/func_appendList.R")
 source("../libpurzel/func_anova_v2.R")
+source("../libpurzel/func_ttest.R")
+source("../libpurzel/func_aggregate_values.R")
 source("../libpurzel/func_modify_yield_data.R")
 source("../libpurzel/func_get_yield_data.R")
 source("../libpurzel/func_starch_yield_mpitest.R")
@@ -64,7 +68,7 @@ yield_data_raw <- read.table("data/yield_data.txt", sep="\t", header=TRUE)
 yield_data_raw <- func_modify_yield_data(yield_data_raw)
 pander(table(yield_data_raw$culture, yield_data_raw$attribute))
 table(yield_data_raw$treatment)
-#levels(yield_data_raw$cultivar_name)
+#levels(yield_data_raw$cultivar)
 ```
 
 
@@ -143,13 +147,13 @@ jki_field_2012_check <- func_starch_yield_jki_feld_2012_check(yield_data, 56875,
 
 ```{r ANOVA for starch yield}
 # test trials
-mpi_test_1_2_anova <- func_anova_2fac_ia(mpi_test_1_2, "starch_yield_g_per_plant", "cultivar_name", "treatment", 0.01)
-mpi_test_2_anova <- func_anova_2fac_ia(mpi_test_2, "starch_yield_g_per_plant", "cultivar_name", "treatment", 0.01)
-jki_test_1_anova <- func_anova_2fac_ia(jki_test_1, "starch_yield_g_per_plant", "cultivar_name", "treatment", 0.01)
-jki_test_2_anova <- func_anova_2fac_ia(jki_test_2, "starch_yield_g_per_plant", "cultivar_name", "treatment", 0.01)
+mpi_test_1_2_anova <- func_anova_2fac_ia(mpi_test_1_2, "starch_yield_g_per_plant", "cultivar", "treatment", 0.01)
+mpi_test_2_anova <- func_anova_2fac_ia(mpi_test_2, "starch_yield_g_per_plant", "cultivar", "treatment", 0.01)
+jki_test_1_anova <- func_anova_2fac_ia(jki_test_1, "starch_yield_g_per_plant", "cultivar", "treatment", 0.01)
+jki_test_2_anova <- func_anova_2fac_ia(jki_test_2, "starch_yield_g_per_plant", "cultivar", "treatment", 0.01)
 
 test_trials_anova <- func_combine_anova_res(mpi_test_1_2_anova, mpi_test_2_anova, jki_test_1_anova, 
-                                            jki_test_2_anova, "f_value", "p_value", "treatment", "cultivar_name")
+                                            jki_test_2_anova, "f_value", "p_value", "treatment", "cultivar")
 rownames(test_trials_anova) <- c("MPI-MP greenhouse trial 1", "MPI-MP greenhouse trial 2", 
                                  "JKI greenhouse trial 1", "JKI greenhouse trial 2")
 write.table(test_trials_anova, "output/starch_yield_test_trials_anova.txt", 
@@ -159,13 +163,13 @@ write.table(test_trials_anova, "output/starch_yield_test_trials_anova.txt",
 ################################################################################
 
 # field trials, all cultivar
-mpi_field_2011_anova <- func_anova_2fac_ia(mpi_field_2011, "starch_yield_g_per_plant", "cultivar_name", "treatment", 0.01)
-mpi_field_2012_anova <- func_anova_2fac_ia(mpi_field_2012, "starch_yield_g_per_plant", "cultivar_name", "treatment", 0.01)
-jki_field_2012_anova <- func_anova_2fac_ia(jki_field_2012, "starch_yield_g_per_plant", "cultivar_name", "treatment", 0.01)
-jki_field_2013_anova <- func_anova_2fac_ia(jki_field_2013, "starch_yield_g_per_plant", "cultivar_name", "treatment", 0.01)
+mpi_field_2011_anova <- func_anova_2fac_ia(mpi_field_2011, "starch_yield_g_per_plant", "cultivar", "treatment", 0.01)
+mpi_field_2012_anova <- func_anova_2fac_ia(mpi_field_2012, "starch_yield_g_per_plant", "cultivar", "treatment", 0.01)
+jki_field_2012_anova <- func_anova_2fac_ia(jki_field_2012, "starch_yield_g_per_plant", "cultivar", "treatment", 0.01)
+jki_field_2013_anova <- func_anova_2fac_ia(jki_field_2013, "starch_yield_g_per_plant", "cultivar", "treatment", 0.01)
 
 field_trials_anova <- func_combine_anova_res(mpi_field_2011_anova, mpi_field_2012_anova, jki_field_2012_anova, 
-                                            jki_field_2013_anova, "f_value", "p_value", "treatment", "cultivar_name")
+                                            jki_field_2013_anova, "f_value", "p_value", "treatment", "cultivar")
 rownames(field_trials_anova) <- c("MPI-MP field trial 2011", "MPI-MP field trial 2012", 
                                   "JKI field trial 2012", "JKI field trial 2013")
 write.table(field_trials_anova, "output/starch_yield_field_trials_anova.txt", 
@@ -174,13 +178,13 @@ write.table(field_trials_anova, "output/starch_yield_field_trials_anova.txt",
 ################################################################################
 
 # field trials, only check cultivars
-mpi_field_2011_check_anova <- func_anova_2fac_ia(mpi_field_2011_check, "starch_yield_g_per_plant", "cultivar_name", "treatment", 0.01)
-mpi_field_2012_check_anova <- func_anova_2fac_ia(mpi_field_2012_check, "starch_yield_g_per_plant", "cultivar_name", "treatment", 0.01)
-jki_field_2012_check_anova <- func_anova_2fac_ia(jki_field_2012_check, "starch_yield_g_per_plant", "cultivar_name", "treatment", 0.01)
-jki_field_2013_check_anova <- func_anova_2fac_ia(jki_field_2013_check, "starch_yield_g_per_plant", "cultivar_name", "treatment", 0.01)
+mpi_field_2011_check_anova <- func_anova_2fac_ia(mpi_field_2011_check, "starch_yield_g_per_plant", "cultivar", "treatment", 0.01)
+mpi_field_2012_check_anova <- func_anova_2fac_ia(mpi_field_2012_check, "starch_yield_g_per_plant", "cultivar", "treatment", 0.01)
+jki_field_2012_check_anova <- func_anova_2fac_ia(jki_field_2012_check, "starch_yield_g_per_plant", "cultivar", "treatment", 0.01)
+jki_field_2013_check_anova <- func_anova_2fac_ia(jki_field_2013_check, "starch_yield_g_per_plant", "cultivar", "treatment", 0.01)
 
 field_trials_check_anova <- func_combine_anova_res(mpi_field_2011_check_anova, mpi_field_2012_check_anova, jki_field_2012_check_anova, 
-                                            jki_field_2013_check_anova, "f_value", "p_value", "treatment", "cultivar_name")
+                                            jki_field_2013_check_anova, "f_value", "p_value", "treatment", "cultivar")
 rownames(field_trials_check_anova) <- c("MPI-MP field trial 2011", "MPI-MP field trial 2012", 
                                         "JKI field trial 2012", "JKI field trial 2013")
 write.table(field_trials_check_anova, "output/starch_yield_field_trials_check_anova.txt", 
@@ -297,7 +301,7 @@ dev.off()
 
 
 #### for phd-thesis
-```{r for phd-thesis}
+```{r for phd-thesis, fig.width=10}
 # mpi test 1.2
 #pdf("~/work/Doktorarbeit/figures/yield_mpitest1.pdf", width=6, height=6)
 par(mar=c(7.5, 4.5, 0.5, 0.5))
@@ -360,7 +364,7 @@ dev.off()
 ```
 
 
-```{r calculate stress index phd-thesis}
+```{r calculate stress index phd-thesis, fig.width=10}
 # ALL cultivars
 dflist_phd <- list(mpi_test_1_2, mpi_test_2, pruef1, pruef2, pruef3, 
                    jki_test_1, jki_test_2, jki_shelter_1, jki_shelter_2, 
@@ -603,11 +607,11 @@ drym_test_trials <- rbind(as.data.frame(median_drym_mpi_test_1_2), as.data.frame
                          as.data.frame(median_drym_jki_test_1), as.data.frame(median_drym_jki_test_2))
 
 drym_test_trials_melt <- melt(drym_test_trials)
-colnames(drym_test_trials_melt) <- c("cultivar_name", "drym")
+colnames(drym_test_trials_melt) <- c("cultivar", "drym")
 
 pdf("figures/drym_test_trials_check_cultivars.pdf", width=6, height=6)
 par(mar=c(3, 4.5, 2, 0.5))
-boxplot(drym_test_trials_melt$drym ~ drym_test_trials_melt$cultivar_name, 
+boxplot(drym_test_trials_melt$drym ~ drym_test_trials_melt$cultivar, 
         main="DRYM using 4 greenhouse trials", ylab="DRYM")
 abline(h=0, col="red", lwd=2)
 dev.off()
@@ -618,11 +622,11 @@ dev.off()
 drym_test_trials_pub <- rbind(as.data.frame(median_drym_mpi_test_1_2), as.data.frame(median_drym_mpi_test_2), 
                          as.data.frame(median_drym_jki_test_1))
 drym_test_trials_pub_melt <- melt(drym_test_trials_pub)
-colnames(drym_test_trials_pub_melt) <- c("cultivar_name", "drym")
+colnames(drym_test_trials_pub_melt) <- c("cultivar", "drym")
 
 pdf("figures/drym_test_trials_check_cultivars_pub.pdf", width=6, height=6)
 par(mar=c(3, 4.5, 2, 0.5))
-boxplot(drym_test_trials_pub_melt$drym ~ drym_test_trials_pub_melt$cultivar_name, 
+boxplot(drym_test_trials_pub_melt$drym ~ drym_test_trials_pub_melt$cultivar, 
         main="DRYM using 3 greenhouse trials for publication", ylab="DRYM")
 abline(h=0, col="red", lwd=2)
 dev.off()
@@ -642,15 +646,15 @@ drym_feld_all <- rbind( as.data.frame(median_drym_mpi_field_2011),
 #cultivar_names_all_8 <- rep(c("Albatros", "Alegria", "Burana", "Desiree", "Eldena", "Eurobravo", "Euroflora", "Euronova",  "Euroresa", "Eurostarch", "Eurotango", "Golf", "Jasia", "Jumbo", "Karlena", "Kiebitz", "Kolibri", "Kormoran", "Kuras", "Logo", "Maxi", "Maxilla", "Milva", "Pirol", "Power", "Priamos", "Ramses", "Saturna", "Sibu", "Sommergold", "Tomba", "Tomensa", "Ulme", "Verdi"), 8)
 
 drym_feld_all_melt <- melt(drym_feld_all)
-colnames(drym_feld_all_melt) <- c("cultivar_name", "drym")
+colnames(drym_feld_all_melt) <- c("cultivar", "drym")
 
 pdf("figures/drym_feld_all_cultivars.pdf", width=8, height=6)
 par(mar=c(6, 4.5, 0.5, 0.5))
-boxplot(drym_feld_all_melt$drym ~ drym_feld_all_melt$cultivar_name, las=2)
+boxplot(drym_feld_all_melt$drym ~ drym_feld_all_melt$cultivar, las=2)
 abline(h=0, col="red", lwd=2)
 
 # order by median
-drym_feld_bymedian <- with(drym_feld_all_melt, reorder(cultivar_name, -drym, median, na.rm=T))
+drym_feld_bymedian <- with(drym_feld_all_melt, reorder(cultivar, -drym, median, na.rm=T))
 boxplot(drym ~ drym_feld_bymedian, data=drym_feld_all_melt, las=2)
 abline(h=0, col="red", lwd=2)
 dev.off()
@@ -658,7 +662,7 @@ dev.off()
 # http://stackoverflow.com/questions/3765950/sorting-a-boxplot-based-on-median-value
 
 # ANOVA to check influcence of factor cultivar on DRYM
-summary(aov(drym_feld_all_melt$drym ~ drym_feld_all_melt$cultivar_name))
+summary(aov(drym_feld_all_melt$drym ~ drym_feld_all_melt$cultivar))
 ```
 
 
@@ -674,34 +678,34 @@ drym_feld_all_early_stress <- rbind(as.data.frame(median_drym_mpi_field_2011),
 drym_feld_all_late_stress <- rbind(as.data.frame(median_drym_mpi_field_2013), as.data.frame(median_drym_dethlingen_2013))
 
 drym_feld_all_early_stress_melt <- melt(drym_feld_all_early_stress)
-colnames(drym_feld_all_early_stress_melt) <- c("cultivar_name", "drym")
+colnames(drym_feld_all_early_stress_melt) <- c("cultivar", "drym")
 
 pdf("figures/drym_feld_all_cultivars_early_stress.pdf", width=6, height=6)
 par(mar=c(6, 4.5, 0.5, 0.5))
-boxplot(drym_feld_all_early_stress_melt$drym ~ drym_feld_all_early_stress_melt$cultivar_name, las=2, ylab="DRYM")
+boxplot(drym_feld_all_early_stress_melt$drym ~ drym_feld_all_early_stress_melt$cultivar, las=2, ylab="DRYM")
 abline(h=0, col="red", lwd=2)
 
 # order by median
-drym_feld_early_stress_bymedian <- with(drym_feld_all_early_stress_melt, reorder(cultivar_name, -drym, median, na.rm=T))
+drym_feld_early_stress_bymedian <- with(drym_feld_all_early_stress_melt, reorder(cultivar, -drym, median, na.rm=T))
 boxplot(drym ~ drym_feld_early_stress_bymedian, data=drym_feld_all_early_stress_melt, las=2, ylab="DRYM")
 abline(h=0, col="red", lwd=2)
 dev.off()
 
 # print out median drym values per cultivar for early stress field trials
-# aggregate(drym_feld_all_early_stress_melt$drym, by=list(drym_feld_all_early_stress_melt$cultivar_name), median, na.rm=T)
+# aggregate(drym_feld_all_early_stress_melt$drym, by=list(drym_feld_all_early_stress_melt$cultivar), median, na.rm=T)
 drym_feld_all_early_stress_median <- aggregate(drym_feld_all_early_stress_melt$drym, 
-                                               by=list(drym_feld_all_early_stress_melt$cultivar_name), median, na.rm=T)
+                                               by=list(drym_feld_all_early_stress_melt$cultivar), median, na.rm=T)
 write.table(drym_feld_all_early_stress_median, "output/drym_feld_early_stress_median.txt", sep="\t")
 
 # ANOVA to check influcence of factor cultivar on DRYM
-summary(aov(drym_feld_all_early_stress_melt$drym ~ drym_feld_all_early_stress_melt$cultivar_name))
+summary(aov(drym_feld_all_early_stress_melt$drym ~ drym_feld_all_early_stress_melt$cultivar))
 
 
 # for phd-thesis
 # change cultivar names to IDs!
-levels(drym_feld_all_early_stress_melt$cultivar_name) <- cultivar_all_ids
+levels(drym_feld_all_early_stress_melt$cultivar) <- cultivar_all_ids
 # order by median
-drym_feld_early_stress_bymedian <- with(drym_feld_all_early_stress_melt, reorder(cultivar_name, -drym, median, na.rm=T))
+drym_feld_early_stress_bymedian <- with(drym_feld_all_early_stress_melt, reorder(cultivar, -drym, median, na.rm=T))
 
 # pdf("~/work/Doktorarbeit/figures/drym_feld_all_cultivars_early_stress.pdf", width=10, height=6)
 # par(mar=c(5, 4.5, 0.5, 0.5))
@@ -723,12 +727,12 @@ drym_feld_check <- rbind(as.data.frame(median_drym_mpi_field_2011_check),
                      as.data.frame(median_drym_dethlingen_2013_check))
 
 drym_feld_check_melt <- melt(drym_feld_check)
-colnames(drym_feld_check_melt) <- c("cultivar_name", "drym")
+colnames(drym_feld_check_melt) <- c("cultivar", "drym")
 
 
 pdf("figures/drym_feld_check_cultivars.pdf", width=6, height=6)
 par(mar=c(3, 4.5, 2, 0.5))
-boxplot(drym_feld_check_melt$drym ~ drym_feld_check_melt$cultivar_name, main="DRYM using all 8 field trials", ylab="DRYM")
+boxplot(drym_feld_check_melt$drym ~ drym_feld_check_melt$cultivar, main="DRYM using all 8 field trials", ylab="DRYM")
 abline(h=0, col="red", lwd=2)
 dev.off()
 
@@ -741,14 +745,14 @@ drym_feld_check_pub <- rbind(as.data.frame(median_drym_mpi_field_2011_check),
                      as.data.frame(median_drym_jki_field_2012_check))
 
 drym_feld_check_pub_melt <- melt(drym_feld_check_pub)
-colnames(drym_feld_check_pub_melt) <- c("cultivar_name", "drym")
+colnames(drym_feld_check_pub_melt) <- c("cultivar", "drym")
 
 # reorder cultivar factor (Alegria, Milva, Desiree, Saturna)
-drym_feld_check_pub_melt$cultivar_name <- factor(drym_feld_check_pub_melt$cultivar_name, levels=c("Alegria", "Milva", "Desiree", "Saturna"))
+drym_feld_check_pub_melt$cultivar <- factor(drym_feld_check_pub_melt$cultivar, levels=c("Alegria", "Milva", "Desiree", "Saturna"))
 
 pdf("figures/drym_feld_check_cultivars_pub.pdf", width=6, height=6)
 par(mar=c(3, 4.5, 2, 0.5))
-boxplot(drym_feld_check_pub_melt$drym ~ drym_feld_check_pub_melt$cultivar_name, 
+boxplot(drym_feld_check_pub_melt$drym ~ drym_feld_check_pub_melt$cultivar, 
         main="DRYM using 3 field trials for publication", ylab="DRYM")
 abline(h=0, col="red", lwd=2)
 dev.off()
@@ -757,23 +761,23 @@ dev.off()
 # for phd-thesis:
 #pdf("~/work/Doktorarbeit/figures/drym_feld_check_cultivars_pub.pdf", width=6, height=6)
 par(mar=c(2.5, 4.5, 0.5, 0.5))
-boxplot(drym_feld_check_pub_melt$drym ~ drym_feld_check_pub_melt$cultivar_name, ylab="DRYM", cex.lab=1.4, cex.axis=1.2)
+boxplot(drym_feld_check_pub_melt$drym ~ drym_feld_check_pub_melt$cultivar, ylab="DRYM", cex.lab=1.4, cex.axis=1.2)
 abline(h=0, col="red", lwd=2)
 #dev.off()
 ```
 
 
-```{r plot DRYM: field trials (only check cultivars) PUBLICATION}
+```{r plot DRYM: field trials (only check cultivars) PUBLICATION, message=FALSE}
 # for publication:
 # svg("../../TROST/Manuskripte/tba/drym_feld_check_cultivars_pub.svg", width=6, height=6)
 par(mar=c(2.5, 4.5, 0.5, 0.5))
-boxplot(drym_feld_check_pub_melt$drym ~ drym_feld_check_pub_melt$cultivar_name, ylab="DRYM", cex.lab=1.6, cex.axis=1.4, lwd=2)
+boxplot(drym_feld_check_pub_melt$drym ~ drym_feld_check_pub_melt$cultivar, ylab="DRYM", cex.lab=1.6, cex.axis=1.4, lwd=2)
 abline(h=0, col="red", lwd=2)
 #dev.off()
 
 # Using Arial in R figures destined for PLOS ONE
 # http://www.fromthebottomoftheheap.net/2013/09/09/preparing-figures-for-plos-one-with-r/
-library("extrafont")
+# library("extrafont")
 font_import() # done as admin
 
 ## When it is finished, look at the fonts it has found
@@ -786,7 +790,7 @@ loadfonts(device = "postscript") ## for postscript()
 setEPS()
 #postscript("../../TROST/Manuskripte/tba/drym_feld_check_cultivars_pub_2.eps", width=6, height=6, family="Arial")
 par(mar=c(2.5, 4.5, 0.5, 0.5))
-boxplot(drym_feld_check_pub_melt$drym ~ drym_feld_check_pub_melt$cultivar_name, ylab="DRYM", cex.lab=1.6, cex.axis=1.4, lwd=2)
+boxplot(drym_feld_check_pub_melt$drym ~ drym_feld_check_pub_melt$cultivar, ylab="DRYM", cex.lab=1.6, cex.axis=1.4, lwd=2)
 abline(h=0, col="red", lwd=2)
 #dev.off()
 ```
@@ -794,11 +798,11 @@ abline(h=0, col="red", lwd=2)
 
 ```{r ORIGINAL feld check pub}
 # using MEDIAN per experiment
-drym_feld_check_pub_melt_anova <- aov(drym ~ cultivar_name, data=drym_feld_check_pub_melt)
+drym_feld_check_pub_melt_anova <- aov(drym ~ cultivar, data=drym_feld_check_pub_melt)
 summary(drym_feld_check_pub_melt_anova)
 TukeyHSD(drym_feld_check_pub_melt_anova)
 
-tuk2 <- glht(drym_feld_check_pub_melt_anova, linfct = mcp(cultivar_name = "Tukey"))
+tuk2 <- glht(drym_feld_check_pub_melt_anova, linfct = mcp(cultivar = "Tukey"))
 summary(tuk2)
 tuk.cld2 <- cld(tuk2)   # letter-based display
 opar <- par(mai=c(1,1,1.5,1))
@@ -825,15 +829,15 @@ head(mat_melt_pub)
 mat_melt_na_pub <- which(is.na(mat_melt_pub$value))
 mat_melt_pub2 <- mat_melt_pub[-mat_melt_na_pub,]
 dim(mat_melt_pub2)
-colnames(mat_melt_pub2) <- c("cultivar_name", "drym")
+colnames(mat_melt_pub2) <- c("cultivar", "drym")
 
 # ANOVA to check influcence of factor cultivar on DRYM
-mat_melt_pub2_anova <- aov(drym ~ cultivar_name, data=mat_melt_pub2)
+mat_melt_pub2_anova <- aov(drym ~ cultivar, data=mat_melt_pub2)
 summary(mat_melt_pub2_anova)
 TukeyHSD(mat_melt_pub2_anova)
 
 
-tuk <- glht(mat_melt_pub2_anova, linfct = mcp(cultivar_name = "Tukey"))
+tuk <- glht(mat_melt_pub2_anova, linfct = mcp(cultivar = "Tukey"))
 summary(tuk)
 tuk.cld <- cld(tuk)   # letter-based display
 opar <- par(mai=c(1,1,1.5,1))
@@ -841,7 +845,7 @@ plot(tuk.cld)
 par(opar)
 
 # boxplot
-boxplot(mat_melt_pub2$drym ~ mat_melt_pub2$cultivar_name, main="DRYM using 3 field trials for publication", ylab="DRYM")
+boxplot(mat_melt_pub2$drym ~ mat_melt_pub2$cultivar, main="DRYM using 3 field trials for publication", ylab="DRYM")
 ```
 
 
@@ -872,7 +876,7 @@ upper <- drym_feld_check_pub_mean$x + 2 * drym_feld_check_pub_sd$x
 lower <- drym_feld_check_pub_mean$x - 2 * drym_feld_check_pub_sd$x
 
 drym_mpi_field_2012_check$Alegria
-mpi_field_2012[which(mpi_field_2012$cultivar_name=="Alegria" & mpi_field_2012$treatment=="drought stress"),]
+mpi_field_2012[which(mpi_field_2012$cultivar=="Alegria" & mpi_field_2012$treatment=="drought stress"),]
 # maybe 1170195 is an outlier
 
 #############################################################################
@@ -896,18 +900,18 @@ drym_greenhouse_all <- rbind(as.data.frame(median_drym_pruef1),
                                as.data.frame(median_drym_jki_shelter_2))
 
 drym_greenhouse_all_melt <- melt(drym_greenhouse_all)
-colnames(drym_greenhouse_all_melt) <- c("cultivar_name", "drym")
+colnames(drym_greenhouse_all_melt) <- c("cultivar", "drym")
 
 # ANOVA to check influcence of factor cultivar on DRYM
-summary(aov(drym_greenhouse_all_melt$drym ~ drym_greenhouse_all_melt$cultivar_name))
+summary(aov(drym_greenhouse_all_melt$drym ~ drym_greenhouse_all_melt$cultivar))
 
 pdf("figures/drym_greenhouse_all_cultivars.pdf", width=6, height=6)
 par(mar=c(6, 4.5, 0.5, 0.5))
-boxplot(drym_greenhouse_all_melt$drym ~ drym_greenhouse_all_melt$cultivar_name, las=2, ylab="DRYM")
+boxplot(drym_greenhouse_all_melt$drym ~ drym_greenhouse_all_melt$cultivar, las=2, ylab="DRYM")
 abline(h=0, col="red", lwd=2)
 
 # order by median
-drym_greenhouse_bymedian <- with(drym_greenhouse_all_melt, reorder(cultivar_name, -drym, median, na.rm=T))
+drym_greenhouse_bymedian <- with(drym_greenhouse_all_melt, reorder(cultivar, -drym, median, na.rm=T))
 boxplot(drym ~ drym_greenhouse_bymedian, data=drym_greenhouse_all_melt, las=2, ylab="DRYM")
 abline(h=0, col="red", lwd=2)
 dev.off()
@@ -923,11 +927,11 @@ drym_greenhouse_check <- rbind(as.data.frame(median_drym_pruef1_check),
                                as.data.frame(median_drym_jki_shelter_2_check))
 
 drym_greenhouse_check_melt <- melt(drym_greenhouse_check)
-colnames(drym_greenhouse_check_melt) <- c("cultivar_name", "drym")
+colnames(drym_greenhouse_check_melt) <- c("cultivar", "drym")
 
 pdf("figures/drym_greenhouse_check_cultivars.pdf", width=6, height=6)
 par(mar=c(3, 4.5, 0.5, 0.5))
-boxplot(drym_greenhouse_check_melt$drym ~ drym_greenhouse_check_melt$cultivar_name, ylab="DRYM")
+boxplot(drym_greenhouse_check_melt$drym ~ drym_greenhouse_check_melt$cultivar, ylab="DRYM")
 abline(h=0, col="red", lwd=2)
 dev.off()
 
@@ -946,11 +950,11 @@ drym_greenhouse_test <- rbind(as.data.frame(median_drym_pruef1_check),
                               as.data.frame(median_drym_jki_test_2))
 
 drym_greenhouse_test_melt <- melt(drym_greenhouse_test)
-colnames(drym_greenhouse_test_melt) <- c("cultivar_name", "drym")
+colnames(drym_greenhouse_test_melt) <- c("cultivar", "drym")
 
 pdf("figures/drym_greenhouse_and_test_trials_check_cultivars.pdf", width=6, height=6)
 par(mar=c(3, 4.5, 0.5, 0.5))
-boxplot(drym_greenhouse_test_melt$drym ~ drym_greenhouse_test_melt$cultivar_name, ylab="DRYM")
+boxplot(drym_greenhouse_test_melt$drym ~ drym_greenhouse_test_melt$cultivar, ylab="DRYM")
 abline(h=0, col="red", lwd=2)
 dev.off()
 ```
@@ -982,18 +986,18 @@ head(mat_melt)
 mat_melt_na <- which(is.na(mat_melt$value))
 mat_melt2 <- mat_melt[-mat_melt_na,]
 dim(mat_melt2)
-colnames(mat_melt2) <- c("cultivar_name", "drym")
+colnames(mat_melt2) <- c("cultivar", "drym")
 
 # ANOVA to check influcence of factor cultivar on DRYM
-summary(aov(mat_melt2$drym ~ mat_melt2$cultivar_name))
+summary(aov(mat_melt2$drym ~ mat_melt2$cultivar))
 
 # print out median drym values per cultivar for all field trials
-aggregate(mat_melt2$drym, by=list(mat_melt2$cultivar_name), median, na.rm=T)
+aggregate(mat_melt2$drym, by=list(mat_melt2$cultivar), median, na.rm=T)
 
-aggregate(drym_feld_all_melt$drym, by=list(drym_feld_all_melt$cultivar_name), median, na.rm=T)
+aggregate(drym_feld_all_melt$drym, by=list(drym_feld_all_melt$cultivar), median, na.rm=T)
 
-plot(aggregate(mat_melt2$drym, by=list(mat_melt2$cultivar_name), median, na.rm=T)$x,
-     aggregate(drym_feld_all_melt$drym, by=list(drym_feld_all_melt$cultivar_name), median, na.rm=T)$x)
+plot(aggregate(mat_melt2$drym, by=list(mat_melt2$cultivar), median, na.rm=T)$x,
+     aggregate(drym_feld_all_melt$drym, by=list(drym_feld_all_melt$cultivar), median, na.rm=T)$x)
 ```
 
 
@@ -1020,14 +1024,15 @@ head(mat_melt_early)
 mat_melt_na_early <- which(is.na(mat_melt_early$value))
 mat_melt_early2 <- mat_melt_early[-mat_melt_na_early,]
 dim(mat_melt_early2)
-colnames(mat_melt_early2) <- c("cultivar_name", "drym")
+colnames(mat_melt_early2) <- c("cultivar", "drym")
 
 # ANOVA to check influcence of factor cultivar on DRYM
-fit_early <- aov(drym ~ cultivar_name, data=mat_melt_early2)
+fit_early <- aov(drym ~ cultivar, data=mat_melt_early2)
 summary(fit_early)
-head(TukeyHSD(fit_early))
 
-tuk_early <- glht(fit_early, linfct = mcp(cultivar_name = "Tukey"))
+# head(TukeyHSD(fit_early))
+
+tuk_early <- glht(fit_early, linfct = mcp(cultivar = "Tukey"))
 # summary(tuk_early)
 # tuk.cld_early <- cld(tuk_early)   # letter-based display
 # opar <- par(mai=c(1,1,1.5,1))
@@ -1035,9 +1040,9 @@ tuk_early <- glht(fit_early, linfct = mcp(cultivar_name = "Tukey"))
 # par(opar)
 
 # print out median drym values per cultivar for all field trials
-aggregate(mat_melt_early2$drym, by=list(mat_melt_early2$cultivar_name), median, na.rm=T)
+aggregate(mat_melt_early2$drym, by=list(mat_melt_early2$cultivar), median, na.rm=T)
 
-aggregate(drym_feld_all_early_stress_melt$drym, by=list(drym_feld_all_early_stress_melt$cultivar_name), median, na.rm=T)
+aggregate(drym_feld_all_early_stress_melt$drym, by=list(drym_feld_all_early_stress_melt$cultivar), median, na.rm=T)
 ```
 
 
@@ -1061,13 +1066,13 @@ head(mat_melt_gh)
 mat_melt_na_gh <- which(is.na(mat_melt_gh$value))
 mat_melt_gh2 <- mat_melt_gh[-mat_melt_na_gh,]
 dim(mat_melt_gh2)
-colnames(mat_melt_gh2) <- c("cultivar_name", "drym")
+colnames(mat_melt_gh2) <- c("cultivar", "drym")
 
 # ANOVA to check influcence of factor cultivar on DRYM
-summary(aov(mat_melt_gh2$drym ~ mat_melt_gh2$cultivar_name))
+summary(aov(mat_melt_gh2$drym ~ mat_melt_gh2$cultivar))
 
 # print out median drym values per cultivar for all greenhouse trials
-aggregate(mat_melt_gh2$drym, by=list(mat_melt_gh2$cultivar_name), median, na.rm=T)
+aggregate(mat_melt_gh2$drym, by=list(mat_melt_gh2$cultivar), median, na.rm=T)
 ```
 
 #### plot starch yield vs DRYM
@@ -1087,20 +1092,20 @@ dethlingen_2011_control_starch_yield_median <- median(dethlingen_2011_control$st
 dethlingen_2012_control_starch_yield_median <- median(dethlingen_2012_control$starch_yield_g_per_plant, na.rm=T)
 
 starch_yield_control_feld_all_early_stress <- rbind(
-  aggregate(mpi_field_2011_control$starch_yield_g_per_plant, by=list(mpi_field_2011_control$cultivar_name), median, na.rm=T),
-aggregate(mpi_field_2012_control$starch_yield_g_per_plant, by=list(mpi_field_2012_control$cultivar_name), median, na.rm=T),
-aggregate(jki_field_2012_control$starch_yield_g_per_plant, by=list(jki_field_2012_control$cultivar_name), median, na.rm=T),
-aggregate(jki_field_2013_control$starch_yield_g_per_plant, by=list(jki_field_2013_control$cultivar_name), median, na.rm=T),
-aggregate(dethlingen_2011_control$starch_yield_g_per_plant, by=list(dethlingen_2011_control$cultivar_name), median, na.rm=T),
-aggregate(dethlingen_2012_control$starch_yield_g_per_plant, by=list(dethlingen_2012_control$cultivar_name), median, na.rm=T))
+  aggregate(mpi_field_2011_control$starch_yield_g_per_plant, by=list(mpi_field_2011_control$cultivar), median, na.rm=T),
+aggregate(mpi_field_2012_control$starch_yield_g_per_plant, by=list(mpi_field_2012_control$cultivar), median, na.rm=T),
+aggregate(jki_field_2012_control$starch_yield_g_per_plant, by=list(jki_field_2012_control$cultivar), median, na.rm=T),
+aggregate(jki_field_2013_control$starch_yield_g_per_plant, by=list(jki_field_2013_control$cultivar), median, na.rm=T),
+aggregate(dethlingen_2011_control$starch_yield_g_per_plant, by=list(dethlingen_2011_control$cultivar), median, na.rm=T),
+aggregate(dethlingen_2012_control$starch_yield_g_per_plant, by=list(dethlingen_2012_control$cultivar), median, na.rm=T))
 
 norm_starch_yield_control_feld_all_early_stress <- c(
-  aggregate(mpi_field_2011_control$starch_yield_g_per_plant, by=list(mpi_field_2011_control$cultivar_name), median, na.rm=T)$x/mpi_field_2011_control_starch_yield_median,
-aggregate(mpi_field_2012_control$starch_yield_g_per_plant, by=list(mpi_field_2012_control$cultivar_name), median, na.rm=T)$x/mpi_field_2012_control_starch_yield_median,
-aggregate(jki_field_2012_control$starch_yield_g_per_plant, by=list(jki_field_2012_control$cultivar_name), median, na.rm=T)$x/jki_field_2012_control_starch_yield_median,
-aggregate(jki_field_2013_control$starch_yield_g_per_plant, by=list(jki_field_2013_control$cultivar_name), median, na.rm=T)$x/jki_field_2013_control_starch_yield_median,
-aggregate(dethlingen_2011_control$starch_yield_g_per_plant, by=list(dethlingen_2011_control$cultivar_name), median, na.rm=T)$x/dethlingen_2011_control_starch_yield_median,
-aggregate(dethlingen_2012_control$starch_yield_g_per_plant, by=list(dethlingen_2012_control$cultivar_name), median, na.rm=T)$x/dethlingen_2012_control_starch_yield_median)
+  aggregate(mpi_field_2011_control$starch_yield_g_per_plant, by=list(mpi_field_2011_control$cultivar), median, na.rm=T)$x/mpi_field_2011_control_starch_yield_median,
+aggregate(mpi_field_2012_control$starch_yield_g_per_plant, by=list(mpi_field_2012_control$cultivar), median, na.rm=T)$x/mpi_field_2012_control_starch_yield_median,
+aggregate(jki_field_2012_control$starch_yield_g_per_plant, by=list(jki_field_2012_control$cultivar), median, na.rm=T)$x/jki_field_2012_control_starch_yield_median,
+aggregate(jki_field_2013_control$starch_yield_g_per_plant, by=list(jki_field_2013_control$cultivar), median, na.rm=T)$x/jki_field_2013_control_starch_yield_median,
+aggregate(dethlingen_2011_control$starch_yield_g_per_plant, by=list(dethlingen_2011_control$cultivar), median, na.rm=T)$x/dethlingen_2011_control_starch_yield_median,
+aggregate(dethlingen_2012_control$starch_yield_g_per_plant, by=list(dethlingen_2012_control$cultivar), median, na.rm=T)$x/dethlingen_2012_control_starch_yield_median)
 
 norm_starch_yield_control_feld_all_early_stress_median <- aggregate(norm_starch_yield_control_feld_all_early_stress, by=list(starch_yield_control_feld_all_early_stress$Group.1), median, na.rm=T)
 
@@ -1112,6 +1117,93 @@ norm_starch_yield_control_feld_all_early_stress_median <- aggregate(norm_starch_
 # cor.test(norm_starch_yield_control_feld_all_early_stress_median$x, drym_feld_all_early_stress_median$x)
 ```
 
+
+## further analysis of 6 experiments for publication: G1, G2, G3, F1, F3, F4
+### starch yield: combine mean and sd
+```{r starch yield: combine mean and sd}
+mpi_test_1_2_mean_sd <- func_combine_mean_sd(mpi_test_1_2, variable_name = "starch_yield_g_per_plant")
+
+mpi_test_2_mean_sd <- func_combine_mean_sd(mpi_test_2, variable_name = "starch_yield_g_per_plant")
+
+jki_test_1_mean_sd <- func_combine_mean_sd(jki_test_1, variable_name = "starch_yield_g_per_plant")
+
+mpi_field_2011_check_sy_mean_sd <- func_combine_mean_sd(mpi_field_2011_check,
+                                                        variable_name = "starch_yield_g_per_plant")
+
+mpi_field_2012_check_sy_mean_sd <- func_combine_mean_sd(mpi_field_2012_check, 
+                                                        variable_name = "starch_yield_g_per_plant")
+
+jki_field_2012_check_sy_mean_sd <- func_combine_mean_sd(jki_field_2012_check, 
+                                                        variable_name = "starch_yield_g_per_plant")
+```
+
+
+### starch_yield_g_per_plant: compare control and stress by t-test
+```{r starch_yield_g_per_plant: compare control and stress by t-test}
+starch_yield_ttest_res <- c(func_ttest_treatment2(mpi_test_1_2, variable_name = "starch_yield_g_per_plant"), #G1
+                            func_ttest_treatment2(mpi_test_2, variable_name = "starch_yield_g_per_plant"), #G2
+                            func_ttest_treatment2(jki_test_1, variable_name = "starch_yield_g_per_plant"), #G3
+                            func_ttest_treatment2(mpi_field_2011_check, variable_name = "starch_yield_g_per_plant"), #F1
+                            func_ttest_treatment2(mpi_field_2012_check, variable_name = "starch_yield_g_per_plant"), #F3
+                            func_ttest_treatment2(jki_field_2012_check, variable_name = "starch_yield_g_per_plant")) #F4
+```
+
+
+### starch yield: combine mean and sd results of all 6 experiments (for publication)
+```{r starch yield: combine mean and sd results of all 6 experiments}
+
+starch_yield_check_mean_sd <- rbind(mpi_test_1_2_mean_sd, #G1
+                                    mpi_test_2_mean_sd, #G2
+                                    jki_test_1_mean_sd, #G3
+                                    mpi_field_2011_check_sy_mean_sd, #F1
+                                    mpi_field_2012_check_sy_mean_sd, #F3
+                                    jki_field_2012_check_sy_mean_sd) #F4
+
+starch_yield_check_mean_sd$trial <- c( rep("G1", 4), rep("G2", 4), rep("G3", 4),
+                                       rep("F1", 4), rep("F3", 4), rep("F4", 4))
+
+starch_yield_check_mean_sd$percentage <- starch_yield_check_mean_sd$mean_drought_stress * 100 /
+                                         starch_yield_check_mean_sd$mean_control
+
+starch_yield_check_mean_sd$p_value <- starch_yield_ttest_res
+
+pander(head(starch_yield_check_mean_sd))
+
+write.table(starch_yield_check_mean_sd,
+            "output/starch_yield_check_mean_sd.txt",
+            sep="\t", quote=F, col.names = NA)
+```
+
+### combine ANOVA results for publication
+```{r combine ANOVA results for publication}
+# combine anova results of 6 experiments (for publication)
+starch_yield_anova6 <- func_combine_anova_res6(mpi_test_1_2_anova,
+                                               mpi_test_2_anova, 
+                                               jki_test_1_anova,
+                                               mpi_field_2011_check_anova,
+                                               mpi_field_2012_check_anova,
+                                               jki_field_2012_check_anova,
+                                               "f_value","p_value", "treatment", "cultivar")
+
+rownames(starch_yield_anova6) <- c("G1", "G2", "G3", "F1", "F3", "F4")
+pander(starch_yield_anova6)
+write.table(starch_yield_anova6, "output/starch_yield_anova_pub.txt", sep="\t", quote=F, row.names = T, col.names = NA)
+
+
+#### with interactions!
+
+starch_yield_anova6_ia <- func_combine_anova_res6_ia(mpi_test_1_2_anova,
+                                                     mpi_test_2_anova, 
+                                                     jki_test_1_anova,
+                                                     mpi_field_2011_check_anova,
+                                                     mpi_field_2012_check_anova,
+                                                     jki_field_2012_check_anova,
+                                                     "f_value","p_value", "treatment", "cultivar")
+
+rownames(starch_yield_anova6_ia) <- c("G1", "G2", "G3", "F1", "F3", "F4")
+pander(starch_yield_anova6_ia)
+write.table(starch_yield_anova6_ia, "output/starch_yield_anova_pub_with_ia.txt", sep="\t", quote=F, row.names = T, col.names = NA)
+```
 
 
 ### save workspace

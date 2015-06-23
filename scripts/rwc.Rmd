@@ -94,7 +94,7 @@ rwc_test_trials <- subset(rwc_query_result,
 rwc_test_trials$cultivar <- droplevels(rwc_test_trials$cultivar)
 levels(rwc_test_trials$cultivar) <- c("Alegria", "Desiree", "Milva", "Saturna")
 rwc_test_trials$cultivar <- factor(rwc_test_trials$cultivar, 
-                                   levels=c("Alegria", "Milva", "Desiree", "Saturna"))
+                                   levels = check_names_ordered)
 
 rwc_pruef_trials <- subset(rwc_query_result, 
                            rwc_query_result$experiment_id %in% c("56575", "58243", "60319"))
@@ -159,7 +159,8 @@ boxplot(rwc_test1_late_before$RWC ~ rwc_test1_late_before$treatment *
         col = cols_treatment, las = 2, 
         ylab = "relative water content (RWC)", 
         main = "MPI test trial 1 (late/before)", 
-        names = names_treatment_cultivar_reordered)
+        names = names_treatment_cultivar_reordered,
+        ylim = c(0.5, 1.0))
 
 boxplot(rwc_test1_desiree$RWC ~ rwc_test1_desiree$treatment * 
           rwc_test1_desiree$description, 
@@ -188,9 +189,46 @@ boxplot(rwc_test2_late_before$RWC ~ rwc_test2_late_before$treatment *
         col = cols_treatment, las = 2, 
         ylab = "relative water content (RWC)", 
         main = "MPI test trial 2 (late/before)", 
-        names = names_treatment_cultivar_reordered)
+        names = names_treatment_cultivar_reordered,
+        ylim = c(0.5, 1.0))
 dev.off()
 ```
+
+
+### plots of test trials for publication
+```{r plots of test trials for publication}
+
+pdf("figures/rwc_test_trials_pub.pdf", width=12, height=6)
+par(mar=c(8, 4.1, 2.1, 1))
+par(mfrow=c(1,2))
+
+boxplot(rwc_test1_late_before$RWC ~ rwc_test1_late_before$treatment * 
+          rwc_test1_late_before$cultivar, 
+        col = cols_treatment, 
+        las = 2, cex.lab = 1.4, cex.axis = 1.2,
+        ylab = "relative water content (RWC)", 
+        main = "G1", cex.main = 1.5,
+        names = names_treatment_cultivar_reordered,
+        ylim = c(0.5, 1.0))
+
+boxplot(rwc_test2_late_before$RWC ~ rwc_test2_late_before$treatment * 
+          rwc_test2_late_before$cultivar, 
+        col = cols_treatment, 
+        las = 2, cex.lab = 1.4, cex.axis = 1.2,
+        ylab = "relative water content (RWC)", 
+        main = "G2", cex.main = 1.5,
+        names = names_treatment_cultivar_reordered,
+        ylim = c(0.5, 1.0))
+
+legend("topright", 
+       levels(rwc_test2_late_before$treatment), 
+       fill = cols_treatment, 
+       bty = "n", cex = 1.2)
+
+par(mfrow=c(1,1))
+dev.off()
+```
+
 
 
 ### plot for phd thesis

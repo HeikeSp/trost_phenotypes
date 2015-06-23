@@ -5,6 +5,7 @@ BBCH data analysis for MPI trials
 ```{r set working directory}
 getwd()
 #setwd("D:/work/repos/trost_phenotypes")
+#setwd("~/work/repos/trost_phenotypes")
 ```
 
 [solution for issue with working directory and knitr](https://github.com/yihui/knitr/issues/277)
@@ -17,6 +18,7 @@ library(ggplot2)
 library(reshape)
 library(pander)
 library(plyr)
+library(gridExtra)
 
 # set options for pander
 panderOptions('table.split.table', 200)
@@ -40,6 +42,7 @@ source("../libpurzel/names.R")
 source("../libpurzel/func_anova_v2.R")
 source("../libpurzel/func_aggregate_values.R")
 source("../libpurzel/func_wilcoxon_test.R")
+source("../libpurzel/func_multiplot_ggplot.R")
 ```
 
 
@@ -344,6 +347,39 @@ pdf("figures/bbch_mpi_feld_2012_check_late_rank.pdf")
 func_bbch_plots(bbch_mpi_feld2012_check_late_rank, min=0, max=130, label_xaxis = "rank-transformed developmental stage (BBCH)") 
 dev.off()
 ```
+
+
+### plot of ranks for publication
+```{r plot of ranks for publication}
+# make a 6x6 inch image at 600 dpi/ppi
+resolution <- 600
+tiff("figures/bbch_mpi_test_1_2_late_rank.tiff", width=6*resolution, height=6*resolution, res=resolution)
+func_bbch_plots(bbch_mpi_test1_2_late_rank, min = 0, max = 200, 
+                label_xaxis = "rank-transformed developmental stage (BBCH)") [1] # only first plot out of three
+dev.off()
+
+tiff("figures/bbch_mpi_feld_2011_check_late_rank.tiff", width=6*resolution, height=6*resolution, res=resolution)
+func_bbch_plots(bbch_mpi_feld2011_check_late_rank, min = 0, max = 260, 
+                label_xaxis = "rank-transformed developmental stage (BBCH)") # only first plot out of three
+dev.off()
+
+
+pdf("figures/bbch_rank_pub.pdf", width=12, height=6)
+
+p1 <- func_bbch_plots(bbch_mpi_test1_2_late_rank, min = 0, max = 200, 
+                label_xaxis = "rank-transformed developmental stage (BBCH)",
+                main_text = "G1") [[1]] # only first plot out of three
+
+p2 <- func_bbch_plots(bbch_mpi_feld2011_check_late_rank, min = 0, max = 260, 
+                label_xaxis = "rank-transformed developmental stage (BBCH)",
+                main_text = "F1") [[1]] # only first plot out of three
+
+multiplot(p1, p2, cols=2)
+# grid.arrange(p1, p2, ncol=2)
+dev.off()
+
+```
+
 
 ### ANOVA
 ```{r ANOVA of ranks}

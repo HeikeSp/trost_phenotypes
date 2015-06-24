@@ -747,14 +747,15 @@ drym_feld_check_pub <- rbind(as.data.frame(median_drym_mpi_field_2011_check),
 drym_feld_check_pub_melt <- melt(drym_feld_check_pub)
 colnames(drym_feld_check_pub_melt) <- c("cultivar", "drym")
 
-# reorder cultivar factor (Alegria, Milva, Desiree, Saturna)
-drym_feld_check_pub_melt$cultivar <- factor(drym_feld_check_pub_melt$cultivar, levels=c("Alegria", "Milva", "Desiree", "Saturna"))
+# reorder cultivar factor (Milva, Alegria, Desiree, Saturna)
+drym_feld_check_pub_melt$cultivar <- factor(drym_feld_check_pub_melt$cultivar, 
+                                            levels = c("Milva", "Alegria", "Desiree", "Saturna"))
 
-pdf("figures/drym_feld_check_cultivars_pub.pdf", width=6, height=6)
-par(mar=c(3, 4.5, 2, 0.5))
+pdf("figures/drym_feld_check_cultivars_pub.pdf", width = 6, height = 6)
+par(mar = c(3, 4.5, 2, 0.5))
 boxplot(drym_feld_check_pub_melt$drym ~ drym_feld_check_pub_melt$cultivar, 
-        main="DRYM using 3 field trials for publication", ylab="DRYM")
-abline(h=0, col="red", lwd=2)
+        main = "DRYM using 3 field trials for publication", ylab = "DRYM")
+abline(h = 0, col = "red", lwd = 2)
 dev.off()
 
 
@@ -769,10 +770,21 @@ abline(h=0, col="red", lwd=2)
 
 ```{r plot DRYM: field trials (only check cultivars) PUBLICATION, message=FALSE}
 # for publication:
+
+pdf("../../TROST/Manuskripte/tba/drym_feld_check_cultivars_pub.pdf", width=6.2, height=6)
+par(mar=c(2.5, 4.5, 0.5, 0.5))
+boxplot(drym_feld_check_pub_melt$drym ~ drym_feld_check_pub_melt$cultivar, 
+        ylab = "DRYM", cex.lab = 2, cex.axis = 1.5, lwd = 2, xaxt = "n")
+axis(1, at = 1:4, tick = T, cex.axis = 1.7,
+     labels = levels(drym_feld_check_pub_melt$cultivar))
+abline(h = 0, col = "red", lwd = 2)
+dev.off()
+
 # svg("../../TROST/Manuskripte/tba/drym_feld_check_cultivars_pub.svg", width=6, height=6)
 par(mar=c(2.5, 4.5, 0.5, 0.5))
-boxplot(drym_feld_check_pub_melt$drym ~ drym_feld_check_pub_melt$cultivar, ylab="DRYM", cex.lab=1.6, cex.axis=1.4, lwd=2)
-abline(h=0, col="red", lwd=2)
+boxplot(drym_feld_check_pub_melt$drym ~ drym_feld_check_pub_melt$cultivar, 
+        ylab = "DRYM", cex.lab = 1.6, cex.axis = 1.4, lwd = 2)
+abline(h = 0, col = "red", lwd = 2)
 #dev.off()
 
 # Using Arial in R figures destined for PLOS ONE

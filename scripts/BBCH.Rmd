@@ -4,8 +4,8 @@ BBCH data analysis for MPI trials
 ## Set working directory  
 ```{r set working directory}
 getwd()
-#setwd("D:/work/repos/trost_phenotypes")
-#setwd("~/work/repos/trost_phenotypes")
+# setwd("D:/work/repos/trost_phenotypes")
+# setwd("~/work/repos/trost_phenotypes")
 ```
 
 [solution for issue with working directory and knitr](https://github.com/yihui/knitr/issues/277)

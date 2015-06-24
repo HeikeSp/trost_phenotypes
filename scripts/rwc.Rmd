@@ -4,6 +4,7 @@ RWC data analysis for MPI greenhouse trials
 ### set working directory
 ```{r set working directory}
 # setwd("D:/work/repos/trost_phenotypes")
+# setwd("~/work/repos/trost_phenotypes")
 ```
 
 [solution for issue with working directory and knitr](https://github.com/yihui/knitr/issues/277)
@@ -48,19 +49,32 @@ head(rwc_query_result)
 dim(rwc_query_result)
 # 3212 13
 
+rwc_query_result$FW <- as.numeric(rwc_query_result$FW)
+rwc_query_result$DW <- as.numeric(rwc_query_result$DW)
+rwc_query_result$SW <- as.numeric(rwc_query_result$SW)
+
 write.table(rwc_query_result, "data/rwc_query_result.txt", sep="\t")
 ```
 
 
 ### factors
 ```{r factors}
+# treatment
+rwc_query_result$treatment <- as.factor(rwc_query_result$treatment)
 levels(rwc_query_result$treatment)
 # rename treatment levels
 levels(rwc_query_result$treatment) <- c("control", "drought stress")
 
+# cultivar
+rwc_query_result$cultivar <- as.factor(rwc_query_result$cultivar)
+
+# description
+rwc_query_result$description <- as.factor(rwc_query_result$description)
 levels(rwc_query_result$description)
 # change order of description
-rwc_query_result$description <- factor(rwc_query_result$description, levels=c("early/before", "early/after", "late/before", "late/after"))
+rwc_query_result$description <- factor(rwc_query_result$description, 
+                                       levels=c("early/before", "early/after", 
+                                                "late/before", "late/after"))
 ```
 
 
@@ -221,7 +235,7 @@ boxplot(rwc_test2_late_before$RWC ~ rwc_test2_late_before$treatment *
         ylim = c(0.5, 1.0))
 
 legend("topright", 
-       levels(rwc_test2_late_before$treatment), 
+       legend = levels(rwc_test2_late_before$treatment), 
        fill = cols_treatment, 
        bty = "n", cex = 1.2)
 
@@ -243,7 +257,7 @@ boxplot(rwc_test1_late_before$RWC ~ rwc_test1_late_before$treatment *
         names = names_treatment_cultivar_reordered, 
         cex.lab = 1.4, cex.axis = 1.2)
 legend("topright", 
-       levels(rwc_test1_late_before$treatment), 
+       legend = levels(rwc_test1_late_before$treatment), 
        fill = cols_treatment, 
        cex = 1, bty = "n")
 #dev.off()

@@ -34,11 +34,11 @@ opts_knit$set(root.dir = '../')
 
 ### Source R functions
 ```{r source R functions, include=FALSE}
-source("../libpurzel/colors.R")
-source("../libpurzel/names.R")
-source("../libpurzel/func_get_fw_dw_data.R")
-source("../libpurzel/func_anova_v2.R")
-source("../libpurzel/func_relevel_factors.R")
+source("../functions/colors.R")
+source("../functions/names.R")
+source("../functions/func_get_fw_dw_data.R")
+source("../functions/func_anova_v2.R")
+source("../functions/func_relevel_factors.R")
 ```
 
 ## Load Data

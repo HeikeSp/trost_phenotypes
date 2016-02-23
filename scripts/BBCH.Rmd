@@ -34,15 +34,15 @@ opts_knit$set(root.dir = '../')
 
 ## Source R functions
 ```{r source R functions, include=FALSE}
-source("../libpurzel/func_get_bbch_data.R")
-source("../libpurzel/func_modify_bbch_data.R")
-source("../libpurzel/func_bbch_plots.R")
-source("../libpurzel/colors.R")
-source("../libpurzel/names.R")
-source("../libpurzel/func_anova_v2.R")
-source("../libpurzel/func_aggregate_values.R")
-source("../libpurzel/func_wilcoxon_test.R")
-source("../libpurzel/func_multiplot_ggplot.R")
+source("../functions/func_get_bbch_data.R")
+source("../functions/func_modify_bbch_data.R")
+source("../functions/func_bbch_plots.R")
+source("../functions/colors.R")
+source("../functions/names.R")
+source("../functions/func_anova_v2.R")
+source("../functions/func_aggregate_values.R")
+source("../functions/func_wilcoxon_test.R")
+source("../functions/func_multiplot_ggplot.R")
 ```
 
 

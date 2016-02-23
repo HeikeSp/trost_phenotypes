@@ -38,7 +38,7 @@ opts_chunk$set(fig.width=5, fig.height=5, cache=FALSE, highlight = TRUE, fig.sho
 # load workspace
 #load("sensor_mpi_test2.RData")
 
-source("../libpurzel/func_plot_moisture.R")
+source("../functions/func_plot_moisture.R")
 ```
 
 

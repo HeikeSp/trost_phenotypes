@@ -34,10 +34,10 @@ opts_knit$set(root.dir = '../')
 
 ### source R functions
 ```{r source R functions, include=FALSE}
-source("../libpurzel/func_get_rwc_data.R")
-source("../libpurzel/colors.R")
-source("../libpurzel/names.R")
-source("../libpurzel/func_anova_v2.R")
+source("../functions/func_get_rwc_data.R")
+source("../functions/colors.R")
+source("../functions/names.R")
+source("../functions/func_anova_v2.R")
 ```
 
 

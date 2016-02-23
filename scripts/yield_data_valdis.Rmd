@@ -487,7 +487,12 @@ pander(table(yield_data_correct$culture, yield_data_correct$attribute))
 cultures_2014 <- c(67199, 67516, 68713, 68015, 72237, 67518)
 cultures_2015 <- c(72247, 72275, 72482, 72396, 72292)
 
-yield_data_correct_2014 <- droplevels(subset(yield_data_correct, yield_data_correct$culture %in% cultures_2014))
+# use a subset of 193 lines from either experiments of 2014 or 2015
+yield_data_correct_2014 <- droplevels(subset(yield_data_correct, 
+                                             yield_data_correct$culture %in% cultures_2014 & 
+                                               yield_data_correct$alias %in% lines_2014))
+dim(yield_data_correct_2014)
+
 yield_data_correct_2015 <- droplevels(subset(yield_data_correct, yield_data_correct$culture %in% cultures_2015))
 ```
 
@@ -1450,7 +1455,7 @@ drym_experiments_2014_melt <- melt(drym_experiments_2014)
 colnames(drym_experiments_2014_melt) <- c("alias", "drym")
 
 # add column for culture id
-drym_experiments_2014_melt$culture <- rep( sort(unique(yield_data_final_2014$culture)), 237)
+drym_experiments_2014_melt$culture <- rep( sort(unique(yield_data_final_2014$culture)), length(lines_2014))
 dim(drym_experiments_2014_melt)
 pander(head(drym_experiments_2014_melt))
 
@@ -1646,10 +1651,6 @@ dim(yield_data_final_2014_control_norm_sy_mean)
 
 pander(head(drym_experiments_2014_melt))
 dim(drym_experiments_2014_melt)
-
-setdiff(levels(drym_experiments_2014_melt$alias), levels(yield_data_final_2014_control_norm_sy_mean$alias))
-
-drym_experiments_2014_melt <- drym_experiments_2014_melt[-which(drym_experiments_2014_melt$alias=="AR233"),]
 
 cor.test(yield_data_final_2014_control_norm_sy_mean$norm_sy, drym_experiments_2014_melt$drym)
 # p-value < 2.2e-16

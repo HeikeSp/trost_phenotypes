@@ -696,6 +696,7 @@ dethlingen_2015_control_median <- median(dethlingen_2015_control_mean_per_line$m
 # 216.81
 ```
 
+
 ## Calculate MEDIAN of starch yield per line (only control data)
 ```{r calculate MEDIAN of starch yield per line (only control data)}
 # 2014
@@ -1299,21 +1300,30 @@ dethlingen_2015_anova <- func_anova_2fac_ia(dethlingen_2015, "starch_yield_g_per
 # Calculate stress index (SI)
 **Stress index is 1 - (mean(SY_drought) / mean(SY_control))**
 ```{r calculate stress index (SI)}
-mpi_feld_2014_si <- func_calc_stress_index_valdis(mpi_feld_2014)
-mpi_feld_2015_si <- func_calc_stress_index_valdis(mpi_feld_2015)
-
 # 2014
 dflist_2014 <- list(mpi_feld_2014, mpi_fgh_2014, jki_shelter_2014, jki_feld_2014)
 
 all_SI_list_2014 <- lapply(dflist_2014, func_calc_stress_index_valdis)
-all_SI_2014 <- unlist(lapply(dflist_2014, func_calc_stress_index_valdis))
+all_SI_2014 <- unlist(all_SI_list_2014)
+
+mpi_fgh_2014_si <- func_calc_stress_index_valdis(mpi_fgh_2014)
+mpi_feld_2014_si <- func_calc_stress_index_valdis(mpi_feld_2014)
+jki_shelter_2014_si <- func_calc_stress_index_valdis(jki_shelter_2014)
+jki_feld_2014_si <- func_calc_stress_index_valdis(jki_feld_2014)
+
 
 # 2015
 dflist_2015 <- list(mpi_feld_2015, mpi_fgh_2015, jki_shelter_2015,
                jki_feld_2015, dethlingen_2015)
 
 all_SI_list_2015 <- lapply(dflist_2015, func_calc_stress_index_valdis)
-all_SI_2015 <- unlist(lapply(dflist_2015, func_calc_stress_index_valdis))
+all_SI_2015 <- unlist(all_SI_list_2015)
+
+mpi_fgh_2015_si <- func_calc_stress_index_valdis(mpi_fgh_2015)
+mpi_feld_2015_si <- func_calc_stress_index_valdis(mpi_feld_2015)
+jki_shelter_2015_si <- func_calc_stress_index_valdis(jki_shelter_2015)
+jki_feld_2015_si <- func_calc_stress_index_valdis(jki_feld_2015)
+dethlingen_2015_si <- func_calc_stress_index_valdis(dethlingen_2015)
 ```
 
 
@@ -1850,25 +1860,25 @@ $$
 **Low value of SSI corresponds to tolerant genotype**
 
 ```{r calculate SSI}
-mpi_feld_2015_si
+# 2014
+mpi_fgh_2014_ssi <- func_calc_ssi(mpi_fgh_2014, plant_lines = lines_2014, mpi_fgh_2014_si)
+mpi_feld_2014_ssi <- func_calc_ssi(mpi_feld_2014, plant_lines = lines_2014, mpi_feld_2014_si)
+jki_shelter_2014_ssi <- func_calc_ssi(jki_shelter_2014, plant_lines = lines_2014, jki_shelter_2014_si)
+jki_feld_2014_ssi <- func_calc_ssi(jki_feld_2014, plant_lines = lines_2014, jki_feld_2014_si)
 
-head(mpi_feld_2015_relSY)
-# median per line
-head(mpi_feld_2015_relSY_median)
 
-mpi_feld_2015_ssi <- list()
-  for (plant_line in levels(yield_data_final_2015$alias) ){
-    mpi_feld_2015_ssi[[plant_line]] <- (1 - unique(mpi_feld_2015_relSY_median[[plant_line]]) ) / mpi_feld_2015_si
-  }
+# 2015
+mpi_fgh_2015_ssi <- func_calc_ssi(mpi_fgh_2015, plant_lines = all_lines_2015, mpi_fgh_2015_si)
+mpi_feld_2015_ssi <- func_calc_ssi(mpi_feld_2015, plant_lines = all_lines_2015, mpi_feld_2015_si)
+jki_shelter_2015_ssi <- func_calc_ssi(jki_shelter_2015, plant_lines = all_lines_2015, jki_shelter_2015_si)
+jki_feld_2015_ssi <- func_calc_ssi(jki_feld_2015, plant_lines = all_lines_2015, jki_feld_2015_si)
+dethlingen_2015_ssi <- func_calc_ssi(dethlingen_2015, plant_lines = all_lines_2015, dethlingen_2015_si)
+
 
 plot(unlist(mpi_feld_2015_ssi), unlist(mpi_feld_2015_relSY_median))
 plot(unlist(mpi_feld_2015_ssi), unlist(mpi_feld_2015_drym_median))
 
 # negative correlation between drym and ssi --> higher ssi means more sensitive
-
-test <- func_calc_ssi(mpi_feld_2015, plant_lines = levels(yield_data_final_2015$alias), mpi_feld_2015_si)
-test <- func_calc_ssi(mpi_feld_2015, plant_lines = levels(yield_data_final_2015$alias), mpi_feld_2015_si)
-
 ```
 
 

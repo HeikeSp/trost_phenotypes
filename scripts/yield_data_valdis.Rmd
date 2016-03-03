@@ -462,9 +462,12 @@ all_lines_2015 <- union(
   union(yield_data_72396$alias, yield_data_72292$alias))
 
 length(all_lines_2015)
+# 3 lines more than in common lines: "AR183" "EA131" "EA174" (not present in jki field and dethlingen 2015)
 
 length(intersect(common_lines_2014, all_lines_2015))
 # 62 of 63, because AR21 is missing in MPI Field 2014
+
+setdiff(all_lines_2015, common_lines_2015)
 ```
 
 
@@ -492,6 +495,7 @@ yield_data_correct_2014 <- droplevels(subset(yield_data_correct,
                                              yield_data_correct$culture %in% cultures_2014 & 
                                                yield_data_correct$alias %in% lines_2014))
 dim(yield_data_correct_2014)
+length(levels(yield_data_correct_2014$alias))
 
 yield_data_correct_2015 <- droplevels(subset(yield_data_correct, yield_data_correct$culture %in% cultures_2015))
 ```
@@ -595,6 +599,8 @@ dethlingen_2015 <- func_starch_yield_feld(yield_data_2015_sp_dup, 72482, 10)
 
 # maybe remove entries with NAs???
 which(is.na(mpi_fgh_2015$starch_yield_g_per_plant))
+
+table(mpi_fgh_2014$treatment, mpi_fgh_2014$alias)
 ```
 
 
@@ -1866,6 +1872,11 @@ mpi_feld_2014_ssi <- func_calc_ssi(mpi_feld_2014, plant_lines = lines_2014, mpi_
 jki_shelter_2014_ssi <- func_calc_ssi(jki_shelter_2014, plant_lines = lines_2014, jki_shelter_2014_si)
 jki_feld_2014_ssi <- func_calc_ssi(jki_feld_2014, plant_lines = lines_2014, jki_feld_2014_si)
 
+# median per line 
+mpi_fgh_2014_ssi_median <- func_calc_ssi(mpi_fgh_2014, plant_lines = lines_2014, mpi_fgh_2014_si, keep_replicates = "no")
+mpi_feld_2014_ssi_median <- func_calc_ssi(mpi_feld_2014, plant_lines = lines_2014, mpi_feld_2014_si, keep_replicates = "no")
+jki_shelter_2014_ssi_median <- func_calc_ssi(jki_shelter_2014, plant_lines = lines_2014, jki_shelter_2014_si, keep_replicates = "no")
+jki_feld_2014_ssi_median <- func_calc_ssi(jki_feld_2014, plant_lines = lines_2014, jki_feld_2014_si, keep_replicates = "no")
 
 # 2015
 mpi_fgh_2015_ssi <- func_calc_ssi(mpi_fgh_2015, plant_lines = all_lines_2015, mpi_fgh_2015_si)
@@ -1874,9 +1885,29 @@ jki_shelter_2015_ssi <- func_calc_ssi(jki_shelter_2015, plant_lines = all_lines_
 jki_feld_2015_ssi <- func_calc_ssi(jki_feld_2015, plant_lines = all_lines_2015, jki_feld_2015_si)
 dethlingen_2015_ssi <- func_calc_ssi(dethlingen_2015, plant_lines = all_lines_2015, dethlingen_2015_si)
 
+# median per line
+mpi_fgh_2015_ssi_median <- func_calc_ssi(mpi_fgh_2015, plant_lines = all_lines_2015, mpi_fgh_2015_si, keep_replicates = "no")
+mpi_feld_2015_ssi_median <- func_calc_ssi(mpi_feld_2015, plant_lines = all_lines_2015, mpi_feld_2015_si, keep_replicates = "no")
+jki_shelter_2015_ssi_median <- func_calc_ssi(jki_shelter_2015, plant_lines = all_lines_2015, jki_shelter_2015_si, keep_replicates = "no")
+jki_feld_2015_ssi_median <- func_calc_ssi(jki_feld_2015, plant_lines = all_lines_2015, jki_feld_2015_si, keep_replicates = "no")
+dethlingen_2015_ssi_median <- func_calc_ssi(dethlingen_2015, plant_lines = all_lines_2015, dethlingen_2015_si, keep_replicates = "no")
+```
 
-plot(unlist(mpi_feld_2015_ssi), unlist(mpi_feld_2015_relSY_median))
-plot(unlist(mpi_feld_2015_ssi), unlist(mpi_feld_2015_drym_median))
+
+## Plot SSI versus DRYM
+```{r plot SSI versus DRYM}
+plot(unlist(mpi_feld_2015_ssi), unlist(mpi_feld_2015_relSY))
+plot(unlist(mpi_feld_2015_ssi_median), unlist(mpi_feld_2015_relSY_median))
+
+plot(unlist(mpi_feld_2015_ssi), unlist(mpi_feld_2015_drym))
+plot(unlist(mpi_feld_2015_ssi_median), unlist(mpi_feld_2015_drym_median))
+
+plot(unlist(mpi_fgh_2015_ssi), unlist(mpi_fgh_2015_drym))
+plot(unlist(jki_shelter_2015_ssi), unlist(jki_shelter_2015_drym))
+plot(unlist(jki_feld_2015_ssi), unlist(jki_feld_2015_drym))
+
+plot(unlist(jki_feld_2014_ssi), unlist(jki_feld_2014_drym))
+plot(unlist(jki_shelter_2014_ssi), unlist(jki_shelter_2014_drym))
 
 # negative correlation between drym and ssi --> higher ssi means more sensitive
 ```

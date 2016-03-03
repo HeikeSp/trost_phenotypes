@@ -336,6 +336,7 @@ common_lines_2014 <- intersect(
   intersect(yield_data_67516$alias, yield_data_67199$alias),
   intersect(yield_data_67518$alias, yield_data_68015$alias))
 
+common_lines_2014 <- sort(common_lines_2014)
 length(common_lines_2014)
 ```
 
@@ -343,7 +344,7 @@ length(common_lines_2014)
 **take all 192 common lines and additionally AR21 which is missing in MPI Field 2014 but was selected for SP1**
 
 ```{r define desired subset of lines}
-lines_2014 <- c(common_lines_2014, "AR21")
+lines_2014 <- sort( c(common_lines_2014, "AR21") )
 length(lines_2014)
 ```
 
@@ -454,12 +455,16 @@ common_lines_2015 <- intersect(
   intersect(yield_data_72275$alias, yield_data_72247$alias),
   intersect(yield_data_72396$alias, yield_data_72292$alias))
 
+common_lines_2015 <- sort(common_lines_2015)
+
 length(common_lines_2015)
 
 # all lines --> union
 all_lines_2015 <- union(
   union(yield_data_72275$alias, yield_data_72247$alias),
   union(yield_data_72396$alias, yield_data_72292$alias))
+
+all_lines_2015 <- sort(all_lines_2015)
 
 length(all_lines_2015)
 # 3 lines more than in common lines: "AR183" "EA131" "EA174" (not present in jki field and dethlingen 2015)
@@ -819,6 +824,38 @@ dim(yield_data_final_2015_control_norm_sy_mean)
 
 
 # Subsets for subpopulations
+## Subsets for subpopulations 2014
+```{r subsets for subpopulations 2014}
+# all data
+yield_data_final_2014_sp1 <- subset(yield_data_final_2014, yield_data_final_2014$SP == "SP1")
+yield_data_final_2014_sp2 <- subset(yield_data_final_2014, yield_data_final_2014$SP == "SP2")
+yield_data_final_2014_sp3 <- subset(yield_data_final_2014, yield_data_final_2014$SP == "SP3")
+
+# treatment: control
+yield_data_final_2014_control_sp1 <- subset(yield_data_final_2014_control, yield_data_final_2014_control$SP == "SP1")
+yield_data_final_2014_control_sp2 <- subset(yield_data_final_2014_control, yield_data_final_2014_control$SP == "SP2")
+yield_data_final_2014_control_sp3 <- subset(yield_data_final_2014_control, yield_data_final_2014_control$SP == "SP2")
+
+## SP1 vs. SP2
+t.test(yield_data_final_2014_control_sp1$normalized_starch_yield_per_plant, 
+       yield_data_final_2014_control_sp2$normalized_starch_yield_per_plant)
+## SP2 vs. SP3
+t.test(yield_data_final_2014_control_sp2$normalized_starch_yield_per_plant, 
+       yield_data_final_2014_control_sp3$normalized_starch_yield_per_plant)
+## SP1 vs. SP3
+t.test(yield_data_final_2014_control_sp1$normalized_starch_yield_per_plant, 
+       yield_data_final_2014_control_sp3$normalized_starch_yield_per_plant)
+
+# treatment: drought stress
+yield_data_final_2014_stress_sp1 <- subset(yield_data_final_2014_stress, yield_data_final_2014_stress$SP == "SP1")
+yield_data_final_2014_stress_sp2 <- subset(yield_data_final_2014_stress, yield_data_final_2014_stress$SP == "SP2")
+yield_data_final_2014_stress_sp3 <- subset(yield_data_final_2014_stress, yield_data_final_2014_stress$SP == "SP3")
+
+## SP1 vs. SP2
+t.test(yield_data_final_2014_stress_sp1$normalized_starch_yield_per_plant, 
+       yield_data_final_2014_stress_sp2$normalized_starch_yield_per_plant)
+```
+
 ## Subsets for subpopulations 2015
 ```{r subsets for subpopulations 2015}
 # all data
@@ -1336,17 +1373,17 @@ dethlingen_2015_si <- func_calc_stress_index_valdis(dethlingen_2015)
 # Calculate Relative Starch Yield (RelSY)
 ```{r calculate RelSY}
 # 2014
-mpi_fgh_2014_relSY <- func_calc_relSY_valdis(mpi_fgh_2014, plant_lines = levels(yield_data_final_2014$alias))
-mpi_feld_2014_relSY <- func_calc_relSY_valdis(mpi_feld_2014, plant_lines = levels(yield_data_final_2014$alias))
-jki_feld_2014_relSY <- func_calc_relSY_valdis(jki_feld_2014, plant_lines = levels(yield_data_final_2014$alias))
-jki_shelter_2014_relSY <- func_calc_relSY_valdis(jki_shelter_2014, plant_lines = levels(yield_data_final_2014$alias))
+mpi_fgh_2014_relSY <- func_calc_relSY_valdis(mpi_fgh_2014, plant_lines = lines_2014)
+mpi_feld_2014_relSY <- func_calc_relSY_valdis(mpi_feld_2014, plant_lines = lines_2014)
+jki_feld_2014_relSY <- func_calc_relSY_valdis(jki_feld_2014, plant_lines = lines_2014)
+jki_shelter_2014_relSY <- func_calc_relSY_valdis(jki_shelter_2014, plant_lines = lines_2014)
 
 # 2015
-mpi_fgh_2015_relSY <- func_calc_relSY_valdis(mpi_fgh_2015, plant_lines = levels(yield_data_final_2015$alias))
-mpi_feld_2015_relSY <- func_calc_relSY_valdis(mpi_feld_2015, plant_lines = levels(yield_data_final_2015$alias))
-jki_feld_2015_relSY <- func_calc_relSY_valdis(jki_feld_2015, plant_lines = levels(yield_data_final_2015$alias))
-jki_shelter_2015_relSY <- func_calc_relSY_valdis(jki_shelter_2015, plant_lines = levels(yield_data_final_2015$alias))
-dethlingen_2015_relSY <- func_calc_relSY_valdis(dethlingen_2015, plant_lines = levels(yield_data_final_2015$alias))
+mpi_fgh_2015_relSY <- func_calc_relSY_valdis(mpi_fgh_2015, plant_lines = lines_2015)
+mpi_feld_2015_relSY <- func_calc_relSY_valdis(mpi_feld_2015, plant_lines = lines_2015)
+jki_feld_2015_relSY <- func_calc_relSY_valdis(jki_feld_2015, plant_lines = lines_2015)
+jki_shelter_2015_relSY <- func_calc_relSY_valdis(jki_shelter_2015, plant_lines = lines_2015)
+dethlingen_2015_relSY <- func_calc_relSY_valdis(dethlingen_2015, plant_lines = lines_2015)
 
 # median per plant line
 # 2014
@@ -1369,16 +1406,16 @@ dethlingen_2015_relSY_median <- func_calc_relSY_median(dethlingen_2015_relSY)
 ```{r calculate DRYM 2014}
 # creates a LIST!
 mpi_fgh_2014_drym <- func_calc_drym(mpi_fgh_2014_relSY, mpi_fgh_2014_relSY_median, 
-                                    cultivar_names = levels(yield_data_final_2014$alias))
+                                    cultivar_names = lines_2014)
 
 mpi_feld_2014_drym <- func_calc_drym(mpi_feld_2014_relSY, mpi_feld_2014_relSY_median, 
-                                     cultivar_names = levels(yield_data_final_2014$alias))
+                                     cultivar_names = lines_2014)
 
 jki_feld_2014_drym <- func_calc_drym(jki_feld_2014_relSY, jki_feld_2014_relSY_median, 
-                                     cultivar_names = levels(yield_data_final_2014$alias))
+                                     cultivar_names = lines_2014)
 
 jki_shelter_2014_drym <- func_calc_drym(jki_shelter_2014_relSY, jki_shelter_2014_relSY_median, 
-                                        cultivar_names = levels(yield_data_final_2014$alias))
+                                        cultivar_names = lines_2014)
 
 # median of DRYM per plant line (is a LIST!)
 mpi_fgh_2014_drym_median <- lapply(mpi_fgh_2014_drym, median, na.rm=T)
@@ -1394,19 +1431,19 @@ jki_shelter_2014_drym_median <- lapply(jki_shelter_2014_drym, median, na.rm=T)
 ```{r calculate DRYM 2015}
 # creates a LIST!
 mpi_fgh_2015_drym <- func_calc_drym(mpi_fgh_2015_relSY, mpi_fgh_2015_relSY_median, 
-                                    cultivar_names = levels(yield_data_final_2015$alias))
+                                    cultivar_names = lines_2015)
 
 mpi_feld_2015_drym <- func_calc_drym(mpi_feld_2015_relSY, mpi_feld_2015_relSY_median, 
-                                     cultivar_names = levels(yield_data_final_2015$alias))
+                                     cultivar_names = lines_2015)
 
 jki_feld_2015_drym <- func_calc_drym(jki_feld_2015_relSY, jki_feld_2015_relSY_median, 
-                                     cultivar_names = levels(yield_data_final_2015$alias))
+                                     cultivar_names = lines_2015)
 
 jki_shelter_2015_drym <- func_calc_drym(jki_shelter_2015_relSY, jki_shelter_2015_relSY_median, 
-                                        cultivar_names = levels(yield_data_final_2015$alias))
+                                        cultivar_names = lines_2015)
 
 dethlingen_2015_drym <- func_calc_drym(dethlingen_2015_relSY, dethlingen_2015_relSY_median, 
-                                     cultivar_names = levels(yield_data_final_2015$alias))
+                                     cultivar_names = lines_2015)
 
 # median of DRYM per plant line (is a LIST!)
 mpi_fgh_2015_drym_median <- lapply(mpi_fgh_2015_drym, median, na.rm=T)

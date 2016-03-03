@@ -785,8 +785,28 @@ dim(yield_data_final_2015_stress)
 ```
 
 
-## Calculate mean of starch yield per line and experiment
-```{r calculate mean of starch yield per line and experiment}
+## Calculate mean of starch yield per line and experiment (all conditions)
+```{r calculate mean of starch yield per line and experiment (all conditions)}
+# 2014
+# calculate mean of starch yield per line and experiment
+yield_data_final_2014_sy_mean <- ddply(yield_data_final_2014, c("alias", "culture","treatment_name"), summarise, 
+                                       sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
+
+pander(head(yield_data_final_2014_sy_mean))
+dim(yield_data_final_2014_sy_mean)
+
+# 2015
+# calculate mean of starch yield per line and experiment
+yield_data_final_2015_sy_mean <- ddply(yield_data_final_2015, c("alias", "culture","treatment_name"), summarise, 
+                                      sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
+
+pander(head(yield_data_final_2015_sy_mean))
+dim(yield_data_final_2015_sy_mean)
+```
+
+
+## Calculate mean of starch yield per line and experiment (only control)
+```{r calculate mean of starch yield per line and experiment (only control)}
 # 2014
 # calculate mean of starch yield per line and experiment
 yield_data_final_2014_control_sy_mean <- ddply(yield_data_final_2014_control, c("alias", "culture"), summarise, 
@@ -1323,6 +1343,7 @@ boxplot(dethlingen_2015$normalized_starch_yield_per_plant ~ dethlingen_2015$trea
 dev.off()
 ```
 
+
 ## ANOVA for starch yield
 ```{r ANOVA for starch yield}
 # 2014
@@ -1427,6 +1448,7 @@ jki_shelter_2014_drym_median <- lapply(jki_shelter_2014_drym, median, na.rm=T)
 # This would lead to the emphasis of experiments with more replicates!
 ```
 
+
 ## Calculate DRYM 2015
 ```{r calculate DRYM 2015}
 # creates a LIST!
@@ -1455,6 +1477,7 @@ dethlingen_2015_drym_median <- lapply(dethlingen_2015_drym, median, na.rm=T)
 # Use median per line per experiment because of the different number of replicates in each experiment.
 # This would lead to the emphasis of experiments with more replicates!
 ```
+
 
 ## Convert DRYM list to dataframe
 ```{r convert DRYM list to dataframe}
@@ -1638,7 +1661,7 @@ summary(aov(drym_dethlingen_2015$drym ~ drym_dethlingen_2015$SP))
 ylim_values <- range(drym_experiments_2015_melt_sp_dup$drym, na.rm=T)
 # -0.227  0.429
 
-pdf("figures/valdis_boxplot_drym_per_line_sp.pdf", width = 9, height = 5)
+pdf("figures/valdis_boxplot_drym_per_line_sp_2015.pdf", width = 9, height = 5)
 par(mfrow = c(1,3))
 boxplot(drym_median_2015_sp1$drym ~ drym_median_2015_sp1$alias, las = 2, ylab = "DRYM", 
         main = "DRYM of SP1", col = cols_sp[2], ylim = ylim_values)
@@ -1802,6 +1825,31 @@ dev.off()
 ```
 
 
+# Pairs plot of DRYM
+```{r pairs plot of DRYM, warning=FALSE}
+drym_experiments_2015_t <- as.data.frame(t(drym_experiments_2015))
+#colnames(drym_experiments_2015_t) <- c("MPI FGH 2015","MPI Feld 2015", "JKI Shelter 2015", "JKI Feld 2015", "Dethlingen 2015")
+colnames(drym_experiments_2015_t) <- c("MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015","Dethlingen_2015")
+pander(head(drym_experiments_2015_t))
+
+cor.test(drym_experiments_2015_t$MPI_FGH_2015, drym_experiments_2015_t$JKI_Shelter_2015)
+cor.test(drym_experiments_2015_t$MPI_Feld_2015, drym_experiments_2015_t$JKI_Shelter_2015)
+cor.test(drym_experiments_2015_t$JKI_Shelter_2015, drym_experiments_2015_t$MPI_Feld_2015)
+cor.test(drym_experiments_2015_t$MPI_FGH_2015, drym_experiments_2015_t$MPI_Feld_2015)
+
+
+pdf("figures/valdis_pairs_drym.pdf")
+pairs(drym_experiments_2015_t, lower.panel=panel.smooth, upper.panel=panel.cor, pch=19)
+
+pairs(drym_experiments_2015_t, pch=19)
+
+pairs.annot(drym_experiments_2015_t, pch=19)
+
+ggpairs(drym_experiments_2015_t)
+
+dev.off()
+```
+
 # Correlation between starch yield and starch content
 ```{r Correlation between starch yield and starch content}
 #plot(yield_data_2015_sy$number, yield_data_2015_sc$number)
@@ -1844,6 +1892,7 @@ func_boxplot_sc(jki_feld_2014, "JKI Feld 2014")
 dev.off()
 ```
 
+
 ## Correlation between starch yield and starch content 2015
 ```{r Correlation between starch yield and starch content 2015}
 pdf("figures/valdis_2015_SY_vs_SC.pdf", width=8, height=8)
@@ -1865,31 +1914,6 @@ func_boxplot_sc(dethlingen_2015, "Dethlingen 2015")
 dev.off()
 ```
 
-
-# Pairs plot
-```{r pairs plot, warning=FALSE}
-drym_experiments_2015_t <- as.data.frame(t(drym_experiments_2015))
-#colnames(drym_experiments_2015_t) <- c("MPI FGH 2015","MPI Feld 2015", "JKI Shelter 2015", "JKI Feld 2015", "Dethlingen 2015")
-colnames(drym_experiments_2015_t) <- c("MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015","Dethlingen_2015")
-pander(head(drym_experiments_2015_t))
-
-cor.test(drym_experiments_2015_t$MPI_FGH_2015, drym_experiments_2015_t$JKI_Shelter_2015)
-cor.test(drym_experiments_2015_t$MPI_Feld_2015, drym_experiments_2015_t$JKI_Shelter_2015)
-cor.test(drym_experiments_2015_t$JKI_Shelter_2015, drym_experiments_2015_t$MPI_Feld_2015)
-cor.test(drym_experiments_2015_t$MPI_FGH_2015, drym_experiments_2015_t$MPI_Feld_2015)
-
-
-pdf("figures/valdis_pairs_drym.pdf")
-pairs(drym_experiments_2015_t, lower.panel=panel.smooth, upper.panel=panel.cor, pch=19)
-
-pairs(drym_experiments_2015_t, pch=19)
-
-pairs.annot(drym_experiments_2015_t, pch=19)
-
-ggpairs(drym_experiments_2015_t)
-
-dev.off()
-```
 
 
 # Calculate Stress Sensitivity Index (SSI)

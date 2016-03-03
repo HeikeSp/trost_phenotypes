@@ -23,8 +23,12 @@
 
 
 | Trial | Culture ID | Lines |
-| ------|-----------:|------:|
+|:------|:-----------|:------|
 | JKI Field Trial 2014 | 67518 | 195 (with EA197) |
+| JKI Shelter Trial 2014 | 68015 and 72237 | 195 (with EA197) |
+| MPI Field Trial 2014 | 67516 and 68713 | ca. 200 |
+| MPI FGH Trial 2014 | 67199 | 225 |
+
 
 
 

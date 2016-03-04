@@ -506,6 +506,40 @@ yield_data_correct_2015 <- droplevels(subset(yield_data_correct, yield_data_corr
 ```
 
 
+## Missing values of starch content (SC)
+```{r missing values of SC}
+# 2014
+# which entries have NA as value --> all of them are SC values
+yield_data_correct_2014_NA_idx <- which( is.na(yield_data_correct_2014$number) == TRUE) # 61 entries
+# plant ID of entries with NA as SC
+yield_data_correct_2014_NA_plantID <- yield_data_correct_2014$plant_id[yield_data_correct_2014_NA_idx]
+# FW of entries with NA as SC 
+yield_data_correct_2014_NA_FW <- subset(yield_data_correct_2014, 
+                                        yield_data_correct_2014$plant_id %in% yield_data_correct_2014_NA_plantID &
+                                          yield_data_correct_2014$attribute == "absolutes Frischgewicht")
+
+# plant ID of entries with NA as SC and FW > 0.1 (9 entries)
+#yield_data_correct_2014_NA_FW$plant_id [which(yield_data_correct_2014_NA_FW$number > 0.1)]
+
+# plant ID of entries with NA as SC and FW < 0.1 --> replace NA of SC by ZERO (52 entries)
+SC_NA_2014_plantID <- yield_data_correct_2014_NA_FW$plant_id [which(yield_data_correct_2014_NA_FW$number < 0.1)]
+
+# replace NA of SC by ZERO, for plants with FW < 0.1
+yield_data_correct_2014$number [which(yield_data_correct_2014$plant_id %in% SC_NA_2014_plantID
+                                      & yield_data_correct_2014$attribute == "Staerkegehalt")] <- 0
+
+##################################
+
+# 2015
+yield_data_correct_2015_NA_idx <- which( is.na(yield_data_correct_2015$number) == TRUE)
+yield_data_correct_2015_NA_plantID <- yield_data_correct_2015$plant_id[yield_data_correct_2015_NA_idx]
+# 1648847 1648474 --> FW of zero --> set SC to zero
+
+yield_data_correct_2015$number [which(yield_data_correct_2015$plant_id %in% yield_data_correct_2015_NA_plantID
+                                      & yield_data_correct_2015$attribute == "Staerkegehalt")] <- 0
+```
+
+
 # Get information about subpopulations
 ```{r get information about subpopulations}
 # load information about SP
@@ -875,6 +909,7 @@ yield_data_final_2014_stress_sp3 <- subset(yield_data_final_2014_stress, yield_d
 t.test(yield_data_final_2014_stress_sp1$normalized_starch_yield_per_plant, 
        yield_data_final_2014_stress_sp2$normalized_starch_yield_per_plant)
 ```
+
 
 ## Subsets for subpopulations 2015
 ```{r subsets for subpopulations 2015}

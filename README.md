@@ -26,6 +26,9 @@
 	* 60 were present in all 5 experiments (`common_lines_2015`)
 	* 3 additional line were present in MPI FGH, MPI field and JKI shelter, but missing in Dethlingen and JKI field (`all_lines_2015`)
 * **create correct yield data table**: calculate mean per plant_ID to get rid of replicated measurements (FW, SC) &rarr; **`yield_data_correct`**
+* **replace NA values of SC by ZERO** if FW < 0.1kg for the respective plant &rarr; this will influence the calculation of mean SY in further analysis 
+	* if FW < 0.1kg, SY will be zero (52 entries)
+	* if FW > 0.1kg and if SC is NA, SY will be NA (9 entries)
 * get information about subpopulations
 	* `sp_infos` &rarr; every line is only listed once 
 	* `sp_infos_dup` &rarr; every line that belongs to two different SPs is duplicated

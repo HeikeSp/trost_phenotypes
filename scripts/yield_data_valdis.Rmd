@@ -1400,11 +1400,11 @@ jki_feld_2014_relSY <- func_calc_relSY_valdis(jki_feld_2014, plant_lines = lines
 jki_shelter_2014_relSY <- func_calc_relSY_valdis(jki_shelter_2014, plant_lines = lines_2014)
 
 # 2015
-mpi_fgh_2015_relSY <- func_calc_relSY_valdis(mpi_fgh_2015, plant_lines = lines_2015)
-mpi_feld_2015_relSY <- func_calc_relSY_valdis(mpi_feld_2015, plant_lines = lines_2015)
-jki_feld_2015_relSY <- func_calc_relSY_valdis(jki_feld_2015, plant_lines = lines_2015)
-jki_shelter_2015_relSY <- func_calc_relSY_valdis(jki_shelter_2015, plant_lines = lines_2015)
-dethlingen_2015_relSY <- func_calc_relSY_valdis(dethlingen_2015, plant_lines = lines_2015)
+mpi_fgh_2015_relSY <- func_calc_relSY_valdis(mpi_fgh_2015, plant_lines = all_lines_2015)
+mpi_feld_2015_relSY <- func_calc_relSY_valdis(mpi_feld_2015, plant_lines = all_lines_2015)
+jki_feld_2015_relSY <- func_calc_relSY_valdis(jki_feld_2015, plant_lines = all_lines_2015)
+jki_shelter_2015_relSY <- func_calc_relSY_valdis(jki_shelter_2015, plant_lines = all_lines_2015)
+dethlingen_2015_relSY <- func_calc_relSY_valdis(dethlingen_2015, plant_lines = all_lines_2015)
 
 # median per plant line
 # 2014
@@ -1453,19 +1453,19 @@ jki_shelter_2014_drym_median <- lapply(jki_shelter_2014_drym, median, na.rm=T)
 ```{r calculate DRYM 2015}
 # creates a LIST!
 mpi_fgh_2015_drym <- func_calc_drym(mpi_fgh_2015_relSY, mpi_fgh_2015_relSY_median, 
-                                    cultivar_names = lines_2015)
+                                    cultivar_names = all_lines_2015)
 
 mpi_feld_2015_drym <- func_calc_drym(mpi_feld_2015_relSY, mpi_feld_2015_relSY_median, 
-                                     cultivar_names = lines_2015)
+                                     cultivar_names = all_lines_2015)
 
 jki_feld_2015_drym <- func_calc_drym(jki_feld_2015_relSY, jki_feld_2015_relSY_median, 
-                                     cultivar_names = lines_2015)
+                                     cultivar_names = all_lines_2015)
 
 jki_shelter_2015_drym <- func_calc_drym(jki_shelter_2015_relSY, jki_shelter_2015_relSY_median, 
-                                        cultivar_names = lines_2015)
+                                        cultivar_names = all_lines_2015)
 
 dethlingen_2015_drym <- func_calc_drym(dethlingen_2015_relSY, dethlingen_2015_relSY_median, 
-                                     cultivar_names = lines_2015)
+                                     cultivar_names = all_lines_2015)
 
 # median of DRYM per plant line (is a LIST!)
 mpi_fgh_2015_drym_median <- lapply(mpi_fgh_2015_drym, median, na.rm=T)

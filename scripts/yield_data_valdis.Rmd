@@ -682,7 +682,6 @@ dethlingen_2015_cv <- ddply(dethlingen_2015, c("alias","treatment_name"),
 
 ## Subset of CONTROL starch yield
 ```{r subset of CONTROL starch yield}
-# subsets of control plants
 # 2014
 mpi_fgh_2014_control <- subset(mpi_fgh_2014, mpi_fgh_2014$treatment_name == "control")
 mpi_feld_2014_control <- subset(mpi_feld_2014, mpi_feld_2014$treatment_name == "control")
@@ -697,6 +696,22 @@ jki_shelter_2015_control <- subset(jki_shelter_2015, jki_shelter_2015$treatment_
 dethlingen_2015_control <- subset(dethlingen_2015, dethlingen_2015$treatment_name == "control")
 ```
 
+
+## Subset of STRESS starch yield
+```{r subset of STRESS starch yield}
+# 2014
+mpi_fgh_2014_stress <- subset(mpi_fgh_2014, mpi_fgh_2014$treatment_name == "drought stress")
+mpi_feld_2014_stress <- subset(mpi_feld_2014, mpi_feld_2014$treatment_name == "drought stress")
+jki_feld_2014_stress <- subset(jki_feld_2014, jki_feld_2014$treatment_name == "drought stress")
+jki_shelter_2014_stress <- subset(jki_shelter_2014, jki_shelter_2014$treatment_name == "drought stress")
+
+# 2015
+mpi_fgh_2015_stress <- subset(mpi_fgh_2015, mpi_fgh_2015$treatment_name == "drought stress")
+mpi_feld_2015_stress <- subset(mpi_feld_2015, mpi_feld_2015$treatment_name == "drought stress")
+jki_feld_2015_stress <- subset(jki_feld_2015, jki_feld_2015$treatment_name == "drought stress")
+jki_shelter_2015_stress <- subset(jki_shelter_2015, jki_shelter_2015$treatment_name == "drought stress")
+dethlingen_2015_stress <- subset(dethlingen_2015, dethlingen_2015$treatment_name == "drought stress")
+```
 
 ## Calculate MEAN of starch yield per line (only control data)
 ```{r calculate MEAN of starch yield per line (only control data)}
@@ -723,28 +738,43 @@ dethlingen_2015_control_mean_per_line <- ddply(dethlingen_2015_control, "alias",
 
 # calculate overall median of mean values per line (only control data)
 # 2014
-mpi_fgh_2014_control_median <- median(mpi_fgh_2014_control_mean_per_line$mean, na.rm = T)
-# 117.20
-mpi_feld_2014_control_median <- median(mpi_feld_2014_control_mean_per_line$mean, na.rm = T)
-# 261.99
-jki_feld_2014_control_median <- median(jki_feld_2014_control_mean_per_line$mean, na.rm = T)
-# 324.64
-jki_shelter_2014_control_median <- median(jki_shelter_2014_control_mean_per_line$mean, na.rm = T)
-# 56.16
+mpi_fgh_2014_control_median <- median(mpi_fgh_2014_control_mean_per_line$mean, na.rm = T) # 117.20
+mpi_feld_2014_control_median <- median(mpi_feld_2014_control_mean_per_line$mean, na.rm = T) # 261.99
+jki_feld_2014_control_median <- median(jki_feld_2014_control_mean_per_line$mean, na.rm = T) # 324.64
+jki_shelter_2014_control_median <- median(jki_shelter_2014_control_mean_per_line$mean, na.rm = T) # 56.16
 
 # 2015
-mpi_fgh_2015_control_median <- median(mpi_fgh_2015_control_mean_per_line$mean)
-# 272.73
-mpi_feld_2015_control_median <- median(mpi_feld_2015_control_mean_per_line$mean)
-# 221.56
-jki_feld_2015_control_median <- median(jki_feld_2015_control_mean_per_line$mean)
-# 242.85
-jki_shelter_2015_control_median <- median(jki_shelter_2015_control_mean_per_line$mean)
-# 71.91
-dethlingen_2015_control_median <- median(dethlingen_2015_control_mean_per_line$mean)
-# 216.81
+mpi_fgh_2015_control_median <- median(mpi_fgh_2015_control_mean_per_line$mean) # 272.73
+mpi_feld_2015_control_median <- median(mpi_feld_2015_control_mean_per_line$mean) # 221.56
+jki_feld_2015_control_median <- median(jki_feld_2015_control_mean_per_line$mean) # 242.85
+jki_shelter_2015_control_median <- median(jki_shelter_2015_control_mean_per_line$mean) # 71.91
+dethlingen_2015_control_median <- median(dethlingen_2015_control_mean_per_line$mean) # 216.81
 ```
 
+
+## Calculate MEAN of starch yield per line (only stress data)
+```{r calculate MEAN of starch yield per line (only stress data)}
+# 2014
+mpi_fgh_2014_stress_mean_per_line <- ddply(mpi_fgh_2014_stress, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+mpi_feld_2014_stress_mean_per_line <- ddply(mpi_feld_2014_stress, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+jki_feld_2014_stress_mean_per_line <- ddply(jki_feld_2014_stress, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+jki_shelter_2014_stress_mean_per_line <- ddply(jki_shelter_2014_stress, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+# 2015
+mpi_fgh_2015_stress_mean_per_line <- ddply(mpi_fgh_2015_stress, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+mpi_feld_2015_stress_mean_per_line <- ddply(mpi_feld_2015_stress, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+jki_feld_2015_stress_mean_per_line <- ddply(jki_feld_2015_stress, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+jki_shelter_2015_stress_mean_per_line <- ddply(jki_shelter_2015_stress, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+dethlingen_2015_stress_mean_per_line <- ddply(dethlingen_2015_stress, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant))
+```
 
 ## Calculate MEDIAN of starch yield per line (only control data)
 ```{r calculate MEDIAN of starch yield per line (only control data)}

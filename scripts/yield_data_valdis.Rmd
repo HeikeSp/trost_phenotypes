@@ -528,6 +528,8 @@ SC_NA_2014_plantID <- yield_data_correct_2014_NA_FW$plant_id [which(yield_data_c
 yield_data_correct_2014$number [which(yield_data_correct_2014$plant_id %in% SC_NA_2014_plantID
                                       & yield_data_correct_2014$attribute == "Staerkegehalt")] <- 0
 
+length(which(is.na(yield_data_correct_2014$number)==TRUE))
+
 ##################################
 
 # 2015
@@ -537,6 +539,8 @@ yield_data_correct_2015_NA_plantID <- yield_data_correct_2015$plant_id[yield_dat
 
 yield_data_correct_2015$number [which(yield_data_correct_2015$plant_id %in% yield_data_correct_2015_NA_plantID
                                       & yield_data_correct_2015$attribute == "Staerkegehalt")] <- 0
+
+length(which(is.na(yield_data_correct_2015$number)==TRUE))
 ```
 
 
@@ -856,6 +860,26 @@ yield_data_final_2015_control_sy_mean <- ddply(yield_data_final_2015_control, c(
 
 pander(head(yield_data_final_2015_control_sy_mean))
 dim(yield_data_final_2015_control_sy_mean)
+```
+
+
+## Calculate mean of starch yield per line and experiment (only stress)
+```{r calculate mean of starch yield per line and experiment (only stress)}
+# 2014
+# calculate mean of starch yield per line and experiment
+yield_data_final_2014_stress_sy_mean <- ddply(yield_data_final_2014_stress, c("alias", "culture"), summarise, 
+                                            sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
+
+pander(head(yield_data_final_2014_stress_sy_mean))
+dim(yield_data_final_2014_stress_sy_mean)
+
+# 2015
+# calculate mean of starch yield per line and experiment
+yield_data_final_2015_stress_sy_mean <- ddply(yield_data_final_2015_stress, c("alias", "culture"), summarise, 
+                                            sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
+
+pander(head(yield_data_final_2015_stress_sy_mean))
+dim(yield_data_final_2015_stress_sy_mean)
 ```
 
 

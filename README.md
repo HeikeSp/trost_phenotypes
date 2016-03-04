@@ -49,9 +49,11 @@
 	* `starch_yield_g_per_plant`
 	* `starch_yield_g_per_plot`
 	* `normalized_starch_yield_per_plant`
-* get subset for control conditions of final data &rarr; `yield_data_final_2014_control` and `yield_data_final_2015_control`
-	* calculate mean of starch yield per line and experiment (`yield_data_final_2014_control_sy_mean`)
+* get subset for **control** conditions of final data &rarr; `yield_data_final_2014_control` and `yield_data_final_2015_control`
+	* calculate mean of starch yield per line and experiment (e.g. `yield_data_final_2014_control_sy_mean`)
 	* calculate mean of NORMALIZED starch yield per line and experiment (`yield_data_final_2014_control_norm_sy_mean`)
+* get subset for **stress** conditions of final data &rarr; `yield_data_final_2014_stress` and `yield_data_final_2015_stress`
+	* calculate mean of starch yield per line and experiment (e.g. `yield_data_final_2014_stress_sy_mean`)
 * get subsets for subpopulations
 * create explorative plots for:
 	* abolute starch yield ~ treatment

@@ -680,6 +680,33 @@ dethlingen_2015_cv <- ddply(dethlingen_2015, c("alias","treatment_name"),
 ```
 
 
+## Summarize replicates per line: Mean per line, treatment and experiment
+
+```{r summarize replicates per line}
+# 2014
+mpi_fgh_2014_mean_per_line <- ddply(mpi_fgh_2014, c("alias", "treatment"), summarise,  
+                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+mpi_feld_2014_mean_per_line <- ddply(mpi_feld_2014, c("alias", "treatment"), summarise,  
+                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+jki_shelter_2014_mean_per_line <- ddply(jki_shelter_2014, c("alias", "treatment"), summarise,  
+                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+jki_feld_2014_mean_per_line <- ddply(jki_feld_2014, c("alias", "treatment"), summarise,  
+                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+
+# 2015
+mpi_fgh_2015_mean_per_line <- ddply(mpi_fgh_2015, c("alias", "treatment"), summarise,  
+                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+mpi_feld_2015_mean_per_line <- ddply(mpi_feld_2015, c("alias", "treatment"), summarise,  
+                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+jki_shelter_2015_mean_per_line <- ddply(jki_shelter_2015, c("alias", "treatment"), summarise,  
+                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+jki_feld_2015_mean_per_line <- ddply(jki_feld_2015, c("alias", "treatment"), summarise,  
+                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+dethlingen_2015_mean_per_line <- ddply(dethlingen_2015, c("alias", "treatment"), summarise,  
+                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+```
+
+
 ## Subset of CONTROL starch yield
 ```{r subset of CONTROL starch yield}
 # 2014
@@ -712,6 +739,7 @@ jki_feld_2015_stress <- subset(jki_feld_2015, jki_feld_2015$treatment_name == "d
 jki_shelter_2015_stress <- subset(jki_shelter_2015, jki_shelter_2015$treatment_name == "drought stress")
 dethlingen_2015_stress <- subset(dethlingen_2015, dethlingen_2015$treatment_name == "drought stress")
 ```
+
 
 ## Calculate MEAN of starch yield per line (only control data)
 ```{r calculate MEAN of starch yield per line (only control data)}
@@ -775,6 +803,7 @@ jki_shelter_2015_stress_mean_per_line <- ddply(jki_shelter_2015_stress, "alias",
 dethlingen_2015_stress_mean_per_line <- ddply(dethlingen_2015_stress, "alias", summarise, 
                                             mean = mean(starch_yield_g_per_plant))
 ```
+
 
 ## Calculate MEDIAN of starch yield per line (only control data)
 ```{r calculate MEDIAN of starch yield per line (only control data)}

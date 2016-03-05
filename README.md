@@ -34,9 +34,10 @@
 	* `sp_infos_dup` &rarr; every line that belongs to two different SPs is duplicated
 * merge data from correct data from 2014 and 2015 with SP information &rarr; `yield_data_2014_sp_dup` and `yield_data_2015_sp_dup`
 * create subsets for tuber FW, SC and SY &rarr; examine histograms
-* calculate SY per experiment with `func_starch_yield_feld`
+* **calculate SY** per experiment with `func_starch_yield_feld`
 	* results in new table for each experiment (e.g. `mpi_fgh_2014`)
 	* calculate coefficient of variation (CV) of SY per line and treatment of each experiment
+	* calculate **mean of SY per line and treatment of each experiment**
 * get subset for control conditions per experiment (e.g. `mpi_fgh_2014_control`)
 	* calculate **mean** of starch yield in g per plant for each line (**only control data!**) (e.g. `mpi_fgh_2014_control_mean_per_line`)
 	* calculate overall median of mean values per line (**only control data!**) &rarr; results in one value per experiment (e.g. `mpi_fgh_2014_control_median`)

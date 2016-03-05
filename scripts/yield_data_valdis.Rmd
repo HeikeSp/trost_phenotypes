@@ -561,6 +561,14 @@ plant_lines_sp1_sp3 <- droplevels(sp_infos$alias[which(sp_infos$SP1 == "yes" & s
 
 # order table by alias (= plant line)
 sp_infos_ordered <- sp_infos[order(sp_infos$alias),]
+
+# this file contains duplicate entries for lines that belong to two SP for ALL 193 LINES FROM 2014
+sp_infos_dup_2014 <- read.table("data/valdis_subpopulations_duplicates_all_2014.txt", sep="\t", header=TRUE)
+length(levels(sp_infos_dup_2014$alias))
+
+# WITHOUT PARENTS
+sp_infos_dup_no_parents <- droplevels( subset(sp_infos_dup, !sp_infos_dup$population == "parent"))
+sp_infos_dup_2014_no_parents <- droplevels( subset(sp_infos_dup_2014, !sp_infos_dup_2014$population == "parent"))
 ```
 
 
@@ -569,7 +577,7 @@ sp_infos_ordered <- sp_infos[order(sp_infos$alias),]
 yield_data_2014_sp <- merge(yield_data_correct_2014, sp_infos, by = "alias", all = TRUE)
 dim(yield_data_2014_sp)
 
-yield_data_2014_sp_dup <- merge(yield_data_correct_2014, sp_infos_dup, by = "alias", all = TRUE)
+yield_data_2014_sp_dup <- merge(yield_data_correct_2014, sp_infos_dup_no_parents, by = "alias", all = TRUE)
 dim(yield_data_2014_sp_dup)
 ```
 
@@ -579,7 +587,7 @@ dim(yield_data_2014_sp_dup)
 yield_data_2015_sp <- merge(yield_data_correct_2015, sp_infos, by = "alias", all = TRUE)
 dim(yield_data_2015_sp)
 
-yield_data_2015_sp_dup <- merge(yield_data_correct_2015, sp_infos_dup, by = "alias", all = TRUE)
+yield_data_2015_sp_dup <- merge(yield_data_correct_2015, sp_infos_dup_no_parents, by = "alias", all = TRUE)
 dim(yield_data_2015_sp_dup)
 ```
 
@@ -956,6 +964,14 @@ yield_data_final_2015_control_norm_sy_mean <- ddply(yield_data_final_2015_contro
 
 pander(head(yield_data_final_2015_control_norm_sy_mean))
 dim(yield_data_final_2015_control_norm_sy_mean)
+
+# cast results, so that one column per experiment
+yield_data_final_2014_control_norm_sy_mean_cast <- cast(yield_data_final_2014_control_norm_sy_mean, 
+                                                   alias ~ culture, value = "norm_sy")
+
+yield_data_final_2015_control_norm_sy_mean_cast <- cast(yield_data_final_2015_control_norm_sy_mean, 
+                                                   alias ~ culture, value = "norm_sy")
+head(yield_data_final_2015_control_norm_sy_mean_cast)
 ```
 
 
@@ -1641,7 +1657,7 @@ dethlingen_2015_drym_median <- lapply(dethlingen_2015_drym, median, na.rm=T)
 ## Combine DRYM median per line per experiment 2014
 ```{r combine DRYM median per line per experiment 2014}
 drym_experiments_2014 <- rbind(as.data.frame(mpi_fgh_2014_drym_median),
-                               as.data.frame(mpi_feld_2014_drym_median),
+                               #as.data.frame(mpi_feld_2014_drym_median),
                                as.data.frame(jki_shelter_2014_drym_median),
                                as.data.frame(jki_feld_2014_drym_median))
 
@@ -1651,12 +1667,13 @@ drym_experiments_2014_melt <- melt(drym_experiments_2014)
 colnames(drym_experiments_2014_melt) <- c("alias", "drym")
 
 # add column for culture id
-drym_experiments_2014_melt$culture <- rep( sort(unique(yield_data_final_2014$culture)), length(lines_2014))
+#drym_experiments_2014_melt$culture <- rep( sort(unique(yield_data_final_2014$culture)), length(lines_2014))
+drym_experiments_2014_melt$culture <- rep( c("67199","67518","68015"), length(lines_2014))
 dim(drym_experiments_2014_melt)
 pander(head(drym_experiments_2014_melt))
 
 # merge melted drym table with SP infos
-drym_experiments_2014_melt_sp_dup <- droplevels(merge(drym_experiments_2014_melt, sp_infos_dup, by = "alias"))
+drym_experiments_2014_melt_sp_dup <- droplevels(merge(drym_experiments_2014_melt, sp_infos_dup_2014_no_parents, by = "alias"))
 dim(drym_experiments_2014_melt_sp_dup)
 pander(head(drym_experiments_2014_melt_sp_dup))
 ```
@@ -1667,8 +1684,8 @@ pander(head(drym_experiments_2014_melt_sp_dup))
 drym_experiments_2015 <- rbind(as.data.frame(mpi_fgh_2015_drym_median),     # 72247
                                as.data.frame(mpi_feld_2015_drym_median),    # 72275
                                as.data.frame(jki_shelter_2015_drym_median), # 72292
-                               as.data.frame(jki_feld_2015_drym_median),    # 72396
-                               as.data.frame(dethlingen_2015_drym_median))  # 72482
+                               as.data.frame(jki_feld_2015_drym_median))    # 72396
+                               #as.data.frame(dethlingen_2015_drym_median))  # 72482
 
 dim(drym_experiments_2015)
 
@@ -1676,12 +1693,12 @@ drym_experiments_2015_melt <- melt(drym_experiments_2015)
 colnames(drym_experiments_2015_melt) <- c("alias", "drym")
 
 # add column for culture id
-drym_experiments_2015_melt$culture <- rep( sort(unique(yield_data_final_2015$culture)), 63)
+drym_experiments_2015_melt$culture <- rep( sort(unique(yield_data_final_2015$culture))[-5], 63)
 dim(drym_experiments_2015_melt)
 pander(head(drym_experiments_2015_melt))
 
 # merge melted drym table with SP infos
-drym_experiments_2015_melt_sp_dup <- merge(drym_experiments_2015_melt, sp_infos_dup, by = "alias")
+drym_experiments_2015_melt_sp_dup <- merge(drym_experiments_2015_melt, sp_infos_dup_no_parents, by = "alias")
 dim(drym_experiments_2015_melt_sp_dup)
 pander(head(drym_experiments_2015_melt_sp_dup))
 ```
@@ -1739,12 +1756,12 @@ dev.off()
 # 2015
 pdf("figures/valdis_boxplot_drym_sp_2015.pdf", width = 5, height = 5)
 boxplot(drym_experiments_2015_melt_sp_dup$drym ~ drym_experiments_2015_melt_sp_dup$SP, 
-        main = "all experiments", col = cols_sp, ylab = "DRYM (median per line)")
-boxplot(drym_mpi_fgh_2015$drym ~ drym_mpi_fgh_2015$SP, main = "MPI FGH 2015", col = cols_sp, ylab = "DRYM (median per line)")
-boxplot(drym_mpi_feld_2015$drym ~ drym_mpi_feld_2015$SP, main = "MPI Feld 2015", col = cols_sp, ylab = "DRYM (median per line)")
-boxplot(drym_jki_shelter_2015$drym ~ drym_jki_shelter_2015$SP, main = "JKI Shelter 2015", col = cols_sp, ylab = "DRYM (median per line)")
-boxplot(drym_jki_feld_2015$drym ~ drym_jki_feld_2015$SP, main = "JKI Feld 2015", col = cols_sp, ylab = "DRYM (median per line)")
-boxplot(drym_dethlingen_2015$drym ~ drym_dethlingen_2015$SP, main = "Dethlingen 2015", col = cols_sp, ylab = "DRYM (median per line)")
+        main = "all experiments", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+boxplot(drym_mpi_fgh_2015$drym ~ drym_mpi_fgh_2015$SP, main = "MPI FGH 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+boxplot(drym_mpi_feld_2015$drym ~ drym_mpi_feld_2015$SP, main = "MPI Feld 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+boxplot(drym_jki_shelter_2015$drym ~ drym_jki_shelter_2015$SP, main = "JKI Shelter 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+boxplot(drym_jki_feld_2015$drym ~ drym_jki_feld_2015$SP, main = "JKI Feld 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+boxplot(drym_dethlingen_2015$drym ~ drym_dethlingen_2015$SP, main = "Dethlingen 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
 dev.off()
 ```
 
@@ -1842,53 +1859,81 @@ par(mfrow = c(1,1))
 
 ## Plot DRYM versus normalized SY 2014
 ```{r plot DRYM versus normalized SY 2014}
-pander(head(yield_data_final_2014_control_norm_sy_mean))
-dim(yield_data_final_2014_control_norm_sy_mean)
+# take out MPI field 2014 data (very low SI)
+yield_data_final_2014_control_norm_sy_mean2 <- subset(yield_data_final_2014_control_norm_sy_mean,
+                                                      yield_data_final_2014_control_norm_sy_mean$culture != "67516")
+pander(head(yield_data_final_2014_control_norm_sy_mean2))
+dim(yield_data_final_2014_control_norm_sy_mean2)
 
 pander(head(drym_experiments_2014_melt))
 dim(drym_experiments_2014_melt)
 
-cor.test(yield_data_final_2014_control_norm_sy_mean$norm_sy, drym_experiments_2014_melt$drym)
-# p-value < 2.2e-16
-# cor: -0.3778671
+cor.test(yield_data_final_2014_control_norm_sy_mean2$norm_sy, drym_experiments_2014_melt$drym)
+# p-value 7.705e-13
+# cor: -0.2924254
 
 dim(drym_experiments_2014_melt_sp_dup)
 pander(head(drym_experiments_2014_melt_sp_dup))
 
 # merge control_norm_SY table with SP infos
-yield_data_final_2014_control_norm_sy_mean_sp_dup <- merge(yield_data_final_2014_control_norm_sy_mean, sp_infos_dup, by = "alias")
+yield_data_final_2014_control_norm_sy_mean_sp_dup <- merge(yield_data_final_2014_control_norm_sy_mean2, sp_infos_dup_2014_no_parents, by = "alias")
 pander(head(yield_data_final_2014_control_norm_sy_mean_sp_dup))
 dim(yield_data_final_2014_control_norm_sy_mean_sp_dup)
 
 pdf("figures/valdis_control_norm_SY_vs_DRYM_2014.pdf")
-plot(yield_data_final_2014_control_norm_sy_mean$norm_sy, drym_experiments_2014_melt$drym, pch = 19,
+plot(yield_data_final_2014_control_norm_sy_mean2$norm_sy, drym_experiments_2014_melt$drym, pch = 19,
      xlab = "normalized starch yield of control", ylab = "median DRYM per line and per experiment")
 
 # equivalent (da duplizierte Punkte sich überlagern)
 # plot(yield_data_final_2014_control_norm_sy_mean_sp_dup$norm_sy, drym_experiments_2014_melt_sp_dup$drym, pch = 19,
 #      xlab = "normalized starch yield of control", ylab = "median DRYM per line and per experiment")
 
-palette(rainbow(5))
-plot(yield_data_final_2014_control_norm_sy_mean$norm_sy, drym_experiments_2014_melt$drym, pch = 19,
+palette("default")
+plot(yield_data_final_2014_control_norm_sy_mean2$norm_sy, drym_experiments_2014_melt$drym, pch = 19,
      xlab = "normalized starch yield of control", ylab = "median DRYM per line and per experiment",
      col = as.factor(drym_experiments_2014_melt$culture))
-legend("topright", fill = rainbow(5),
-       legend = c("MPI FGH 2014", "MPI Feld 2014", "JKI Feld 2014", "JKI Shelter 2014"))
+legend("topright", fill = 1:3,
+       legend = c("MPI FGH 2014", "JKI Feld 2014", "JKI Shelter 2014"))
 
 palette(cols_sp)
 plot(yield_data_final_2014_control_norm_sy_mean_sp_dup$norm_sy, drym_experiments_2014_melt_sp_dup$drym, pch = 19,
      xlab = "normalized starch yield of control", ylab = "median DRYM per line and per experiment",
-     col = drym_experiments_2014_melt_sp_dup$SP, cex = 1.2)
-legend("topright", fill = cols_sp, legend = c("parents", "SP1", "SP2", "SP3"))
+     col = drym_experiments_2014_melt_sp_dup$SP, cex = 1)
+legend("topright", fill = cols_sp_no_parents, legend = c("remaining", "SP1", "SP2", "SP3"))
 
 plot(yield_data_final_2014_control_norm_sy_mean_sp_dup$norm_sy, drym_experiments_2014_melt_sp_dup$drym, pch = 19,
      xlab = "normalized starch yield of control", ylab = "median DRYM per line and per experiment",
-     col = drym_experiments_2014_melt_sp_dup$SP, cex = 1.2)
+     col = drym_experiments_2014_melt_sp_dup$SP, cex = 1)
 text(yield_data_final_2014_control_norm_sy_mean_sp_dup$norm_sy, drym_experiments_2014_melt_sp_dup$drym,
      labels = yield_data_final_2014_control_norm_sy_mean_sp_dup$alias, cex = 0.7)
-legend("topright", fill = cols_sp, legend = c("parents", "SP1", "SP2", "SP3"))
+legend("topright", fill = cols_sp_no_parents, legend = c("remaining", "SP1", "SP2", "SP3"))
 
 dev.off()
+```
+
+
+## Plot DRYM versus normalized SY 2014 (MEAN)
+```{r Plot DRYM versus normalized SY 2014 (MEAN)}
+# mean over all three experiments 2014
+control_norm_sy_mean_2014 <- ddply(yield_data_final_2014_control_norm_sy_mean_sp_dup, 
+                              c("alias","SP"), summarise,  
+                              norm_sy = mean(norm_sy, na.rm = T))
+
+drym_mean_2014 <- ddply(drym_experiments_2014_melt_sp_dup, 
+                        c("alias","SP"), summarise,  
+                        drym = mean(drym, na.rm = T))
+
+plot(control_norm_sy_mean_2014$norm_sy, drym_mean_2014$drym, pch=19)
+palette(cols_sp)
+plot(control_norm_sy_mean_2014$norm_sy, drym_mean_2014$drym, pch=19, cex=1.3, col=drym_mean_2014$SP)
+legend("bottomleft", legend = levels(drym_mean_2014$SP), fill = cols_sp)
+abline(h=0, col="red")
+abline(v=1, col="black")
+
+
+cor.test(control_norm_sy_mean_2014$norm_sy, drym_mean_2014$drym)
+# p-value = 8.736e-09
+# R = -0.3937
 ```
 
 
@@ -1909,7 +1954,7 @@ dim(drym_experiments_2015_melt_sp_dup)
 pander(head(drym_experiments_2015_melt_sp_dup))
 
 # merge control_norm_SY table with SP infos
-yield_data_final_2015_control_norm_sy_mean_sp_dup <- merge(yield_data_final_2015_control_norm_sy_mean, sp_infos_dup, by = "alias")
+yield_data_final_2015_control_norm_sy_mean_sp_dup <- merge(yield_data_final_2015_control_norm_sy_mean, sp_infos_dup_no_parents, by = "alias")
 pander(head(yield_data_final_2015_control_norm_sy_mean_sp_dup))
 dim(yield_data_final_2015_control_norm_sy_mean_sp_dup)
 
@@ -1928,20 +1973,72 @@ plot(yield_data_final_2015_control_norm_sy_mean$norm_sy, drym_experiments_2015_m
 legend("topright", fill = rainbow(5),
        legend = c("MPI FGH 2015", "MPI Feld 2015", "JKI Shelter 2015", "JKI Feld 2015", "Dethlingen 2015"))
 
-palette(cols_sp)
+palette(cols_sp_no_parents)
 plot(yield_data_final_2015_control_norm_sy_mean_sp_dup$norm_sy, drym_experiments_2015_melt_sp_dup$drym, pch = 19,
      xlab = "normalized starch yield of control", ylab = "median DRYM per line and per experiment",
      col = drym_experiments_2015_melt_sp_dup$SP, cex = 1.2)
-legend("topright", fill = cols_sp, legend = c("parents", "SP1", "SP2", "SP3"))
+legend("topright", fill = cols_sp_no_parents, legend = c("parents", "SP1", "SP2", "SP3"))
 
 plot(yield_data_final_2015_control_norm_sy_mean_sp_dup$norm_sy, drym_experiments_2015_melt_sp_dup$drym, pch = 19,
      xlab = "normalized starch yield of control", ylab = "median DRYM per line and per experiment",
      col = drym_experiments_2015_melt_sp_dup$SP, cex = 1.2)
 text(yield_data_final_2015_control_norm_sy_mean_sp_dup$norm_sy, drym_experiments_2015_melt_sp_dup$drym,
      labels = yield_data_final_2015_control_norm_sy_mean_sp_dup$alias, cex = 0.7)
-legend("topright", fill = cols_sp, legend = c("parents", "SP1", "SP2", "SP3"))
+legend("topright", fill = cols_sp_no_parents, legend = c("parents", "SP1", "SP2", "SP3"))
 
 dev.off()
+```
+
+
+## Plot DRYM versus normalized SY 2015 (MEAN)
+```{r plot DRYM versus normalized SY 2015 (MEAN)}
+# mean over all three experiments 2015
+control_norm_sy_mean_2015 <- ddply(yield_data_final_2015_control_norm_sy_mean_sp_dup, 
+                              c("alias","SP"), summarise,  
+                              norm_sy = mean(norm_sy, na.rm = T))
+
+drym_mean_2015 <- ddply(drym_experiments_2015_melt_sp_dup, 
+                        c("alias","SP"), summarise,  
+                        drym = mean(drym, na.rm = T))
+
+plot(control_norm_sy_mean_2015$norm_sy, drym_mean_2015$drym, pch=19, cex=1.3)
+palette(cols_sp_no_parents)
+plot(control_norm_sy_mean_2015$norm_sy, drym_mean_2015$drym, pch=19, cex=1.3, col=drym_mean_2015$SP)
+legend("bottomleft", legend = levels(drym_mean_2015$SP), fill = cols_sp_no_parents)
+abline(h=0, col="red")
+abline(v=1, col="black")
+
+cor.test(control_norm_sy_mean_2015$norm_sy, drym_mean_2015$drym)
+# p-value = 0.00409
+# R = -0.3414
+```
+
+
+## Compare DRYM of 60 SP lines from 2014 and 2015
+**Not such a good idea, because DRYM is based on median over all genotypes, but 2014 contains much more genotypes than 2015**
+**Instead, use SSI which is independent of median**
+```{r compare DRYM of 60 SP lines from 2014 and 2015}
+drym_mean_2014_2015 <- merge(unique(drym_mean_2015[,-2]), 
+                             unique(drym_mean_2014[,-2]), by="alias")
+head(drym_mean_2014_2015)
+dim(drym_mean_2014_2015)
+
+colnames(drym_mean_2014_2015) <- c("alias", "drym_2015", "drym_2014")
+
+#drym_mean_2014_2015 <- merge(drym_mean_2014_2015, sp_infos_dup_no_parents, by = "alias")
+drym_mean_2014_2015 <- droplevels(merge(drym_mean_2014_2015, sp_infos, by = "alias"))
+
+cor.test(drym_mean_2014_2015$drym_2014, drym_mean_2014_2015$drym_2015)
+# p-value = 0.0001562
+# R = 0.4691352
+
+plot(drym_mean_2014_2015$drym_2014, drym_mean_2014_2015$drym_2015, pch = 19, cex = 1.3)
+#palette(cols_sp_no_parents)
+palette("default")
+plot(drym_mean_2014_2015$drym_2014, drym_mean_2014_2015$drym_2015, pch = 19, cex = 1.3, col = drym_mean_2014_2015$SP)
+legend("bottomright", legend = levels(drym_mean_2014_2015$SP), fill = 1:5)
+abline(h=0, col="black")
+abline(v=0, col="black")
 ```
 
 
@@ -2078,10 +2175,10 @@ dethlingen_2015_ssi_mean <- func_calc_ssi(dethlingen_2015, plant_lines = all_lin
 ## Plot SSI versus DRYM
 ```{r plot SSI versus DRYM}
 plot(unlist(mpi_feld_2015_ssi), unlist(mpi_feld_2015_relSY))
-plot(unlist(mpi_feld_2015_ssi_median), unlist(mpi_feld_2015_relSY_median))
+plot(unlist(mpi_feld_2015_ssi_mean), unlist(mpi_feld_2015_relSY_median))
 
 plot(unlist(mpi_feld_2015_ssi), unlist(mpi_feld_2015_drym))
-plot(unlist(mpi_feld_2015_ssi_median), unlist(mpi_feld_2015_drym_median))
+plot(unlist(mpi_feld_2015_ssi_mean), unlist(mpi_feld_2015_drym_median))
 
 plot(unlist(mpi_fgh_2015_ssi), unlist(mpi_fgh_2015_drym))
 plot(unlist(jki_shelter_2015_ssi), unlist(jki_shelter_2015_drym))
@@ -2091,6 +2188,325 @@ plot(unlist(jki_feld_2014_ssi), unlist(jki_feld_2014_drym))
 plot(unlist(jki_shelter_2014_ssi), unlist(jki_shelter_2014_drym))
 
 # negative correlation between drym and ssi --> higher ssi means more sensitive
+```
+
+
+## Combine SSI mean per line per experiment 2014
+**Leave out MPI Field 2014 because it showed a very low stress intensity!**
+```{r combine SSI mean per line per experiment 2014}
+ssi_experiments_2014 <- rbind(as.data.frame(mpi_fgh_2014_ssi_mean), #67199
+                               #as.data.frame(mpi_feld_2014_ssi_mean),
+                               as.data.frame(jki_shelter_2014_ssi_mean), #67518
+                               as.data.frame(jki_feld_2014_ssi_mean)) #68015
+
+dim(ssi_experiments_2014)
+
+ssi_experiments_2014_melt <- melt(ssi_experiments_2014)
+colnames(ssi_experiments_2014_melt) <- c("alias", "ssi")
+
+# cast results, so that one column per experiment
+ssi_experiments_2014_cast <- cast(ssi_experiments_2014_melt, alias ~ culture, value = "ssi")
+head(ssi_experiments_2014_cast)
+
+# add column for culture id
+#ssi_experiments_2014_melt$culture <- rep( sort(unique(yield_data_final_2014$culture)), length(lines_2014))
+ssi_experiments_2014_melt$culture <- rep( c("67199","67518","68015"), length(lines_2014))
+dim(ssi_experiments_2014_melt)
+pander(head(ssi_experiments_2014_melt))
+
+# merge melted ssi table with SP infos
+ssi_experiments_2014_melt_sp_dup <- droplevels(merge(ssi_experiments_2014_melt, sp_infos_dup_2014_no_parents, by = "alias"))
+dim(ssi_experiments_2014_melt_sp_dup)
+pander(head(ssi_experiments_2014_melt_sp_dup))
+```
+
+
+## Combine ssi mean per line per experiment 2015
+```{r combine ssi mean per line per experiment 2015}
+ssi_experiments_2015 <- rbind(as.data.frame(mpi_fgh_2015_ssi_mean),     # 72247
+                               as.data.frame(mpi_feld_2015_ssi_mean),    # 72275
+                               as.data.frame(jki_shelter_2015_ssi_mean), # 72292
+                               as.data.frame(jki_feld_2015_ssi_mean))    # 72396
+                               #as.data.frame(dethlingen_2015_ssi_mean))  # 72482
+
+dim(ssi_experiments_2015)
+
+ssi_experiments_2015_melt <- melt(ssi_experiments_2015)
+colnames(ssi_experiments_2015_melt) <- c("alias", "ssi")
+
+# cast results, so that one column per experiment
+ssi_experiments_2015_cast <- cast(ssi_experiments_2015_melt, alias ~ culture, value = "ssi")
+head(ssi_experiments_2015_cast)
+
+# add column for culture id
+ssi_experiments_2015_melt$culture <- rep( sort(unique(yield_data_final_2015$culture))[-5], 63)
+dim(ssi_experiments_2015_melt)
+pander(head(ssi_experiments_2015_melt))
+
+# merge melted ssi table with SP infos
+ssi_experiments_2015_melt_sp_dup <- merge(ssi_experiments_2015_melt, sp_infos_dup_no_parents, by = "alias")
+dim(ssi_experiments_2015_melt_sp_dup)
+pander(head(ssi_experiments_2015_melt_sp_dup))
+```
+
+
+## Compare SSI of subpopulations 2014
+```{r compare SSI of subpopulations 2014}
+ssi_mean_2014_sp1 <- droplevels(subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_2014_melt_sp_dup$SP == "SP1"))
+ssi_mean_2014_sp2 <- droplevels(subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_2014_melt_sp_dup$SP == "SP2"))
+ssi_mean_2014_sp3 <- droplevels(subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_2014_melt_sp_dup$SP == "SP3"))
+
+# use all lines (UNIQUE ENTRIES!) "Gesamtpopulation" = GP
+ssi_mean_2014_gp <- droplevels(subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_2014_melt_sp_dup$SP_GP == "GP"))
+ssi_mean_2014_gp <- unique(ssi_mean_2014_gp[,-8])
+
+# 130 REMAINING lines that don't belong to any SP
+ssi_mean_2014_rest <- droplevels(subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_2014_melt_sp_dup$SP == "remaining"))
+
+t.test(ssi_mean_2014_sp1$ssi, ssi_mean_2014_sp2$ssi)
+t.test(ssi_mean_2014_sp1$ssi, ssi_mean_2014_sp3$ssi)
+t.test(ssi_mean_2014_sp2$ssi, ssi_mean_2014_sp3$ssi)
+
+# ssi subsets per experiment
+ssi_mpi_fgh_2014 <- subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_2014_melt_sp_dup$culture == "67199")
+# ssi_mpi_feld_2014 <- subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_2014_melt_sp_dup$culture == "67516")
+ssi_jki_shelter_2014 <- subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_2014_melt_sp_dup$culture == "68015")
+ssi_jki_feld_2014 <- subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_2014_melt_sp_dup$culture == "67518")
+```
+
+
+## Compare SSI of subpopulations 2015
+```{r compare SSI of subpopulations 2015}
+ssi_mean_2015_sp1 <- droplevels(subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$SP == "SP1"))
+ssi_mean_2015_sp2 <- droplevels(subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$SP == "SP2"))
+ssi_mean_2015_sp3 <- droplevels(subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$SP == "SP3"))
+
+t.test(ssi_mean_2015_sp1$ssi, ssi_mean_2015_sp2$ssi)
+t.test(ssi_mean_2015_sp1$ssi, ssi_mean_2015_sp3$ssi)
+t.test(ssi_mean_2015_sp2$ssi, ssi_mean_2015_sp3$ssi)
+
+# ssi subsets per experiment
+ssi_mpi_fgh_2015 <- subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$culture == "72247")
+ssi_mpi_feld_2015 <- subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$culture == "72275")
+ssi_jki_shelter_2015 <- subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$culture == "72292")
+ssi_jki_feld_2015 <- subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$culture == "72396")
+ssi_dethlingen_2015 <- subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$culture == "72482")
+```
+
+
+## Plot SSI per experiment and SP
+```{r plot SSI per experiment and SP}
+# 2014
+pdf("figures/valdis_boxplot_ssi_sp_2014.pdf", width = 5, height = 5)
+boxplot(ssi_experiments_2014_melt_sp_dup$ssi ~ ssi_experiments_2014_melt_sp_dup$SP, 
+        main = "all experiments", col = cols_sp, ylab = "SSI (mean per line)")
+boxplot(ssi_mpi_fgh_2014$ssi ~ ssi_mpi_fgh_2014$SP, main = "MPI FGH 2014", col = cols_sp, ylab = "SSI (mean per line)")
+#boxplot(ssi_mpi_feld_2014$ssi ~ ssi_mpi_feld_2014$SP, main = "MPI Feld 2014", col = cols_sp, ylab = "SSI (mean per line)")
+boxplot(ssi_jki_shelter_2014$ssi ~ ssi_jki_shelter_2014$SP, main = "JKI Shelter 2014", col = cols_sp, ylab = "SSI (mean per line)")
+boxplot(ssi_jki_feld_2014$ssi ~ ssi_jki_feld_2014$SP, main = "JKI Feld 2014", col = cols_sp, ylab = "SSI (mean per line)")
+dev.off()
+
+# 2015
+pdf("figures/valdis_boxplot_ssi_sp_2015.pdf", width = 5, height = 5)
+boxplot(ssi_experiments_2015_melt_sp_dup$ssi ~ ssi_experiments_2015_melt_sp_dup$SP, 
+        main = "all experiments", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+boxplot(ssi_mpi_fgh_2015$ssi ~ ssi_mpi_fgh_2015$SP, main = "MPI FGH 2015", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+boxplot(ssi_mpi_feld_2015$ssi ~ ssi_mpi_feld_2015$SP, main = "MPI Feld 2015", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+boxplot(ssi_jki_shelter_2015$ssi ~ ssi_jki_shelter_2015$SP, main = "JKI Shelter 2015", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+boxplot(ssi_jki_feld_2015$ssi ~ ssi_jki_feld_2015$SP, main = "JKI Feld 2015", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+boxplot(ssi_dethlingen_2015$ssi ~ ssi_dethlingen_2015$SP, main = "Dethlingen 2015", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+dev.off()
+
+
+names_trial_2015 <- c("MPI pot 2015","MPI field 2015","JKI pot 2015","JKI field 2015")
+names_sp <- c("SP1","SP2","SP3")
+names_sp_trial_2015 <- levels(interaction(names_sp, names_trial_2015, sep = "-"))
+
+pdf("figures/valdis_boxplot_ssi_sp_2014_combined.pdf", width = 3, height = 7)
+range(ssi_experiments_2014_melt_sp_dup$ssi, na.rm = T)
+boxplot(ssi_mean_2014_gp$ssi, at=1, xlim=c(0.8, 2.7), ylim=c(-0.2, 1.9), col=cols_sp[1], ylab = "SSI")
+boxplot(ssi_mean_2014_sp1$ssi, at=1.5, add=TRUE, col=cols_sp[2])
+boxplot(ssi_mean_2014_sp2$ssi, at=2, add=TRUE, col=cols_sp[3])
+boxplot(ssi_mean_2014_sp3$ssi, at=2.5, add=TRUE, col=cols_sp[4])
+legend("bottomright", legend = c("all", names_sp), fill = cols_sp)
+#boxplot(ssi_mean_2014_rest$ssi, at=5, add=TRUE)
+dev.off()
+
+pdf("figures/valdis_boxplot_ssi_sp_2015_combined.pdf", width = 7, height = 7)
+boxplot(ssi_experiments_2015_melt_sp_dup$ssi ~ ssi_experiments_2015_melt_sp_dup$SP * 
+          ssi_experiments_2015_melt_sp_dup$culture, 
+        col = cols_sp_no_parents, 
+        #names = names_sp_trial_2015,
+        cex.axis = 1, las = 2, ylab = "SSI",
+        ylim=c(-0.2, 1.9))
+legend("topright", legend = names_sp, fill = cols_sp_no_parents)
+dev.off()
+```
+
+
+## ANOVA of SSI 2015
+```{r ANOVA of SSI 2015}
+pander(head(ssi_experiments_2015_melt_sp_dup))
+dim(ssi_experiments_2015_melt_sp_dup)
+
+ssi_anova <- func_anova_2fac_ia(ssi_experiments_2015_melt_sp_dup, "ssi", "culture", "SP", 0.05)
+ssi_anova
+
+# SP * culture
+summary(aov(ssi_experiments_2015_melt_sp_dup$ssi ~ ssi_experiments_2015_melt_sp_dup$SP * ssi_experiments_2015_melt_sp_dup$culture))
+
+# alias (genotype)
+summary(aov(ssi_experiments_2015_melt_sp_dup$ssi ~ ssi_experiments_2015_melt_sp_dup$alias))
+# alias (genotype) * culture
+summary(aov(ssi_experiments_2015_melt_sp_dup$ssi ~ ssi_experiments_2015_melt_sp_dup$alias * ssi_experiments_2015_melt_sp_dup$culture))
+
+dim(ssi_mpi_fgh_2015)
+pander(head(ssi_mpi_fgh_2015))
+
+summary(aov(ssi_mpi_fgh_2015$ssi ~ ssi_mpi_fgh_2015$SP))
+summary(aov(ssi_mpi_feld_2015$ssi ~ ssi_mpi_feld_2015$SP))
+summary(aov(ssi_jki_shelter_2015$ssi ~ ssi_jki_shelter_2015$SP))
+summary(aov(ssi_jki_feld_2015$ssi ~ ssi_jki_feld_2015$SP))
+summary(aov(ssi_dethlingen_2015$ssi ~ ssi_dethlingen_2015$SP))
+```
+
+
+## Plot SSI 2015
+```{r plot SSI 2015}
+ylim_values <- range(ssi_experiments_2015_melt_sp_dup$ssi, na.rm=T)
+# -0.227  0.429
+
+pdf("figures/valdis_boxplot_ssi_per_line_sp_2015.pdf", width = 9, height = 5)
+par(mfrow = c(1,3))
+boxplot(ssi_mean_2015_sp1$ssi ~ ssi_mean_2015_sp1$alias, las = 2, ylab = "SSI", 
+        main = "SSI of SP1", col = cols_sp[2], ylim = ylim_values)
+boxplot(ssi_mean_2015_sp2$ssi ~ ssi_mean_2015_sp2$alias, las = 2, ylab = "SSI", 
+        main = "SSI of SP2", col = cols_sp[3], ylim = ylim_values)
+boxplot(ssi_mean_2015_sp3$ssi ~ ssi_mean_2015_sp3$alias, las = 2, ylab = "SSI", 
+        main = "SSI of SP3", col = cols_sp[4], ylim = ylim_values)
+
+# order by median
+ssi_mean_2015_sp1_ordered <- with(ssi_mean_2015_sp1, reorder(alias, -ssi, median, na.rm=T))
+ssi_mean_2015_sp2_ordered <- with(ssi_mean_2015_sp2, reorder(alias, -ssi, median, na.rm=T))
+ssi_mean_2015_sp3_ordered <- with(ssi_mean_2015_sp3, reorder(alias, -ssi, median, na.rm=T))
+
+boxplot(ssi ~ ssi_mean_2015_sp1_ordered, data=ssi_mean_2015_sp1, las = 2, ylab = "SSI", 
+        main = "SSI of SP1", col = cols_sp[2], ylim = ylim_values)
+boxplot(ssi ~ ssi_mean_2015_sp2_ordered, data=ssi_mean_2015_sp2, las = 2, ylab = "SSI", 
+        main = "SSI of SP2", col = cols_sp[3], ylim = ylim_values)
+boxplot(ssi ~ ssi_mean_2015_sp3_ordered, data=ssi_mean_2015_sp3, las = 2, ylab = "SSI", 
+        main = "SSI of SP3", col = cols_sp[4], ylim = ylim_values)
+dev.off()
+
+par(mfrow = c(1,1))
+```
+
+
+## Plot SSI versus normalized SY 2014 (MEAN)
+```{r plot SSI versus normalized SY 2014 (MEAN)}
+# mean over all three experiments 2014
+control_norm_sy_mean_2014 <- ddply(yield_data_final_2014_control_norm_sy_mean_sp_dup, 
+                              c("alias","SP"), summarise,  
+                              norm_sy = mean(norm_sy, na.rm = T))
+
+ssi_mean_2014 <- ddply(ssi_experiments_2014_melt_sp_dup, 
+                        c("alias","SP"), summarise,  
+                        ssi = mean(ssi, na.rm = T))
+
+plot(control_norm_sy_mean_2014$norm_sy, ssi_mean_2014$ssi, pch=19, cex=1.3)
+palette(cols_sp)
+plot(control_norm_sy_mean_2014$norm_sy, ssi_mean_2014$ssi, pch=19, cex=1.3, col=ssi_mean_2014$SP)
+legend("bottomright", legend = levels(ssi_mean_2014$SP), fill = cols_sp)
+abline(h=1, col="red")
+abline(v=1, col="black")
+
+cor.test(control_norm_sy_mean_2014$norm_sy, ssi_mean_2014$ssi)
+# p-value = 3.095e-09
+# R = 0.4045664
+
+#####################
+
+# only 60 lines from SP
+control_norm_sy_mean_2014_sp <- subset(control_norm_sy_mean_2014, control_norm_sy_mean_2014$SP != "remaining")
+ssi_mean_2014_sp <- droplevels(subset(ssi_mean_2014, ssi_mean_2014$SP != "remaining"))
+
+plot(control_norm_sy_mean_2014_sp$norm_sy, ssi_mean_2014_sp$ssi, pch=19, cex=1.3)
+palette(cols_sp_no_parents)
+plot(control_norm_sy_mean_2014_sp$norm_sy, ssi_mean_2014_sp$ssi, pch=19, cex=1.3, col=ssi_mean_2014_sp$SP)
+legend("bottomright", legend = levels(ssi_mean_2014_sp$SP), fill = cols_sp_no_parents)
+abline(h=1, col="red")
+abline(v=1, col="black")
+
+cor.test(control_norm_sy_mean_2014_sp$norm_sy, ssi_mean_2014_sp$ssi)
+# p-value = 3.85e-10
+# R = 0.6671937
+```
+
+
+## Plot SSI versus normalized SY 2015 (MEAN)
+```{r plot SSI versus normalized SY 2015 (MEAN)}
+# mean over all three experiments 2015
+control_norm_sy_mean_2015 <- ddply(yield_data_final_2015_control_norm_sy_mean_sp_dup, 
+                              c("alias","SP"), summarise,  
+                              norm_sy = mean(norm_sy, na.rm = T))
+
+ssi_mean_2015 <- ddply(ssi_experiments_2015_melt_sp_dup, 
+                        c("alias","SP"), summarise,  
+                        ssi = mean(ssi, na.rm = T))
+
+plot(control_norm_sy_mean_2015$norm_sy, ssi_mean_2015$ssi, pch=19, cex=1.3)
+palette(cols_sp_no_parents)
+plot(control_norm_sy_mean_2015$norm_sy, ssi_mean_2015$ssi, pch=19, cex=1.3, col=drym_mean_2015$SP)
+legend("bottomleft", legend = levels(ssi_mean_2015$SP), fill = cols_sp_no_parents)
+abline(h=1, col="red")
+abline(v=1, col="black")
+
+cor.test(control_norm_sy_mean_2015$norm_sy, ssi_mean_2015$ssi)
+# p-value = 0.001821
+# R = 0.3687636
+```
+
+
+## Compare SSI of 60 SP lines from 2014 and 2015
+```{r compare SSI of 60 SP lines from 2014 and 2015}
+
+ssi_mean_2014_2015 <- merge(unique(ssi_mean_2015[,-2]), 
+                            unique(ssi_mean_2014[,-2]), by="alias")
+head(ssi_mean_2014_2015)
+dim(ssi_mean_2014_2015)
+
+colnames(ssi_mean_2014_2015) <- c("alias", "ssi_2015", "ssi_2014")
+
+#ssi_mean_2014_2015 <- merge(ssi_mean_2014_2015, sp_infos_dup_no_parents, by = "alias")
+ssi_mean_2014_2015 <- droplevels(merge(ssi_mean_2014_2015, sp_infos, by = "alias"))
+
+cor.test(ssi_mean_2014_2015$ssi_2014, ssi_mean_2014_2015$ssi_2015)
+# p-value = 5.904e-05
+# R = 0.49457
+
+plot(ssi_mean_2014_2015$ssi_2014, ssi_mean_2014_2015$ssi_2015, pch = 19, cex = 1.3)
+#palette(cols_sp_no_parents)
+palette("default")
+plot(ssi_mean_2014_2015$ssi_2014, ssi_mean_2014_2015$ssi_2015, 
+     pch = 19, cex = 1.3, col = ssi_mean_2014_2015$SP,
+     xlab = "SSI 2014", ylab = "SSI 2015")
+legend("bottomright", legend = levels(ssi_mean_2014_2015$SP), fill = 1:5)
+abline(h=1, col="black")
+abline(v=1, col="black")
+```
+
+
+## export cast SSI and normSY values
+```{r export cast SSI and normSY values}
+ssi_only_sp <- merge(ssi_experiments_2015_cast, ssi_experiments_2014_cast, by = "alias")
+head(ssi_only_sp)
+dim(ssi_only_sp)
+
+control_norm_sy_only_sp <- merge(yield_data_final_2015_control_norm_sy_mean_cast, 
+                                 yield_data_final_2014_control_norm_sy_mean_cast, by = "alias")
+
+write.table(ssi_only_sp, "output/ssi_only_sp_2014_2015.txt", sep="\t", row.names = F)
+write.table(control_norm_sy_only_sp, "output/control_norm_sy_only_sp_2014_2015.txt", sep="\t", row.names = F)
 ```
 
 

@@ -681,29 +681,28 @@ dethlingen_2015_cv <- ddply(dethlingen_2015, c("alias","treatment_name"),
 
 
 ## Summarize replicates per line: Mean per line, treatment and experiment
-
 ```{r summarize replicates per line}
 # 2014
-mpi_fgh_2014_mean_per_line <- ddply(mpi_fgh_2014, c("alias", "treatment"), summarise,  
-                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
-mpi_feld_2014_mean_per_line <- ddply(mpi_feld_2014, c("alias", "treatment"), summarise,  
-                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
-jki_shelter_2014_mean_per_line <- ddply(jki_shelter_2014, c("alias", "treatment"), summarise,  
-                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
-jki_feld_2014_mean_per_line <- ddply(jki_feld_2014, c("alias", "treatment"), summarise,  
-                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+mpi_fgh_2014_mean_per_line <- ddply(mpi_fgh_2014, c("alias", "treatment_name"), summarise,  
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+mpi_feld_2014_mean_per_line <- ddply(mpi_feld_2014, c("alias", "treatment_name"), summarise,  
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+jki_shelter_2014_mean_per_line <- ddply(jki_shelter_2014, c("alias", "treatment_name"), summarise,  
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+jki_feld_2014_mean_per_line <- ddply(jki_feld_2014, c("alias", "treatment_name"), summarise,  
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
 
 # 2015
-mpi_fgh_2015_mean_per_line <- ddply(mpi_fgh_2015, c("alias", "treatment"), summarise,  
-                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
-mpi_feld_2015_mean_per_line <- ddply(mpi_feld_2015, c("alias", "treatment"), summarise,  
-                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
-jki_shelter_2015_mean_per_line <- ddply(jki_shelter_2015, c("alias", "treatment"), summarise,  
-                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
-jki_feld_2015_mean_per_line <- ddply(jki_feld_2015, c("alias", "treatment"), summarise,  
-                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
-dethlingen_2015_mean_per_line <- ddply(dethlingen_2015, c("alias", "treatment"), summarise,  
-                                    starch_yield_kg_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+mpi_fgh_2015_mean_per_line <- ddply(mpi_fgh_2015, c("alias", "treatment_name"), summarise,  
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+mpi_feld_2015_mean_per_line <- ddply(mpi_feld_2015, c("alias", "treatment_name"), summarise,  
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+jki_shelter_2015_mean_per_line <- ddply(jki_shelter_2015, c("alias", "treatment_name"), summarise,  
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+jki_feld_2015_mean_per_line <- ddply(jki_feld_2015, c("alias", "treatment_name"), summarise,  
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+dethlingen_2015_mean_per_line <- ddply(dethlingen_2015, c("alias", "treatment_name"), summarise,  
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
 ```
 
 
@@ -1537,6 +1536,9 @@ mpi_feld_2015_relSY_median <- func_calc_relSY_median(mpi_feld_2015_relSY)
 jki_feld_2015_relSY_median <- func_calc_relSY_median(jki_feld_2015_relSY)
 jki_shelter_2015_relSY_median <- func_calc_relSY_median(jki_shelter_2015_relSY)
 dethlingen_2015_relSY_median <- func_calc_relSY_median(dethlingen_2015_relSY)
+
+# use mean per line (mean is calculated first, then relSY is calculated)
+mpi_fgh_2014_relSY_mean <- func_calc_relSY_valdis(mpi_fgh_2014_mean_per_line, plant_lines = lines_2014)
 ```
 
 
@@ -2051,11 +2053,11 @@ mpi_feld_2014_ssi <- func_calc_ssi(mpi_feld_2014, plant_lines = lines_2014, mpi_
 jki_shelter_2014_ssi <- func_calc_ssi(jki_shelter_2014, plant_lines = lines_2014, jki_shelter_2014_si)
 jki_feld_2014_ssi <- func_calc_ssi(jki_feld_2014, plant_lines = lines_2014, jki_feld_2014_si)
 
-# median per line 
-mpi_fgh_2014_ssi_median <- func_calc_ssi(mpi_fgh_2014, plant_lines = lines_2014, mpi_fgh_2014_si, keep_replicates = "no")
-mpi_feld_2014_ssi_median <- func_calc_ssi(mpi_feld_2014, plant_lines = lines_2014, mpi_feld_2014_si, keep_replicates = "no")
-jki_shelter_2014_ssi_median <- func_calc_ssi(jki_shelter_2014, plant_lines = lines_2014, jki_shelter_2014_si, keep_replicates = "no")
-jki_feld_2014_ssi_median <- func_calc_ssi(jki_feld_2014, plant_lines = lines_2014, jki_feld_2014_si, keep_replicates = "no")
+# mean per line 
+mpi_fgh_2014_ssi_mean <- func_calc_ssi(mpi_fgh_2014, plant_lines = lines_2014, mpi_fgh_2014_si, keep_replicates = "no")
+mpi_feld_2014_ssi_mean <- func_calc_ssi(mpi_feld_2014, plant_lines = lines_2014, mpi_feld_2014_si, keep_replicates = "no")
+jki_shelter_2014_ssi_mean <- func_calc_ssi(jki_shelter_2014, plant_lines = lines_2014, jki_shelter_2014_si, keep_replicates = "no")
+jki_feld_2014_ssi_mean <- func_calc_ssi(jki_feld_2014, plant_lines = lines_2014, jki_feld_2014_si, keep_replicates = "no")
 
 # 2015
 mpi_fgh_2015_ssi <- func_calc_ssi(mpi_fgh_2015, plant_lines = all_lines_2015, mpi_fgh_2015_si)
@@ -2064,12 +2066,12 @@ jki_shelter_2015_ssi <- func_calc_ssi(jki_shelter_2015, plant_lines = all_lines_
 jki_feld_2015_ssi <- func_calc_ssi(jki_feld_2015, plant_lines = all_lines_2015, jki_feld_2015_si)
 dethlingen_2015_ssi <- func_calc_ssi(dethlingen_2015, plant_lines = all_lines_2015, dethlingen_2015_si)
 
-# median per line
-mpi_fgh_2015_ssi_median <- func_calc_ssi(mpi_fgh_2015, plant_lines = all_lines_2015, mpi_fgh_2015_si, keep_replicates = "no")
-mpi_feld_2015_ssi_median <- func_calc_ssi(mpi_feld_2015, plant_lines = all_lines_2015, mpi_feld_2015_si, keep_replicates = "no")
-jki_shelter_2015_ssi_median <- func_calc_ssi(jki_shelter_2015, plant_lines = all_lines_2015, jki_shelter_2015_si, keep_replicates = "no")
-jki_feld_2015_ssi_median <- func_calc_ssi(jki_feld_2015, plant_lines = all_lines_2015, jki_feld_2015_si, keep_replicates = "no")
-dethlingen_2015_ssi_median <- func_calc_ssi(dethlingen_2015, plant_lines = all_lines_2015, dethlingen_2015_si, keep_replicates = "no")
+# mean per line
+mpi_fgh_2015_ssi_mean <- func_calc_ssi(mpi_fgh_2015, plant_lines = all_lines_2015, mpi_fgh_2015_si, keep_replicates = "no")
+mpi_feld_2015_ssi_mean <- func_calc_ssi(mpi_feld_2015, plant_lines = all_lines_2015, mpi_feld_2015_si, keep_replicates = "no")
+jki_shelter_2015_ssi_mean <- func_calc_ssi(jki_shelter_2015, plant_lines = all_lines_2015, jki_shelter_2015_si, keep_replicates = "no")
+jki_feld_2015_ssi_mean <- func_calc_ssi(jki_feld_2015, plant_lines = all_lines_2015, jki_feld_2015_si, keep_replicates = "no")
+dethlingen_2015_ssi_mean <- func_calc_ssi(dethlingen_2015, plant_lines = all_lines_2015, dethlingen_2015_si, keep_replicates = "no")
 ```
 
 

@@ -30,6 +30,8 @@ library(multcomp)
 library(extrafont)
 library(plyr)
 library(GGally)
+library(gplots)
+library(RColorBrewer)
 
 # set options for pander
 panderOptions('table.split.table', 200)
@@ -338,6 +340,9 @@ common_lines_2014 <- intersect(
 
 common_lines_2014 <- sort(common_lines_2014)
 length(common_lines_2014)
+
+common_parents_2014 <- which(common_lines_2014 %in% c("Albatros", "Euroresa", "Ramses"))
+common_lines_2014_no_par <- common_lines_2014[-common_parents_2014]
 ```
 
 ## Define desired subset of lines for further analysis
@@ -346,6 +351,9 @@ length(common_lines_2014)
 ```{r define desired subset of lines}
 lines_2014 <- sort( c(common_lines_2014, "AR21") )
 length(lines_2014)
+
+lines_parents_2014 <- which(lines_2014 %in% c("Albatros", "Euroresa", "Ramses"))
+lines_2014_no_par <- lines_2014[-lines_parents_2014]
 ```
 
 
@@ -456,8 +464,10 @@ common_lines_2015 <- intersect(
   intersect(yield_data_72396$alias, yield_data_72292$alias))
 
 common_lines_2015 <- sort(common_lines_2015)
-
 length(common_lines_2015)
+
+common_parents_2015 <- which(common_lines_2015 %in% c("Albatros", "Euroresa", "Ramses"))
+common_parents_2015_no_par <- common_lines_2015[-common_parents_2015]
 
 # all lines --> union
 all_lines_2015 <- union(
@@ -468,6 +478,9 @@ all_lines_2015 <- sort(all_lines_2015)
 
 length(all_lines_2015)
 # 3 lines more than in common lines: "AR183" "EA131" "EA174" (not present in jki field and dethlingen 2015)
+
+all_parents_2015 <- which(all_lines_2015 %in% c("Albatros", "Euroresa", "Ramses"))
+all_lines_2015_no_par <- all_lines_2015[-all_parents_2015]
 
 length(intersect(common_lines_2014, all_lines_2015))
 # 62 of 63, because AR21 is missing in MPI Field 2014
@@ -514,9 +527,9 @@ yield_data_correct_2014_NA_idx <- which( is.na(yield_data_correct_2014$number) =
 # plant ID of entries with NA as SC
 yield_data_correct_2014_NA_plantID <- yield_data_correct_2014$plant_id[yield_data_correct_2014_NA_idx]
 # FW of entries with NA as SC 
-yield_data_correct_2014_NA_FW <- subset(yield_data_correct_2014, 
+yield_data_correct_2014_NA_FW <- droplevels(subset(yield_data_correct_2014, 
                                         yield_data_correct_2014$plant_id %in% yield_data_correct_2014_NA_plantID &
-                                          yield_data_correct_2014$attribute == "absolutes Frischgewicht")
+                                          yield_data_correct_2014$attribute == "absolutes Frischgewicht"))
 
 # plant ID of entries with NA as SC and FW > 0.1 (9 entries)
 #yield_data_correct_2014_NA_FW$plant_id [which(yield_data_correct_2014_NA_FW$number > 0.1)]
@@ -530,17 +543,28 @@ yield_data_correct_2014$number [which(yield_data_correct_2014$plant_id %in% SC_N
 
 length(which(is.na(yield_data_correct_2014$number)==TRUE))
 
+
+# SOME EXCEPTIONS FOR LINES OF SPs (for 2015):
+exceptions_alias <- levels(yield_data_correct_2014_NA_FW$alias)[which(levels(yield_data_correct_2014_NA_FW$alias) %in% all_lines_2015)]
+exceptions_alias
+
+exceptions_plantID <- yield_data_correct_2014_NA_FW$plant_id[which(yield_data_correct_2014_NA_FW$alias %in% exceptions_alias)]
+exceptions_plantID
+
+yield_data_correct_2014$number [which(yield_data_correct_2014$plant_id %in% exceptions_plantID
+                                      & yield_data_correct_2014$attribute == "Staerkegehalt")] <- NA
+
 ##################################
 
 # 2015
-yield_data_correct_2015_NA_idx <- which( is.na(yield_data_correct_2015$number) == TRUE)
-yield_data_correct_2015_NA_plantID <- yield_data_correct_2015$plant_id[yield_data_correct_2015_NA_idx]
-# 1648847 1648474 --> FW of zero --> set SC to zero
-
-yield_data_correct_2015$number [which(yield_data_correct_2015$plant_id %in% yield_data_correct_2015_NA_plantID
-                                      & yield_data_correct_2015$attribute == "Staerkegehalt")] <- 0
-
-length(which(is.na(yield_data_correct_2015$number)==TRUE))
+# yield_data_correct_2015_NA_idx <- which( is.na(yield_data_correct_2015$number) == TRUE)
+# yield_data_correct_2015_NA_plantID <- yield_data_correct_2015$plant_id[yield_data_correct_2015_NA_idx]
+# # 1648847 1648474 --> FW of zero --> set SC to zero
+# 
+# yield_data_correct_2015$number [which(yield_data_correct_2015$plant_id %in% yield_data_correct_2015_NA_plantID
+#                                       & yield_data_correct_2015$attribute == "Staerkegehalt")] <- 0
+# 
+# length(which(is.na(yield_data_correct_2015$number)==TRUE))
 ```
 
 
@@ -784,6 +808,25 @@ mpi_feld_2015_control_median <- median(mpi_feld_2015_control_mean_per_line$mean)
 jki_feld_2015_control_median <- median(jki_feld_2015_control_mean_per_line$mean) # 242.85
 jki_shelter_2015_control_median <- median(jki_shelter_2015_control_mean_per_line$mean) # 71.91
 dethlingen_2015_control_median <- median(dethlingen_2015_control_mean_per_line$mean) # 216.81
+
+###############
+
+# 2014: subsest of only 60 lines of SPs (AND parents)
+mpi_fgh_2014_control_mean_per_line_sp <- subset(mpi_fgh_2014_control_mean_per_line,
+                                                mpi_fgh_2014_control_mean_per_line$alias %in% all_lines_2015)
+mpi_fgh_2014_control_median_sp <- median(mpi_fgh_2014_control_mean_per_line_sp$mean, na.rm = T) # 130.1
+
+mpi_feld_2014_control_mean_per_line_sp <- subset(mpi_feld_2014_control_mean_per_line,
+                                                mpi_feld_2014_control_mean_per_line$alias %in% all_lines_2015)
+mpi_feld_2014_control_median_sp <- median(mpi_feld_2014_control_mean_per_line_sp$mean, na.rm = T) # 263.6
+
+jki_feld_2014_control_mean_per_line_sp <- subset(jki_feld_2014_control_mean_per_line,
+                                                jki_feld_2014_control_mean_per_line$alias %in% all_lines_2015)
+jki_feld_2014_control_median_sp <- median(jki_feld_2014_control_mean_per_line_sp$mean, na.rm = T) # 305.98
+
+jki_shelter_2014_control_mean_per_line_sp <- subset(jki_shelter_2014_control_mean_per_line,
+                                                jki_shelter_2014_control_mean_per_line$alias %in% all_lines_2015)
+jki_shelter_2014_control_median_sp <- median(jki_shelter_2014_control_mean_per_line_sp$mean, na.rm = T) # 57.87
 ```
 
 
@@ -842,10 +885,10 @@ dethlingen_2015_control_median_per_line <- ddply(dethlingen_2015_control, "alias
 **use control median of each experiment to calculate ratio**
 ```{r normalize starch yield per experiment}
 # 2014
-mpi_fgh_2014$normalized_starch_yield_per_plant <- mpi_fgh_2014$starch_yield_g_per_plant / mpi_fgh_2014_control_median
-mpi_feld_2014$normalized_starch_yield_per_plant <- mpi_feld_2014$starch_yield_g_per_plant / mpi_feld_2014_control_median
-jki_feld_2014$normalized_starch_yield_per_plant <- jki_feld_2014$starch_yield_g_per_plant / jki_feld_2014_control_median
-jki_shelter_2014$normalized_starch_yield_per_plant <- jki_shelter_2014$starch_yield_g_per_plant / jki_shelter_2014_control_median
+mpi_fgh_2014$normalized_starch_yield_per_plant <- mpi_fgh_2014$starch_yield_g_per_plant / mpi_fgh_2014_control_median_sp
+mpi_feld_2014$normalized_starch_yield_per_plant <- mpi_feld_2014$starch_yield_g_per_plant / mpi_feld_2014_control_median_sp
+jki_feld_2014$normalized_starch_yield_per_plant <- jki_feld_2014$starch_yield_g_per_plant / jki_feld_2014_control_median_sp
+jki_shelter_2014$normalized_starch_yield_per_plant <- jki_shelter_2014$starch_yield_g_per_plant / jki_shelter_2014_control_median_sp
 
 # 2015
 mpi_fgh_2015$normalized_starch_yield_per_plant <- mpi_fgh_2015$starch_yield_g_per_plant / mpi_fgh_2015_control_median
@@ -869,8 +912,10 @@ dethlingen_2015$normalized_starch_yield_per_plant <- dethlingen_2015$starch_yiel
 http://www.cookbook-r.com/Manipulating_data/Summarizing_data/#filling-empty-combinations-with-zeros-1
 
 ```{r bind all processed yield data}
-yield_data_final_2014 <- rbind(mpi_fgh_2014, mpi_feld_2014, jki_feld_2014, jki_shelter_2014)
-yield_data_final_2015 <- rbind(mpi_fgh_2015, mpi_feld_2015, jki_feld_2015, jki_shelter_2015, dethlingen_2015)
+#yield_data_final_2014_all <- rbind(mpi_fgh_2014, mpi_feld_2014, jki_feld_2014, jki_shelter_2014)
+yield_data_final_2014 <- rbind(mpi_fgh_2014, jki_feld_2014, jki_shelter_2014)
+#yield_data_final_2015_all <- rbind(mpi_fgh_2015, mpi_feld_2015, jki_feld_2015, jki_shelter_2015, dethlingen_2015)
+yield_data_final_2015 <- rbind(mpi_fgh_2015, mpi_feld_2015, jki_feld_2015, jki_shelter_2015)
 
 dim(yield_data_final_2014)
 dim(yield_data_final_2015)
@@ -926,6 +971,14 @@ yield_data_final_2015_control_sy_mean <- ddply(yield_data_final_2015_control, c(
 
 pander(head(yield_data_final_2015_control_sy_mean))
 dim(yield_data_final_2015_control_sy_mean)
+
+# cast results, so that one column per experiment
+yield_data_final_2014_control_sy_mean_cast <- cast(yield_data_final_2014_control_sy_mean, 
+                                                   alias ~ culture, value = "sy")
+
+yield_data_final_2015_control_sy_mean_cast <- cast(yield_data_final_2015_control_sy_mean, 
+                                                   alias ~ culture, value = "sy")
+head(yield_data_final_2015_control_sy_mean_cast)
 ```
 
 
@@ -1024,6 +1077,7 @@ yield_data_final_2015_control_sp3 <- subset(yield_data_final_2015_control, yield
 ## SP1 vs. SP2
 t.test(yield_data_final_2015_control_sp1$normalized_starch_yield_per_plant, 
        yield_data_final_2015_control_sp2$normalized_starch_yield_per_plant)
+
 ## SP2 vs. SP3
 t.test(yield_data_final_2015_control_sp2$normalized_starch_yield_per_plant, 
        yield_data_final_2015_control_sp3$normalized_starch_yield_per_plant)
@@ -1501,6 +1555,7 @@ dethlingen_2015_anova <- func_anova_2fac_ia(dethlingen_2015, "starch_yield_g_per
 dflist_2014 <- list(mpi_feld_2014, mpi_fgh_2014, jki_shelter_2014, jki_feld_2014)
 
 all_SI_list_2014 <- lapply(dflist_2014, func_calc_stress_index_valdis)
+names(all_SI_list_2014) <- c("mpi_feld_2014", "mpi_fgh_2014", "jki_shelter_2014", "jki_feld_2014")
 all_SI_2014 <- unlist(all_SI_list_2014)
 
 mpi_fgh_2014_si <- func_calc_stress_index_valdis(mpi_fgh_2014)
@@ -1514,6 +1569,8 @@ dflist_2015 <- list(mpi_feld_2015, mpi_fgh_2015, jki_shelter_2015,
                jki_feld_2015, dethlingen_2015)
 
 all_SI_list_2015 <- lapply(dflist_2015, func_calc_stress_index_valdis)
+names(all_SI_list_2015) <- c("mpi_feld_2015", "mpi_fgh_2015", "jki_shelter_2015",
+                             "jki_feld_2015", "dethlingen_2015")
 all_SI_2015 <- unlist(all_SI_list_2015)
 
 mpi_fgh_2015_si <- func_calc_stress_index_valdis(mpi_fgh_2015)
@@ -1657,7 +1714,7 @@ dethlingen_2015_drym_median <- lapply(dethlingen_2015_drym, median, na.rm=T)
 ## Combine DRYM median per line per experiment 2014
 ```{r combine DRYM median per line per experiment 2014}
 drym_experiments_2014 <- rbind(as.data.frame(mpi_fgh_2014_drym_median),
-                               #as.data.frame(mpi_feld_2014_drym_median),
+                               #as.data.frame(mpi_feld_2014_drym_median), # without MPI feld 2014 (low SI)
                                as.data.frame(jki_shelter_2014_drym_median),
                                as.data.frame(jki_feld_2014_drym_median))
 
@@ -1685,7 +1742,7 @@ drym_experiments_2015 <- rbind(as.data.frame(mpi_fgh_2015_drym_median),     # 72
                                as.data.frame(mpi_feld_2015_drym_median),    # 72275
                                as.data.frame(jki_shelter_2015_drym_median), # 72292
                                as.data.frame(jki_feld_2015_drym_median))    # 72396
-                               #as.data.frame(dethlingen_2015_drym_median))  # 72482
+                               #as.data.frame(dethlingen_2015_drym_median))  # 72482 --> without dethlingen 2015 (low SI)
 
 dim(drym_experiments_2015)
 
@@ -1716,7 +1773,7 @@ t.test(drym_median_2014_sp2$drym, drym_median_2014_sp3$drym)
 
 # drym subsets per experiment
 drym_mpi_fgh_2014 <- subset(drym_experiments_2014_melt_sp_dup, drym_experiments_2014_melt_sp_dup$culture == "67199")
-drym_mpi_feld_2014 <- subset(drym_experiments_2014_melt_sp_dup, drym_experiments_2014_melt_sp_dup$culture == "67516")
+#drym_mpi_feld_2014 <- subset(drym_experiments_2014_melt_sp_dup, drym_experiments_2014_melt_sp_dup$culture == "67516")
 drym_jki_shelter_2014 <- subset(drym_experiments_2014_melt_sp_dup, drym_experiments_2014_melt_sp_dup$culture == "68015")
 drym_jki_feld_2014 <- subset(drym_experiments_2014_melt_sp_dup, drym_experiments_2014_melt_sp_dup$culture == "67518")
 ```
@@ -1737,7 +1794,7 @@ drym_mpi_fgh_2015 <- subset(drym_experiments_2015_melt_sp_dup, drym_experiments_
 drym_mpi_feld_2015 <- subset(drym_experiments_2015_melt_sp_dup, drym_experiments_2015_melt_sp_dup$culture == "72275")
 drym_jki_shelter_2015 <- subset(drym_experiments_2015_melt_sp_dup, drym_experiments_2015_melt_sp_dup$culture == "72292")
 drym_jki_feld_2015 <- subset(drym_experiments_2015_melt_sp_dup, drym_experiments_2015_melt_sp_dup$culture == "72396")
-drym_dethlingen_2015 <- subset(drym_experiments_2015_melt_sp_dup, drym_experiments_2015_melt_sp_dup$culture == "72482")
+#drym_dethlingen_2015 <- subset(drym_experiments_2015_melt_sp_dup, drym_experiments_2015_melt_sp_dup$culture == "72482")
 ```
 
 
@@ -1748,7 +1805,7 @@ pdf("figures/valdis_boxplot_drym_sp_2014.pdf", width = 5, height = 5)
 boxplot(drym_experiments_2014_melt_sp_dup$drym ~ drym_experiments_2014_melt_sp_dup$SP, 
         main = "all experiments", col = cols_sp, ylab = "DRYM (median per line)")
 boxplot(drym_mpi_fgh_2014$drym ~ drym_mpi_fgh_2014$SP, main = "MPI FGH 2014", col = cols_sp, ylab = "DRYM (median per line)")
-boxplot(drym_mpi_feld_2014$drym ~ drym_mpi_feld_2014$SP, main = "MPI Feld 2014", col = cols_sp, ylab = "DRYM (median per line)")
+#boxplot(drym_mpi_feld_2014$drym ~ drym_mpi_feld_2014$SP, main = "MPI Feld 2014", col = cols_sp, ylab = "DRYM (median per line)")
 boxplot(drym_jki_shelter_2014$drym ~ drym_jki_shelter_2014$SP, main = "JKI Shelter 2014", col = cols_sp, ylab = "DRYM (median per line)")
 boxplot(drym_jki_feld_2014$drym ~ drym_jki_feld_2014$SP, main = "JKI Feld 2014", col = cols_sp, ylab = "DRYM (median per line)")
 dev.off()
@@ -1761,7 +1818,7 @@ boxplot(drym_mpi_fgh_2015$drym ~ drym_mpi_fgh_2015$SP, main = "MPI FGH 2015", co
 boxplot(drym_mpi_feld_2015$drym ~ drym_mpi_feld_2015$SP, main = "MPI Feld 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
 boxplot(drym_jki_shelter_2015$drym ~ drym_jki_shelter_2015$SP, main = "JKI Shelter 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
 boxplot(drym_jki_feld_2015$drym ~ drym_jki_feld_2015$SP, main = "JKI Feld 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
-boxplot(drym_dethlingen_2015$drym ~ drym_dethlingen_2015$SP, main = "Dethlingen 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+#boxplot(drym_dethlingen_2015$drym ~ drym_dethlingen_2015$SP, main = "Dethlingen 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
 dev.off()
 ```
 
@@ -1789,7 +1846,7 @@ summary(aov(drym_mpi_fgh_2015$drym ~ drym_mpi_fgh_2015$SP))
 summary(aov(drym_mpi_feld_2015$drym ~ drym_mpi_feld_2015$SP))
 summary(aov(drym_jki_shelter_2015$drym ~ drym_jki_shelter_2015$SP))
 summary(aov(drym_jki_feld_2015$drym ~ drym_jki_feld_2015$SP))
-summary(aov(drym_dethlingen_2015$drym ~ drym_dethlingen_2015$SP))
+#summary(aov(drym_dethlingen_2015$drym ~ drym_dethlingen_2015$SP))
 ```
 
 
@@ -2046,7 +2103,7 @@ abline(v=0, col="black")
 ```{r pairs plot of DRYM, warning=FALSE}
 drym_experiments_2015_t <- as.data.frame(t(drym_experiments_2015))
 #colnames(drym_experiments_2015_t) <- c("MPI FGH 2015","MPI Feld 2015", "JKI Shelter 2015", "JKI Feld 2015", "Dethlingen 2015")
-colnames(drym_experiments_2015_t) <- c("MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015","Dethlingen_2015")
+colnames(drym_experiments_2015_t) <- c("MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015")
 pander(head(drym_experiments_2015_t))
 
 cor.test(drym_experiments_2015_t$MPI_FGH_2015, drym_experiments_2015_t$JKI_Shelter_2015)
@@ -2196,23 +2253,23 @@ plot(unlist(jki_shelter_2014_ssi), unlist(jki_shelter_2014_drym))
 ```{r combine SSI mean per line per experiment 2014}
 ssi_experiments_2014 <- rbind(as.data.frame(mpi_fgh_2014_ssi_mean), #67199
                                #as.data.frame(mpi_feld_2014_ssi_mean),
-                               as.data.frame(jki_shelter_2014_ssi_mean), #67518
-                               as.data.frame(jki_feld_2014_ssi_mean)) #68015
+                               as.data.frame(jki_shelter_2014_ssi_mean), #68015
+                               as.data.frame(jki_feld_2014_ssi_mean)) #67518
 
 dim(ssi_experiments_2014)
 
 ssi_experiments_2014_melt <- melt(ssi_experiments_2014)
 colnames(ssi_experiments_2014_melt) <- c("alias", "ssi")
 
+# add column for culture id
+#ssi_experiments_2014_melt$culture <- rep( sort(unique(yield_data_final_2014$culture)), length(lines_2014))
+ssi_experiments_2014_melt$culture <- rep( c("67199","68015","67518"), length(lines_2014))
+dim(ssi_experiments_2014_melt)
+pander(head(ssi_experiments_2014_melt))
+
 # cast results, so that one column per experiment
 ssi_experiments_2014_cast <- cast(ssi_experiments_2014_melt, alias ~ culture, value = "ssi")
 head(ssi_experiments_2014_cast)
-
-# add column for culture id
-#ssi_experiments_2014_melt$culture <- rep( sort(unique(yield_data_final_2014$culture)), length(lines_2014))
-ssi_experiments_2014_melt$culture <- rep( c("67199","67518","68015"), length(lines_2014))
-dim(ssi_experiments_2014_melt)
-pander(head(ssi_experiments_2014_melt))
 
 # merge melted ssi table with SP infos
 ssi_experiments_2014_melt_sp_dup <- droplevels(merge(ssi_experiments_2014_melt, sp_infos_dup_2014_no_parents, by = "alias"))
@@ -2234,14 +2291,14 @@ dim(ssi_experiments_2015)
 ssi_experiments_2015_melt <- melt(ssi_experiments_2015)
 colnames(ssi_experiments_2015_melt) <- c("alias", "ssi")
 
-# cast results, so that one column per experiment
-ssi_experiments_2015_cast <- cast(ssi_experiments_2015_melt, alias ~ culture, value = "ssi")
-head(ssi_experiments_2015_cast)
-
 # add column for culture id
 ssi_experiments_2015_melt$culture <- rep( sort(unique(yield_data_final_2015$culture))[-5], 63)
 dim(ssi_experiments_2015_melt)
 pander(head(ssi_experiments_2015_melt))
+
+# cast results, so that one column per experiment
+ssi_experiments_2015_cast <- cast(ssi_experiments_2015_melt, alias ~ culture, value = "ssi")
+head(ssi_experiments_2015_cast)
 
 # merge melted ssi table with SP infos
 ssi_experiments_2015_melt_sp_dup <- merge(ssi_experiments_2015_melt, sp_infos_dup_no_parents, by = "alias")
@@ -2272,6 +2329,7 @@ ssi_mpi_fgh_2014 <- subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_201
 # ssi_mpi_feld_2014 <- subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_2014_melt_sp_dup$culture == "67516")
 ssi_jki_shelter_2014 <- subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_2014_melt_sp_dup$culture == "68015")
 ssi_jki_feld_2014 <- subset(ssi_experiments_2014_melt_sp_dup, ssi_experiments_2014_melt_sp_dup$culture == "67518")
+head(ssi_jki_feld_2014)
 ```
 
 
@@ -2290,7 +2348,7 @@ ssi_mpi_fgh_2015 <- subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_201
 ssi_mpi_feld_2015 <- subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$culture == "72275")
 ssi_jki_shelter_2015 <- subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$culture == "72292")
 ssi_jki_feld_2015 <- subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$culture == "72396")
-ssi_dethlingen_2015 <- subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$culture == "72482")
+# ssi_dethlingen_2015 <- subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_2015_melt_sp_dup$culture == "72482")
 ```
 
 
@@ -2314,7 +2372,7 @@ boxplot(ssi_mpi_fgh_2015$ssi ~ ssi_mpi_fgh_2015$SP, main = "MPI FGH 2015", col =
 boxplot(ssi_mpi_feld_2015$ssi ~ ssi_mpi_feld_2015$SP, main = "MPI Feld 2015", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
 boxplot(ssi_jki_shelter_2015$ssi ~ ssi_jki_shelter_2015$SP, main = "JKI Shelter 2015", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
 boxplot(ssi_jki_feld_2015$ssi ~ ssi_jki_feld_2015$SP, main = "JKI Feld 2015", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
-boxplot(ssi_dethlingen_2015$ssi ~ ssi_dethlingen_2015$SP, main = "Dethlingen 2015", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+#boxplot(ssi_dethlingen_2015$ssi ~ ssi_dethlingen_2015$SP, main = "Dethlingen 2015", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
 dev.off()
 
 
@@ -2367,14 +2425,14 @@ summary(aov(ssi_mpi_fgh_2015$ssi ~ ssi_mpi_fgh_2015$SP))
 summary(aov(ssi_mpi_feld_2015$ssi ~ ssi_mpi_feld_2015$SP))
 summary(aov(ssi_jki_shelter_2015$ssi ~ ssi_jki_shelter_2015$SP))
 summary(aov(ssi_jki_feld_2015$ssi ~ ssi_jki_feld_2015$SP))
-summary(aov(ssi_dethlingen_2015$ssi ~ ssi_dethlingen_2015$SP))
+#summary(aov(ssi_dethlingen_2015$ssi ~ ssi_dethlingen_2015$SP))
 ```
 
 
 ## Plot SSI 2015
 ```{r plot SSI 2015}
 ylim_values <- range(ssi_experiments_2015_melt_sp_dup$ssi, na.rm=T)
-# -0.227  0.429
+# 0.438   1.436
 
 pdf("figures/valdis_boxplot_ssi_per_line_sp_2015.pdf", width = 9, height = 5)
 par(mfrow = c(1,3))
@@ -2499,14 +2557,474 @@ abline(v=1, col="black")
 ## export cast SSI and normSY values
 ```{r export cast SSI and normSY values}
 ssi_only_sp <- merge(ssi_experiments_2015_cast, ssi_experiments_2014_cast, by = "alias")
+
+colnames(ssi_only_sp)[2:8] <- c("MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015","MPI_FGH_2014","JKI_Feld_2014","JKI_Shelter_2014")
+rownames(ssi_only_sp) <- ssi_only_sp$alias
+ssi_only_sp <- ssi_only_sp[,-1]
 head(ssi_only_sp)
 dim(ssi_only_sp)
+
 
 control_norm_sy_only_sp <- merge(yield_data_final_2015_control_norm_sy_mean_cast, 
                                  yield_data_final_2014_control_norm_sy_mean_cast, by = "alias")
 
-write.table(ssi_only_sp, "output/ssi_only_sp_2014_2015.txt", sep="\t", row.names = F)
-write.table(control_norm_sy_only_sp, "output/control_norm_sy_only_sp_2014_2015.txt", sep="\t", row.names = F)
+colnames(control_norm_sy_only_sp)[2:8] <- c("MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015","MPI_FGH_2014","JKI_Feld_2014","JKI_Shelter_2014")
+rownames(control_norm_sy_only_sp) <- control_norm_sy_only_sp$alias
+control_norm_sy_only_sp <- control_norm_sy_only_sp[,-1]
+head(control_norm_sy_only_sp)
+
+
+
+control_sy_only_sp <- merge(yield_data_final_2015_control_sy_mean_cast, 
+                            yield_data_final_2014_control_sy_mean_cast, by = "alias")
+
+colnames(control_sy_only_sp)[2:8] <- c("MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015","MPI_FGH_2014","JKI_Feld_2014","JKI_Shelter_2014")
+rownames(control_sy_only_sp) <- control_sy_only_sp$alias
+control_sy_only_sp <- control_sy_only_sp[,-1]
+head(control_sy_only_sp)
+
+
+write.table(ssi_only_sp, "output/ssi_only_sp_2014_2015.txt", sep="\t", row.names = T)
+write.table(control_norm_sy_only_sp, "output/control_norm_sy_only_sp_2014_2015.txt", sep="\t", row.names = T)
+write.table(control_sy_only_sp, "output/control_sy_only_sp_2014_2015.txt", sep="\t", row.names = T)
+```
+
+
+## Plot SSI versus normalized SY PER EXPERIMENT
+```{r plot SSI versus normalized SY PER EXPERIMENT}
+pdf("figures/valdis_ssi_vs_norm_sy_per_experiment.pdf", width=10, height = 5)
+par(mfrow=c(2,4))
+# MPI FGH 2014
+plot(control_norm_sy_only_sp$MPI_FGH_2014, ssi_only_sp$MPI_FGH_2014, 
+     pch=19, cex=1.3, xlab = "norm SY (control)", ylab = "SSI", main = "MPI FGH 2014")
+# JKI field 2014 --> no samples
+plot(control_norm_sy_only_sp$JKI_Feld_2014, ssi_only_sp$JKI_Feld_2014, 
+     pch=19, cex=1.3, xlab = "norm SY (control)", ylab = "SSI", main = "JKI field 2014") 
+# JKI pot 2014
+plot(control_norm_sy_only_sp$JKI_Shelter_2014, ssi_only_sp$JKI_Shelter_2014, 
+     pch=19, cex=1.3, xlab = "norm SY (control)", ylab = "SSI", main = "JKI pot 2014")
+
+# MPI field 2015
+plot(control_norm_sy_only_sp$MPI_Feld_2015, ssi_only_sp$MPI_Feld_2015, 
+     pch=19, cex=1.3, xlab = "norm SY (control)", ylab = "SSI", main = "MPI field 2015") 
+# MPI FGH 2015
+plot(control_norm_sy_only_sp$MPI_FGH_2015, ssi_only_sp$MPI_FGH_2015, 
+     pch=19, cex=1.3, xlab = "norm SY (control)", ylab = "SSI", main = "MPI FGH 2015") 
+# JKI field 2015
+plot(control_norm_sy_only_sp$JKI_Feld_2015, ssi_only_sp$JKI_Feld_2015, 
+     pch=19, cex=1.3, xlab = "norm SY (control)", ylab = "SSI", main = "JKI field 2015") 
+# JKI pot 2015
+plot(control_norm_sy_only_sp$JKI_Shelter_2015, ssi_only_sp$JKI_Shelter_2015, 
+     pch=19, cex=1.3, xlab = "norm SY (control)", ylab = "SSI", main = "JKI pot 2015") 
+
+dev.off()
+```
+
+
+## Plot SSI versus SY PER EXPERIMENT
+```{r plot SSI versus SY PER EXPERIMENT}
+pdf("figures/valdis_ssi_vs_sy_per_experiment.pdf", width=10, height = 5)
+par(mfrow=c(2,4))
+# MPI FGH 2014
+plot(control_sy_only_sp$MPI_FGH_2014, ssi_only_sp$MPI_FGH_2014, 
+     pch=19, cex=1.3, xlab = "SY (control)", ylab = "SSI", main = "MPI FGH 2014")
+# JKI field 2014 --> no samples
+plot(control_sy_only_sp$JKI_Feld_2014, ssi_only_sp$JKI_Feld_2014, 
+     pch=19, cex=1.3, xlab = "SY (control)", ylab = "SSI", main = "JKI field 2014") 
+# JKI pot 2014
+plot(control_sy_only_sp$JKI_Shelter_2014, ssi_only_sp$JKI_Shelter_2014, 
+     pch=19, cex=1.3, xlab = "SY (control)", ylab = "SSI", main = "JKI pot 2014")
+
+# MPI field 2015
+plot(control_sy_only_sp$MPI_Feld_2015, ssi_only_sp$MPI_Feld_2015, 
+     pch=19, cex=1.3, xlab = "SY (control)", ylab = "SSI", main = "MPI field 2015") 
+# MPI FGH 2015
+plot(control_sy_only_sp$MPI_FGH_2015, ssi_only_sp$MPI_FGH_2015, 
+     pch=19, cex=1.3, xlab = "SY (control)", ylab = "SSI", main = "MPI FGH 2015") 
+# JKI field 2015
+plot(control_sy_only_sp$JKI_Feld_2015, ssi_only_sp$JKI_Feld_2015, 
+     pch=19, cex=1.3, xlab = "SY (control)", ylab = "SSI", main = "JKI field 2015") 
+# JKI pot 2015
+plot(control_sy_only_sp$JKI_Shelter_2015, ssi_only_sp$JKI_Shelter_2015, 
+     pch=19, cex=1.3, xlab = "SY (control)", ylab = "SSI", main = "JKI pot 2015") 
+dev.off()
+```
+
+
+# Pairs plot of norm SY
+```{r pairs plot of norm SY, warning=FALSE}
+cor.test(control_norm_sy_only_sp$MPI_FGH_2015, control_norm_sy_only_sp$JKI_Shelter_2015)
+cor.test(control_norm_sy_only_sp$MPI_Feld_2015, control_norm_sy_only_sp$JKI_Shelter_2015)
+cor.test(control_norm_sy_only_sp$JKI_Shelter_2015, control_norm_sy_only_sp$MPI_Feld_2015)
+cor.test(control_norm_sy_only_sp$MPI_FGH_2015, control_norm_sy_only_sp$MPI_Feld_2015)
+
+cor.test(control_norm_sy_only_sp$JKI_Feld_2014, control_norm_sy_only_sp$JKI_Feld_2015)
+cor.test(control_norm_sy_only_sp$JKI_Shelter_2014, control_norm_sy_only_sp$JKI_Shelter_2015)
+
+
+pdf("figures/valdis_pairs_control_norm_sy.pdf", width=8, height=8)
+pairs(control_norm_sy_only_sp[,2:8], lower.panel=panel.smooth, upper.panel=panel.cor, pch=19, na.action=na.omit)
+
+pairs(control_norm_sy_only_sp[,2:8], pch=19)
+
+pairs.annot(control_norm_sy_only_sp[,2:8], pch=19)
+
+ggpairs(control_norm_sy_only_sp[,2:8])
+
+dev.off()
+```
+
+
+# Pairs plot of SSI
+```{r pairs plot of SSI, warning=FALSE}
+cor.test(ssi_only_sp$MPI_FGH_2015, ssi_only_sp$JKI_Shelter_2015)
+cor.test(ssi_only_sp$MPI_Feld_2015, ssi_only_sp$JKI_Shelter_2015)
+cor.test(ssi_only_sp$JKI_Shelter_2015, ssi_only_sp$MPI_Feld_2015)
+cor.test(ssi_only_sp$MPI_FGH_2015, ssi_only_sp$MPI_Feld_2015)
+
+
+pdf("figures/valdis_pairs_ssi.pdf", width=8, height=8)
+pairs(ssi_only_sp[,2:8], lower.panel=panel.smooth, upper.panel=panel.cor, pch=19)
+
+pairs(ssi_only_sp[,2:8], pch=19)
+
+pairs.annot(ssi_only_sp[,2:8], pch=19)
+
+ggpairs(ssi_only_sp[,2:8])
+
+dev.off()
+```
+
+
+## Get intermediate tolerance group
+*50% of the values: above 1st Quartile (25%) and below 3rd Quartile (75%)
+
+```{r get intermediate tolerance group}
+# SSI table without parents
+ssi_only_sp_par_idx <- which(rownames(ssi_only_sp) %in% c("Albatros", "Euroresa", "Ramses"))
+ssi_only_sp_no_par <- ssi_only_sp[-ssi_only_sp_par_idx,]
+dim(ssi_only_sp_no_par)
+
+# calculate 1st and 3rd quartile for all experiments --> 50% in between
+# lower_border <- 0.25
+# upper_border <- 0.75
+
+# calculate 20% and 80% percentile for all experiments --> 60% in between
+# lower_border <- 0.2
+# upper_border <- 0.8
+
+# calculate 15% and 85% percentile for all experiments --> 70% in between
+lower_border <- 0.15
+upper_border <- 0.85
+
+# calculate 10% and 90% percentile for all experiments --> 80% in between
+# lower_border <- 0.1
+# upper_border <- 0.9
+
+ssi_intermediate <- apply(ssi_only_sp_no_par, 2, function(x) quantile(x, c(lower_border, upper_border), na.rm=T))
+dim(ssi_intermediate)
+
+ssi_intermediate_lines <- list()
+for (i in 1:7){
+  intermediate_idx <- which(ssi_only_sp_no_par[,i] > ssi_intermediate[1,i] & ssi_only_sp_no_par[,i] < ssi_intermediate[2,i])
+  ssi_intermediate_lines[[i]] <- rownames(ssi_only_sp_no_par)[intermediate_idx]
+}
+names(ssi_intermediate_lines) <- colnames(ssi_only_sp_no_par)
+
+venn_ssi_1 <- func_venn_diagram_3(res1 = ssi_intermediate_lines$MPI_FGH_2014,
+                                res2 = ssi_intermediate_lines$MPI_Feld_2015,
+                                res3 = ssi_intermediate_lines$JKI_Shelter_2015,
+                                lab1 = "MPI FGH 2014",
+                                lab2 = "MPI Field 2015",
+                                lab3 = "JKI Pot 2015")
+
+venn_ssi_2 <- func_venn_diagram_3(res1 = ssi_intermediate_lines$MPI_FGH_2014,
+                                res2 = ssi_intermediate_lines$MPI_Feld_2015,
+                                res3 = ssi_intermediate_lines$JKI_Shelter_2014,
+                                lab1 = "MPI FGH 2014",
+                                lab2 = "MPI Field 2015",
+                                lab3 = "JKI Pot 2014")
+
+venn_ssi_3 <- func_venn_diagram_3(res1 = ssi_intermediate_lines$JKI_Shelter_2014,
+                                res2 = ssi_intermediate_lines$MPI_Feld_2015,
+                                res3 = ssi_intermediate_lines$JKI_Shelter_2015,
+                                lab1 = "JKI Pot 2014",
+                                lab2 = "MPI Field 2015",
+                                lab3 = "JKI Pot 2015")
+
+venn_ssi_4 <- func_venn_diagram_3(res1 = ssi_intermediate_lines$MPI_FGH_2014,
+                                res2 = ssi_intermediate_lines$JKI_Shelter_2014,
+                                res3 = ssi_intermediate_lines$JKI_Shelter_2015,
+                                lab1 = "MPI FGH 2014",
+                                lab2 = "JKI Pot 2014",
+                                lab3 = "JKI Pot 2015")
+
+venn_ssi <- func_venn_diagram_4(res1 = ssi_intermediate_lines$JKI_Shelter_2014,
+                                 res2 = ssi_intermediate_lines$MPI_Feld_2015,
+                                 res3 = ssi_intermediate_lines$JKI_Shelter_2015,
+                                 res4 = ssi_intermediate_lines$MPI_FGH_2014,
+                                 lab1 = "JKI Pot 2014",
+                                 lab2 = "MPI Field 2015",
+                                 lab3 = "JKI Pot 2015",
+                                 lab4 = "MPI FGH 2014")
+
+pdf("figures/venn_ssi_intermediate_overlap.pdf")
+plot.new()
+grid.draw(venn_ssi_1)
+plot.new()
+grid.draw(venn_ssi_2)
+plot.new()
+grid.draw(venn_ssi_3)
+plot.new()
+grid.draw(venn_ssi_4)
+plot.new()
+grid.draw(venn_ssi)
+dev.off()
+```
+
+
+```{r }
+l1 <- ssi_intermediate_lines$JKI_Shelter_2014
+l2 <- ssi_intermediate_lines$JKI_Shelter_2015
+l3 <- ssi_intermediate_lines$MPI_FGH_2014
+l4 <- ssi_intermediate_lines$MPI_Feld_2015
+
+# get intersection of triple combinations
+r1 <- Reduce(intersect, list(l1, l2, l3))
+r2 <- Reduce(intersect, list(l1, l2, l4))
+r3 <- Reduce(intersect, list(l1, l3, l4))
+r4 <- Reduce(intersect, list(l2, l3, l4))
+
+# union of triple intersections
+count_overlap <- Reduce(union, list(r1, r2, r3, r4))
+```
+
+
+## Get High Yield / Low Yield (HY/LY) group
+*High Yield: > 60% of the values for control yield OR > 50%
+*Low Yield: < 40% of the values for control yield OR < 50%
+
+```{r get high yield and low yield group}
+
+# only lines that have intermediate SSI
+count_overlap_idx <- which(rownames(control_sy_only_sp) %in% count_overlap)
+
+# SSI table without parents
+#control_sy_only_sp_par_idx <- which(rownames(control_sy_only_sp) %in% c("Albatros", "Euroresa", "Ramses"))
+control_sy_only_sp_no_par <- control_sy_only_sp[count_overlap_idx,]
+dim(control_sy_only_sp_no_par)
+
+# calculate 40% and 60% quartile for all experiments
+control_sy_border <- apply(control_sy_only_sp_no_par, 2, function(x) quantile(x, c(0.4, 0.5, 0.6), na.rm=T))
+dim(control_sy_border)
+
+control_ly <- list()
+control_hy <- list()
+
+for (i in 1:7){
+#   ly_idx <- which(control_sy_only_sp_no_par[,i] < control_sy_border[2,i])
+#   hy_idx <- which(control_sy_only_sp_no_par[,i] > control_sy_border[2,i])
+  
+  ly_idx <- which(control_sy_only_sp_no_par[,i] < control_sy_border[1,i])
+  hy_idx <- which(control_sy_only_sp_no_par[,i] > control_sy_border[3,i])
+  
+  control_ly[[i]] <- rownames(control_sy_only_sp_no_par)[ly_idx]
+  control_hy[[i]] <- rownames(control_sy_only_sp_no_par)[hy_idx]
+  
+}
+names(control_hy) <- names(control_ly) <- colnames(control_sy_only_sp_no_par)
+
+venn_hy <- func_venn_diagram_4(res1 = control_hy$JKI_Shelter_2014,
+                                 res2 = control_hy$MPI_Feld_2015,
+                                 res3 = control_hy$JKI_Shelter_2015,
+                                 res4 = control_hy$MPI_FGH_2014,
+                                 lab1 = "JKI Pot 2014",
+                                 lab2 = "MPI Field 2015",
+                                 lab3 = "JKI Pot 2015",
+                                 lab4 = "MPI FGH 2014")
+
+venn_ly <- func_venn_diagram_4(res1 = control_ly$JKI_Shelter_2014,
+                                 res2 = control_ly$MPI_Feld_2015,
+                                 res3 = control_ly$JKI_Shelter_2015,
+                                 res4 = control_ly$MPI_FGH_2014,
+                                 lab1 = "JKI Pot 2014",
+                                 lab2 = "MPI Field 2015",
+                                 lab3 = "JKI Pot 2015",
+                                 lab4 = "MPI FGH 2014")
+
+
+pdf("figures/venn_hy_overlap.pdf")
+plot.new()
+title("high yield")
+grid.draw(venn_hy)
+dev.off()
+
+pdf("figures/venn_ly_overlap.pdf")
+plot.new()
+title("low yield")
+grid.draw(venn_ly)
+dev.off()
+```
+
+# Count replicates per experiment, treatment and alias
+```{r coutn replicates}
+# remove duplicates due to double SP info
+yield_data_final_2014_unique <- yield_data_final_2014[-which(duplicated(yield_data_final_2014[,-12])),]
+yield_data_final_2015_unique <- yield_data_final_2015[-which(duplicated(yield_data_final_2015[,-12])),]
+
+# count replicates per experiment, treatment and alias 
+count_2014 <- ddply(yield_data_final_2014_unique, c("culture", "alias", "treatment_name"), summarise,
+                                            count = length(starch_yield_g_per_plant))
+
+count_2015 <- ddply(yield_data_final_2015_unique, c("culture", "alias", "treatment_name"), summarise,
+                                            count = length(starch_yield_g_per_plant))
+# combine data from 2014 and 2015
+count_2014_2015 <- rbind(count_2014, count_2015)
+
+# use only common set of lines (from 2015)
+count_2014_2015 <- droplevels(subset(count_2014_2015, 
+                                     count_2014_2015$alias %in% all_lines_2015)) # 63 = lines of SP + parents
+
+dim(count_2014_2015)
+
+# reshape table to have one column per experiment/treatment, rows are alias
+count_2014_2015_cast <- cast(count_2014_2015, alias ~ culture + treatment_name, value = "count")
+rownames(count_2014_2015_cast) <- count_2014_2015_cast[,1]
+count_2014_2015_cast <- count_2014_2015_cast[,-1]
+
+count_2014_2015_cast_t <- t(as.matrix(count_2014_2015_cast))
+
+pdf("figures/heatmap_valdis_yield_data_replicates.pdf", width = 11, height = 6)
+heatmap.2(count_2014_2015_cast_t, 
+          trace = "none", Rowv = F, dendrogram = "column",
+          col = colorRampPalette(brewer.pal(8,"Spectral"))(8),
+          labCol = rownames(count_2014_2015_cast),
+          labRow = colnames(count_2014_2015_cast))
+
+heatmap.2(count_2014_2015_cast_t, 
+          trace = "none", Colv = F, Rowv = F, dendrogram = "none",
+          col = colorRampPalette(brewer.pal(8,"Spectral"))(8),
+          labCol = rownames(count_2014_2015_cast),
+          labRow = colnames(count_2014_2015_cast))
+dev.off()
+```
+
+
+
+# Intermediate mean SSI over 7 experiments
+```{r intermediate mean SSI over 7 experiments}
+# define SE - standard error of the mean
+se <- function(x) sqrt(var(x, na.rm = T)/length(x))
+
+# SSI table without parents
+ssi_only_sp_mean <- apply(ssi_only_sp, 1, mean, na.rm=T)
+ssi_only_sp_median <- apply(ssi_only_sp, 1, median, na.rm=T)
+ssi_only_sp_sd <- apply(ssi_only_sp, 1, sd, na.rm=T)
+ssi_only_sp_se <- apply(ssi_only_sp, 1, se)
+
+# control norm SY --> table without parents
+# control_norm_sy_only_sp_par_idx <- which(rownames(control_norm_sy_only_sp) %in% c("Albatros", "Euroresa", "Ramses"))
+# control_norm_sy_only_sp_no_par <- control_norm_sy_only_sp[-control_norm_sy_only_sp_par_idx,]
+# dim(control_norm_sy_only_sp_no_par)
+
+control_norm_sy_only_sp_mean <- apply(control_norm_sy_only_sp, 1, mean, na.rm=T)
+control_norm_sy_only_sp_median <- apply(control_norm_sy_only_sp, 1, median, na.rm=T)
+control_norm_sy_only_sp_sd <- apply(control_norm_sy_only_sp, 1, sd, na.rm=T)
+control_norm_sy_only_sp_se <- apply(control_norm_sy_only_sp, 1, se)
+
+
+# plot SSI vs. control normSY
+y = ssi_only_sp_mean
+x = control_norm_sy_only_sp_mean
+se_x <- control_norm_sy_only_sp_se
+se_y <- ssi_only_sp_se
+col_y <- rgb(0,0,1, alpha=0.5) # blue
+col_x <- rgb(1,0,0, alpha=0.5) # red
+
+pdf("figures/valdis_ssi_vs_control_norm_sy.pdf", width=8, height = 7)
+plot(x, y, pch = 19, cex = 20*se_y, col = col_y, ylab = "SSI", xlab = "control normSY")
+grid(lty = 1)
+points(x, y, pch = 19, cex = 20*se_x, col = col_x)
+text(x, y, labels=names(x), pos = 1, cex = 0.5)
+legend("topleft", c("SE of normSY", "SE of SSI"), fill=c(col_x, col_y))
+minor.tick(nx = 10, ny = 10)
+dev.off()
+
+summary(ssi_only_sp_mean)
+summary(control_norm_sy_only_sp_mean)
+```
+
+
+# Define groups for RNA-Seq
+```{r define groups for RNA-Seq}
+group_ly <- c("AR1", "AR106", "AR157", "AR183", "EA2", "EA8", "EA92", "EA280")    #8
+group_hy <- c("AR55","AR282", "AR285", "AR293", "EA87", "EA111", "EA162", "EA273")  #8
+group_parents <- c("Albatros", "Euroresa", "Ramses")
+
+group_ly_idx <- which(rownames(ssi_only_sp) %in% group_ly)
+group_hy_idx <- which(rownames(ssi_only_sp) %in% group_hy)
+group_parents_idx <- which(rownames(ssi_only_sp) %in% group_parents)
+
+group_all_idx <- c(group_parents_idx, group_hy_idx, group_ly_idx)
+
+col_groups <- rep(rgb(0,0,0, alpha=0.5), 63)
+col_groups[group_parents_idx] <- rgb(0,1,0, alpha=0.5) # green
+col_groups[group_hy_idx] <- col_x
+col_groups[group_ly_idx] <- col_y
+
+pdf("figures/valdis_ssi_vs_norm_sy_per_experiment_groups.pdf", width=7, height = 7)
+par(mfrow=c(1,1))
+# MEAN of all trials
+plot(x, y, pch = 19, cex = 1, col = col_groups, ylab = "SSI", xlab = "norm SY (control)", main = "mean of all trials")
+# MPI FGH 2014
+plot(control_norm_sy_only_sp$MPI_FGH_2014, ssi_only_sp$MPI_FGH_2014, col = col_groups,
+     pch = 19, cex = 1.3, xlab = "norm SY (control)", ylab = "SSI", main = "MPI FGH 2014")
+text(control_norm_sy_only_sp$MPI_FGH_2014[group_all_idx], 
+     ssi_only_sp$MPI_FGH_2014[group_all_idx], 
+     labels = rownames(ssi_only_sp)[group_all_idx])
+
+# JKI field 2014 --> no samples
+plot(control_norm_sy_only_sp$JKI_Feld_2014, ssi_only_sp$JKI_Feld_2014, col = col_groups,
+     pch = 19, cex = 1, xlab = "norm SY (control)", ylab = "SSI", main = "JKI field 2014") 
+text(control_norm_sy_only_sp$JKI_Feld_2014[group_all_idx], 
+     ssi_only_sp$JKI_Feld_2014[group_all_idx], 
+     labels = rownames(ssi_only_sp)[group_all_idx])
+
+# JKI pot 2014
+plot(control_norm_sy_only_sp$JKI_Shelter_2014, ssi_only_sp$JKI_Shelter_2014, col = col_groups,
+     pch = 19, cex = 1, xlab = "norm SY (control)", ylab = "SSI", main = "JKI pot 2014")
+text(control_norm_sy_only_sp$JKI_Shelter_2014[group_all_idx], 
+     ssi_only_sp$JKI_Shelter_2014[group_all_idx], 
+     labels = rownames(ssi_only_sp)[group_all_idx])
+
+# MPI field 2015
+plot(control_norm_sy_only_sp$MPI_Feld_2015, ssi_only_sp$MPI_Feld_2015, col = col_groups,
+     pch = 19, cex = 1, xlab = "norm SY (control)", ylab = "SSI", main = "MPI field 2015") 
+text(control_norm_sy_only_sp$MPI_Feld_2015[group_all_idx], 
+     ssi_only_sp$MPI_Feld_2015[group_all_idx], 
+     labels = rownames(ssi_only_sp)[group_all_idx])
+
+# MPI FGH 2015
+plot(control_norm_sy_only_sp$MPI_FGH_2015, ssi_only_sp$MPI_FGH_2015, col = col_groups,
+     pch = 19, cex = 1, xlab = "norm SY (control)", ylab = "SSI", main = "MPI FGH 2015") 
+text(control_norm_sy_only_sp$MPI_FGH_2015[group_all_idx], 
+     ssi_only_sp$MPI_FGH_2015[group_all_idx], 
+     labels = rownames(ssi_only_sp)[group_all_idx])
+
+# JKI field 2015
+plot(control_norm_sy_only_sp$JKI_Feld_2015, ssi_only_sp$JKI_Feld_2015, col = col_groups,
+     pch = 19, cex = 1, xlab = "norm SY (control)", ylab = "SSI", main = "JKI field 2015") 
+text(control_norm_sy_only_sp$JKI_Feld_2015[group_all_idx], 
+     ssi_only_sp$JKI_Feld_2015[group_all_idx], 
+     labels = rownames(ssi_only_sp)[group_all_idx])
+
+# JKI pot 2015
+plot(control_norm_sy_only_sp$JKI_Shelter_2015, ssi_only_sp$JKI_Shelter_2015, col = col_groups,
+     pch = 19, cex = 1, xlab = "norm SY (control)", ylab = "SSI", main = "JKI pot 2015") 
+text(control_norm_sy_only_sp$JKI_Shelter_2015[group_all_idx], 
+     ssi_only_sp$JKI_Shelter_2015[group_all_idx], 
+     labels = rownames(ssi_only_sp)[group_all_idx])
+dev.off()
 ```
 
 

@@ -2783,7 +2783,7 @@ dev.off()
 ```
 
 
-```{r }
+```{r get intersections of different sets}
 l1 <- ssi_intermediate_lines$JKI_Shelter_2014
 l2 <- ssi_intermediate_lines$JKI_Shelter_2015
 l3 <- ssi_intermediate_lines$MPI_FGH_2014
@@ -2867,7 +2867,7 @@ dev.off()
 ```
 
 # Count replicates per experiment, treatment and alias
-```{r coutn replicates}
+```{r count replicates}
 # remove duplicates due to double SP info
 yield_data_final_2014_unique <- yield_data_final_2014[-which(duplicated(yield_data_final_2014[,-12])),]
 yield_data_final_2015_unique <- yield_data_final_2015[-which(duplicated(yield_data_final_2015[,-12])),]
@@ -2932,6 +2932,16 @@ control_norm_sy_only_sp_median <- apply(control_norm_sy_only_sp, 1, median, na.r
 control_norm_sy_only_sp_sd <- apply(control_norm_sy_only_sp, 1, sd, na.rm=T)
 control_norm_sy_only_sp_se <- apply(control_norm_sy_only_sp, 1, se)
 
+# save table with values per experiment and mean
+write.table(data.frame(ssi_only_sp, mean = ssi_only_sp_mean),
+            "output/ssi_only_sp_2014_2015_mean.txt", sep="\t", row.names = T)
+
+# --> valdis_ssi_60lines.xlsx
+
+write.table(data.frame(control_norm_sy_only_sp, mean = control_norm_sy_only_sp_mean), 
+            "output/control_norm_sy_only_sp_2014_2015_mean.txt", sep="\t", row.names = T)
+
+# --> valdis_control_norm_SY_60lines.xlsx
 
 # plot SSI vs. control normSY
 y = ssi_only_sp_mean

@@ -1,0 +1,528 @@
+---
+title: "Tolerance classification and Phenotyper Metadata for TROST Prediction Model"
+author: "Heike Sprenger"
+date: "Monday, March 10, 2014"
+output:
+  html_document:
+    highlight: tango
+    number_section: yes
+    theme: cerulean
+    toc: yes
+    toc_depth: 4
+---
+
+
+# Set working directory  
+```{r set working directory}
+getwd()
+#setwd("D:/work/repos/trost_phenotypes/")
+```
+
+
+# Load workspace, packages and scripts
+```{r load workspace, message=FALSE}
+# load packages
+library(knitr)
+library(ggplot2)
+library(plyr)
+library(reshape)
+library(RMySQL)
+library(yaml)
+library(gplots)
+library(pander)
+
+# set options for pander
+panderOptions('table.split.table', 200)
+
+# set options for knitr
+opts_chunk$set(fig.width=5, fig.height=5, cache=FALSE, highlight = TRUE, fig.show="asis")
+opts_knit$set(root.dir = '../')
+
+# load workspace
+#load("tolerance_classification.RData")
+```
+
+
+# Establish connection to phenotyper DB
+```{r establish connection to phenotyper DB}
+login <- yaml.load_file("../functions/login.yaml")
+phenotyper <- dbConnect(MySQL(), user=login$user, password=login$passwd, dbname=login$db, host=login$host) 
+
+query_send <- dbSendQuery(phenotyper, 'select *  from species')
+dbFetch(query_send)
+```
+
+
+# Metadata for Model
+## Subspecies table --> get maturity group
+```{r subspecies query}
+subspecies_query <- paste("SELECT * FROM subspecies")
+
+subspecies_query_result <- dbFetch( dbSendQuery(phenotyper, subspecies_query) )
+head(subspecies_query_result)
+write.table(subspecies_query_result, "output/subspecies_query_result.txt", sep="\t")
+
+# select only the 34 cultivars which were used for TROST
+subspecies_query_result_part <- subspecies_query_result[5:38,]
+# summary of maturity groups
+table(subspecies_query_result_part$reifegrclass)
+table(subspecies_query_result_part$reifegruppe) # msp-sp and sp are both class 5 (2 = fr, 3 = mfr)
+
+# change colname
+colnames(subspecies_query_result_part)[1] <- "subspecies_id"
+```
+
+
+## Plant Height
+Execute plant height query from ``D:\work\TROST\Database\prediction_model_query.sql`` to get information about the plant height of the 3 MPI Pruef trials:
+- Pruef1: 56575
+- Pruef2: 58243
+- Pruef3: 60319
+
+```{r plant height query}
+plant_height_query <- paste("SELECT pl.id, pl.name, pl.subspecies_id, pl.culture_id, p.date, p.time, p.entity_id, p.value_id, p.number
+                              FROM plants AS pl
+                              LEFT JOIN phenotype_plants AS pp ON pp.plant_id = pl.id
+                              LEFT JOIN phenotypes AS p ON p.id = pp.phenotype_id
+                              WHERE p.value_id = 53 AND pl.culture_id in(56575, 58243, 60319);")
+
+plant_height_query_result <- fetch( dbSendQuery(phenotyper, plant_height_query) , n=-1)
+head(plant_height_query_result)
+
+plant_height_query_result$number <- as.integer(plant_height_query_result$number)
+#write.table(plant_height_query_result, "output/plant_height_query_result.txt", sep="\t")
+```
+
+
+## Treatment: Control
+Execute to get plant with the treatment ID 169 (= CONTROL) of the 3 MPI Pruef trials:
+- Pruef1: 56575
+- Pruef2: 58243
+- Pruef3: 60319
+
+```{r treatment query}
+treatment_control_query <- paste("SELECT pl.id, pl.name, pl.subspecies_id, pl.culture_id, p.date, p.time, p.entity_id, p.value_id, p.number
+                              FROM plants AS pl
+                              LEFT JOIN phenotype_plants AS pp ON pp.plant_id = pl.id
+                              LEFT JOIN phenotypes AS p ON p.id = pp.phenotype_id
+                              WHERE p.value_id = 169 AND pl.culture_id in(56575, 58243, 60319);")
+
+treatment_control_query_result <- dbFetch( dbSendQuery(phenotyper, treatment_control_query) , n=-1)
+head(treatment_control_query_result)
+#write.table(treatment_control_query_result, "output/treatment_control_query_result.txt", sep="\t")
+```
+
+
+## Merge Plant Height with Control treated plants
+```{r merge plant height with control}
+plant_height_control <- join(treatment_control_query_result, plant_height_query_result, by="id")
+head(plant_height_control)
+dim(plant_height_control)
+
+# only selected columns
+plant_height_control <- plant_height_control[,c(1:4,8,13:17)]
+head(plant_height_control)
+
+# number of values per date: for Pruef3 (60319), late there are TWO phenotyping dates
+table(plant_height_control$date)
+table(format(plant_height_control$date, format="%b %Y"))
+
+# sort plant height control by date 
+plant_height_control <- plant_height_control[order(plant_height_control$date, plant_height_control$subspecies_id),]
+
+# add column for timepoint (early/late)
+time_point <- c(rep("early", 204), rep("late", 204), rep("early", 204), rep("late", 204), rep("early", 204), rep("late", 203))
+plant_height_control <- cbind(plant_height_control, time_point)
+```
+
+
+## Aggregate plant height (use median) 
+1. by culture, timepoint and cultivar
+2. then by culture and timepoint to get median over all cultivars
+```{r aggregate plant height by other factors}
+# 1
+# aggregate by culture_id, time_point and cultivar
+plant_height_control_agg <- aggregate(plant_height_control$number, 
+                                      by=list(plant_height_control$subspecies_id, 
+                                              plant_height_control$time_point, 
+                                              plant_height_control$culture_id), 
+                                      median, na.rm=TRUE)
+
+colnames(plant_height_control_agg) <- c("subspecies_id", "time_point", "culture_id", "number")
+head(plant_height_control_agg)
+dim(plant_height_control_agg)
+
+# 2
+# aggregate by culture_id and time_point (AFTER aggregate by culture_id, time_point and cultivar)!
+plant_height_control_agg_1 <- aggregate(plant_height_control_agg$number,
+                                        by=list(plant_height_control_agg$time_point,
+                                                plant_height_control_agg$culture_id),
+                                        median)
+colnames(plant_height_control_agg_1) <- c("time_point","culture_id", "number")
+plant_height_control_agg_1
+```
+
+
+### Cast aggregated table to get a column for each combination of culture and timepoint
+```{r cast aggregated table}
+plant_height_control_agg_cast <- cast(plant_height_control_agg, subspecies_id ~ culture_id + time_point)
+head(plant_height_control_agg_cast)
+dim(plant_height_control_agg_cast)
+```
+
+
+## Calculate normalized plant height values using ratio to median of culture at specific timepoint 
+```{r normalized plant height}
+# create matrix
+plant_height_control_agg_cast_norm <- matrix(1:(6*34), ncol=6)
+# run loop over all 6 columns in casted aggregated table
+for (i in 1:6) {
+  plant_height_control_agg_cast_norm[,i] <- plant_height_control_agg_cast[,i+1] / plant_height_control_agg_1$number[i]
+}
+
+# change colnames and rownames
+colnames(plant_height_control_agg_cast_norm) <- colnames(plant_height_control_agg_cast)[2:7]
+rownames(plant_height_control_agg_cast_norm) <- as.factor(plant_height_control_agg_cast$subspecies_id)
+head(plant_height_control_agg_cast_norm)
+dim(plant_height_control_agg_cast_norm)
+```
+
+
+## Melt normalized plant height table to get only 3 columns (all numbers in one column)
+```{r melt normalized plant height table}
+plant_height_control_agg_cast_norm_melt <- melt(plant_height_control_agg_cast_norm)
+
+colnames(plant_height_control_agg_cast_norm_melt) <- c("subspecies_id", "culture_id_time_point", "number")
+
+head(plant_height_control_agg_cast_norm_melt)
+dim(plant_height_control_agg_cast_norm_melt)
+```
+
+
+## Visualize normalized plant height in heatmap and boxplot
+```{r visualize normalized plant height in heatmap and boxplot}
+par(oma=c(4,4,2,1))
+heatmap.2(plant_height_control_agg_cast_norm, 
+          col = bluered(75), trace = "none")
+par(oma=c(0,0,0,0)) 
+
+####################
+
+# calculate median per subspecies
+bymedian <- with(plant_height_control_agg_cast_norm_melt, reorder(subspecies_id, number, median))
+
+# boxplot of plant height ordered by median per subspecies
+boxplot(plant_height_control_agg_cast_norm_melt$number ~ bymedian, las=2)
+
+
+# calculate mean per subspecies
+bymean <- with(plant_height_control_agg_cast_norm_melt, reorder(subspecies_id, number, mean))
+
+# boxplot of plant height ordered by median per subspecies
+boxplot(plant_height_control_agg_cast_norm_melt$number ~ bymean, las=2)
+```
+
+
+## ANOVA for influence of factors on plant height
+```{r anova for influence of factors on plant height}
+# anova for influence of culture+timepoint
+summary(aov(plant_height_control_agg_cast_norm_melt$number ~ plant_height_control_agg_cast_norm_melt$culture_id_time_point))
+
+# anova for influence of subspecies
+summary(aov(plant_height_control_agg_cast_norm_melt$number ~ plant_height_control_agg_cast_norm_melt$subspecies_id))
+```
+
+
+## Aggregate normalized plant height by subspecies --> MEAN (and median)
+```{r aggregate normalized plant height by subspecies}
+plant_height_control_agg_cast_norm_melt_agg <- aggregate(plant_height_control_agg_cast_norm_melt$number,
+                                                         by=list(plant_height_control_agg_cast_norm_melt$subspecies_id),
+                                                         mean)
+colnames(plant_height_control_agg_cast_norm_melt_agg) <- c("subspecies_id", "mean")
+dim(plant_height_control_agg_cast_norm_melt_agg)
+
+plant_height_control_agg_cast_norm_melt_agg_median <- aggregate(plant_height_control_agg_cast_norm_melt$number,
+                                                      by=list(plant_height_control_agg_cast_norm_melt$subspecies_id),
+                                                      median)
+colnames(plant_height_control_agg_cast_norm_melt_agg_median) <- c("subspecies_id", "median")
+
+# sort list of normalized averaged plant height
+plant_height_control_agg_cast_norm_melt_agg[order(plant_height_control_agg_cast_norm_melt_agg$mean), ]
+
+# plot mean vs. median
+plot(plant_height_control_agg_cast_norm_melt_agg$mean, plant_height_control_agg_cast_norm_melt_agg_median$median, pch=19)
+abline(0,1, lty=3, lwd=2, col="red")
+
+hist(plant_height_control_agg_cast_norm_melt_agg$mean, breaks=10, freq=FALSE, ylim=c(0,7))
+lines(density(plant_height_control_agg_cast_norm_melt_agg$mean), col="green")
+```
+
+
+# Tolerance Classification
+## Load tolerance data (new: from December 2013)
+
+``gdrym131210labeled_export_R.txt`` comes from Karin and was uploaded to TROST webserver: http://trost.mpimp-golm.mpg.de/database/files/Karin108/gdrym131210labeled.csv
+or http://trost.mpimp-golm.mpg.de/database/files/Karin108/gdrym131212.csv
+
+```{r load tolerance data}
+tolerance <- read.table("input/gdrym131210labeled_export_R.txt", header = T, sep = "\t")
+
+# change colname
+colnames(tolerance)[2] <- "subspecies_id"
+head(tolerance)
+
+# new drym values
+summary(tolerance$mdrym_gh) # all greenhouse trials
+summary(tolerance$mdrym_fve) # field trials with EARLY stress 
+summary(tolerance$mdrym_fvl) # field trials with LATE stress 
+summary(tolerance$mdrym_fva) # field trials AVERAGE 
+```
+
+
+### Take only tolerance data for GREENHOUSE (gh) and EARLY FIELD STRESS (fve) experiments
+```{r plot DRYM values}
+# histograms of DRYM values
+par(mfrow=c(2,2))
+hist(tolerance$mdrym_gh, xlim=c(-0.15, 0.2), col="lightblue", breaks=20, freq=FALSE, main="all greenhouse trials")
+lines(density(tolerance$mdrym_gh), col="blue")
+
+hist(tolerance$mdrym_fve, xlim=c(-0.15, 0.2), col="lightgreen", breaks=20, main="early field stress trials", ylim=c(0,10))
+lines(density(tolerance$mdrym_fve), col="green")
+
+# density plots
+plot(density(tolerance$mdrym_fve), col="green", xlim=c(-0.2, 0.25))
+lines(density(tolerance$mdrym_gh), col="blue")
+
+# plot greenhouse vs. early field stress DRYM
+plot(tolerance$mdrym_fve, tolerance$mdrym_gh, pch=19)
+cor.test(tolerance$mdrym_fve, tolerance$mdrym_gh)
+# p-value = 0.1116 --> no correlation
+
+par(mfrow=c(1,1))
+```
+
+
+## Join tolerance data with phenotyper data (plant height and maturity group)
+```{r join tolerance data with phenotyper data}
+head(subspecies_query_result_part)
+head(plant_height_control_agg_cast_norm_melt_agg)
+head(tolerance)
+
+phenotyper_metadata <- join(plant_height_control_agg_cast_norm_melt_agg, 
+                            subspecies_query_result_part, 
+                            by="subspecies_id")
+
+tolerance_phenotyper_metadata_all <- join(phenotyper_metadata, tolerance, by="subspecies_id")
+tolerance_phenotyper_metadata <- tolerance_phenotyper_metadata_all[, c(1,2,4,7,13,15)]
+
+head(tolerance_phenotyper_metadata)
+colnames(tolerance_phenotyper_metadata) <- c("subspecies_id", "norm_height_gh", "cultivar", "maturity", "mdrym_gh", "mdrym_fve")
+
+write.table(tolerance_phenotyper_metadata, "output/tolerance_phenotyper_metadata.txt", sep="\t")
+```
+
+
+## Plot DRYM versus maturity and plant height
+```{r plot DRYM versus maturity and plant height}
+# drym greenhouse vs. maturity group
+boxplot(tolerance_phenotyper_metadata$mdrym_gh ~ tolerance_phenotyper_metadata$maturity, 
+        main="DRMY greenhouse", xlab="maturity class")
+
+# drym field (early stress) vs. maturity group
+boxplot(tolerance_phenotyper_metadata$mdrym_fve ~ tolerance_phenotyper_metadata$maturity, 
+        main="DRMY field (early stress)", xlab="maturity class")
+
+# group 5 has lower tolerance than 3  
+# group 3 has lower tolerance than 2
+
+
+# normalized plant height (greenhouse) vs. maturity group
+boxplot(tolerance_phenotyper_metadata$norm_height_gh ~ tolerance_phenotyper_metadata$maturity,
+        ylab = "norm height", xlab = "maturity class")
+
+# drym greenhouse vs. normalized plant height (greenhouse)
+plot(tolerance_phenotyper_metadata$mdrym_gh, tolerance_phenotyper_metadata$norm_height_gh)
+
+# drym field (early stress) vs. normalized plant height (greenhouse)
+plot(tolerance_phenotyper_metadata$mdrym_fve, tolerance_phenotyper_metadata$norm_height_gh)
+```
+
+
+## Select cultivars for training and test set of prediction model
+### See Excel file for further information: ``D:\work\repos\trost_phenotypes\cultivar_selection_for_model.xlsx``
+* Three cultivars are not used for modelling: Kolibri, Kiebitz and Kormoran (24, 25, 26)
+* Set1 with 68% in training set and 32% in test set
+* Set2 with 77% in training set and 23% in test set
+
+```{r select cultivars}
+train <- as.integer(c(382, 2673, 2674, 2675, 2853, 2854, 2855, 2857, 2858, 2860, 2863, 2864, 
+                      2865, 2866, 2868, 2869, 2870, 2871, 2875, 2876, 2882)) #21 --> 68%
+test <- as.integer(c(2856, 2859, 2861, 2862, 2867, 2877, 2878, 2879, 2880, 2881)) #10 --> 32%
+
+train2 <- as.integer(c(382, 2673, 2674, 2675, 2853, 2854, 2855, 2857, 2858, 2860, 2863, 2864, 
+                       2865, 2866, 2868, 2869, 2870, 2871, 2875, 2876, 2882, 2861, 2878, 2867)) #24 --> 77%
+test2 <- as.integer(c(2856, 2859, 2862, 2877, 2879, 2880, 2881)) #7 --> 23%
+
+train_data <- tolerance_phenotyper_metadata[which(tolerance_phenotyper_metadata$subspecies_id %in% train),]
+test_data <- tolerance_phenotyper_metadata[which(tolerance_phenotyper_metadata$subspecies_id %in% test),]
+
+train_data2 <- tolerance_phenotyper_metadata[which(tolerance_phenotyper_metadata$subspecies_id %in% train2),]
+test_data2 <- tolerance_phenotyper_metadata[which(tolerance_phenotyper_metadata$subspecies_id %in% test2),]
+
+# generate vector with test or training as value
+model_set <- rep("NOT", 34)
+model_set[which(tolerance_phenotyper_metadata$subspecies_id %in% train)] <- "train"
+model_set[which(tolerance_phenotyper_metadata$subspecies_id %in% test)] <- "test"
+model_set
+
+model_set2 <- rep("NOT", 34)
+model_set2[which(tolerance_phenotyper_metadata$subspecies_id %in% train2)] <- "train"
+model_set2[which(tolerance_phenotyper_metadata$subspecies_id %in% test2)] <- "test"
+model_set2
+
+# add model set vector to table
+tolerance_phenotyper_metadata_2 <- data.frame(tolerance_phenotyper_metadata,
+                                              model_set)
+head(tolerance_phenotyper_metadata_2)
+
+tolerance_phenotyper_metadata_2_2 <- data.frame(tolerance_phenotyper_metadata, 
+                                                model_set = model_set2)
+head(tolerance_phenotyper_metadata_2_2)
+
+# select only 31 cultivars, without Kolibri, Kormoran and Kiebitz
+tolerance_phenotyper_metadata_2sub <- droplevels(subset(tolerance_phenotyper_metadata_2,
+                                                        tolerance_phenotyper_metadata_2$model_set != "NOT"))
+
+tolerance_phenotyper_metadata_2sub2 <- droplevels(subset(tolerance_phenotyper_metadata_2_2,
+                                                         tolerance_phenotyper_metadata_2_2$model_set != "NOT"))
+```
+
+
+## Assess if training and test sets are balanced regarding:
+* maturity
+* normalized plant height (greenhouse, control)
+* DRYM (gh, fve)
+
+```{r assess balanced values}
+# maturity
+maturity_table <- table(tolerance_phenotyper_metadata_2sub$maturity,
+                        tolerance_phenotyper_metadata_2sub$model_set)
+maturity_table
+prop.table(maturity_table, 1)
+prop.table(maturity_table, 2)
+assocplot(maturity_table)
+
+# normalized plant height --> subsets for training and test set
+norm_height_gh_train <- subset(tolerance_phenotyper_metadata_2sub$norm_height_gh, 
+                               tolerance_phenotyper_metadata_2sub$model_set=="train")
+
+norm_height_gh_test <- subset(tolerance_phenotyper_metadata_2sub$norm_height_gh, 
+                              tolerance_phenotyper_metadata_2sub$model_set=="test")
+
+# density plot of normalized plant height
+plot(density(norm_height_gh_train), col="red", xlim=c(0.8,1.25), ylim=c(0,8))
+
+lines(density(norm_height_gh_test))
+
+hist(norm_height_gh_test, col="lightgreen", breaks=10)
+```
+
+
+## Plots with ggplots2 for DRYM and normalized plant height
+```{r ggplots}
+pdf("figures/compare_train_test_set.pdf")
+qplot(model_set, norm_height_gh, data=tolerance_phenotyper_metadata_2sub, geom=c("boxplot", "jitter"),
+      fill=model_set, main="normalized plant height \n (mean for all greenhouse trials)")
+
+qplot(model_set, mdrym_gh, data=tolerance_phenotyper_metadata_2sub, geom=c("boxplot", "jitter"),
+      fill=model_set, main="DRYM greenhouse trials")
+
+qplot(model_set, mdrym_fve, data=tolerance_phenotyper_metadata_2sub, geom=c("boxplot", "jitter"),
+      fill=model_set, main="DRYM field trials (early stress)")
+
+ggplot(tolerance_phenotyper_metadata_2sub, aes(x=norm_height_gh, fill=model_set)) + 
+  geom_density(alpha=.3) + scale_x_continuous(limits=c(0.8,1.25)) + ggtitle("normalized plant height \n (mean for all greenhouse trials)")
+
+ggplot(tolerance_phenotyper_metadata_2sub, aes(x=mdrym_gh, fill=model_set)) + 
+  geom_density(alpha=.3) + scale_x_continuous(limits=c(-0.2,0.25)) + ggtitle("DRYM greenhouse trials")
+
+ggplot(tolerance_phenotyper_metadata_2sub, aes(x=mdrym_fve, fill=model_set)) + 
+  geom_density(alpha=.3) + scale_x_continuous(limits=c(-0.15,0.2)) + ggtitle("DRYM field trials (early stress)")
+dev.off()
+```
+
+
+## Convert drym to factor
+### Convert drym to factor: Greenhouse
+```{r convert drym to factor greenhouse}
+# pot
+summary(tolerance_phenotyper_metadata_2sub$mdrym_gh)
+quantile(tolerance_phenotyper_metadata_2sub$mdrym_gh, probs=1/3) # upper third
+quantile(tolerance_phenotyper_metadata_2sub$mdrym_gh, probs=2/3) # lower third
+tolerance_phenotyper_metadata_2sub[which(tolerance_phenotyper_metadata_2sub$mdrym_gh < (-0.04245554)),] # low
+tolerance_phenotyper_metadata_2sub[which(tolerance_phenotyper_metadata_2sub$mdrym_gh > 0.037723),] # high
+
+tol_cat2_gh <- rep("low", 31)
+tol_cat2_gh[which(tolerance_phenotyper_metadata_2sub$mdrym_gh>0)] <- "high"
+table(tol_cat2_gh)
+
+tol_cat3_gh <- rep("mid", 31)
+tol_cat3_gh[which(tolerance_phenotyper_metadata_2sub$mdrym_gh<(-0.04245554))] <- "low"
+tol_cat3_gh[which(tolerance_phenotyper_metadata_2sub$mdrym_gh>0.037723)] <- "high"
+table(tol_cat3_gh)
+```
+
+
+### Convert drym to factor: Field
+```{r convert drym to factor field}
+# field
+summary(tolerance_phenotyper_metadata_2sub$mdrym_fve)
+quantile(tolerance_phenotyper_metadata_2sub$mdrym_fve, probs=1/3) # upper third
+quantile(tolerance_phenotyper_metadata_2sub$mdrym_fve, probs=2/3) # lower third
+tolerance_phenotyper_metadata_2sub[which(tolerance_phenotyper_metadata_2sub$mdrym_fve < (-0.01914815)),] # low
+tolerance_phenotyper_metadata_2sub[which(tolerance_phenotyper_metadata_2sub$mdrym_fve > 0.02033081),] # high
+
+tol_cat2_fve <- rep("low", 31)
+tol_cat2_fve[which(tolerance_phenotyper_metadata_2sub$mdrym_fve>0)] <- "high"
+table(tol_cat2_fve)
+
+tol_cat3_fve <- rep("mid", 31)
+tol_cat3_fve[which(tolerance_phenotyper_metadata_2sub$mdrym_fve<(-0.01914815))] <- "low"
+tol_cat3_fve[which(tolerance_phenotyper_metadata_2sub$mdrym_fve>0.02033081)] <- "high"
+table(tol_cat3_fve)
+```
+
+
+## Combine tolerance information in final table
+```{r combine tolerance information in final table}
+tolerance_phenotyper_metadata_2sub <- data.frame(tolerance_phenotyper_metadata_2sub, 
+                                                 tol_cat2_gh, tol_cat3_gh, 
+                                                 tol_cat2_fve, tol_cat3_fve)
+
+tolerance_phenotyper_metadata_2sub2 <- data.frame(tolerance_phenotyper_metadata_2sub2, 
+                                                  tol_cat2_gh, tol_cat3_gh, 
+                                                  tol_cat2_fve, tol_cat3_fve)
+
+table(tol_cat3_gh, tol_cat3_fve)
+```
+
+
+## Save final tolerance tables
+* Set1 with 68% in training set and 32% in test set
+* Set2 with 77% in training set and 23% in test set
+
+```{r save final tolerance tables}
+write.table(tolerance_phenotyper_metadata_2sub, 
+            "output/tolerance_phenotyper_metadata_2sub.txt", sep="\t")
+
+write.table(tolerance_phenotyper_metadata_2sub2, 
+            "output/tolerance_phenotyper_metadata_2sub2.txt", sep="\t")
+```
+
+
+# Save workspace and sessionInfo
+```{r save workspace}
+save.image("tolerance_classification.RData")
+
+sessionInfo()
+```

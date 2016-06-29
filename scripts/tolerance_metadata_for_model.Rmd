@@ -302,6 +302,70 @@ par(mfrow=c(1,1))
 ```
 
 
+## Barplot of tolerance data for field trials with early drought stress
+```{r Barplot of tolerance data for field trials with early drought stress}
+# error.bar <- function(x, y, upper, lower=upper, length=0.1,...){
+#   if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))
+#     stop("vectors must be same length")
+#   arrows(x,y+upper, x, y-lower, angle=90, code=3, length=length, ...)
+#   }
+# 
+# bar_res <- barplot(tolerance$mdrym_fve, ylab = "DRYM", xlab = "Cutlivar", ylim=c(-0.1, 0.15))
+# error.bar(bar_res, tolerance$mdrym_fve, tolerance$sedrym_fve)
+
+# tolerance data without Kiebit, Kolibri and Kormoran
+tolerance_part <- tolerance[-c(24, 25, 26), ]
+
+# with ggplot2
+pdf("figures/drym_feld_early_stress_pub.pdf", width=9, height=6)
+## using cultivar names
+bar_ggplot <- ggplot(tolerance_part, aes(x = cultivar_name, y = mdrym_fve)) +
+  geom_bar(stat="identity", fill="#C4C4C4", colour="black") +
+  geom_errorbar(aes(ymin = mdrym_fve - sedrym_fve, ymax = mdrym_fve + sedrym_fve), width = 0.3)
+
+bar_ggplot + theme_bw() + theme(axis.title.x = element_text(face="bold", size=16),
+                   axis.text.x  = element_text(angle=90, vjust=0.5, hjust=1, size=12),
+                   axis.text.y = element_text(size=12),
+                   axis.title.y = element_text(face="bold", size=16),
+                   panel.grid.major = element_blank(),
+                   panel.grid.minor = element_blank()) + 
+  ylab("DRYM") + xlab("Cultivar")
+
+## using cultivar IDs
+class(tolerance_part$subspecies_id)
+tolerance_part$subspecies_id <- as.factor(tolerance_part$subspecies_id)
+table(tolerance_part$subspecies_id)
+
+bar_ggplot <- ggplot(tolerance_part, aes(x = subspecies_id, y = mdrym_fve)) +
+  geom_bar(stat="identity", fill="#C4C4C4", colour="black") +
+  geom_errorbar(aes(ymin = mdrym_fve - sedrym_fve, ymax = mdrym_fve + sedrym_fve), width = 0.3)
+
+bar_ggplot + theme_bw() + theme(axis.title.x = element_text(face="bold", size=16),
+                   axis.text.x  = element_text(angle=90, vjust=0.5, hjust=1, size=12),
+                   axis.text.y = element_text(size=12),
+                   axis.title.y = element_text(face="bold", size=16),
+                   panel.grid.major = element_blank(),
+                   panel.grid.minor = element_blank()) + 
+  ylab("DRYM") + xlab("Cultivar")
+dev.off()
+
+png("figures/drym_feld_early_stress_pub.png", width=3000, height=2000, res = 300)
+## using cultivar names
+bar_ggplot <- ggplot(tolerance_part, aes(x = subspecies_id, y = mdrym_fve)) +
+  geom_bar(stat="identity", fill="#C4C4C4", colour="black") +
+  geom_errorbar(aes(ymin = mdrym_fve - sedrym_fve, ymax = mdrym_fve + sedrym_fve), width = 0.3)
+
+bar_ggplot + theme_bw() + theme(axis.title.x = element_text(face="bold", size=16),
+                   axis.text.x  = element_text(angle=90, vjust=0.5, hjust=1, size=12),
+                   axis.text.y = element_text(size=12),
+                   axis.title.y = element_text(face="bold", size=16),
+                   panel.grid.major = element_blank(),
+                   panel.grid.minor = element_blank()) + 
+  ylab("DRYM") + xlab("Cultivar")
+dev.off()
+```
+
+
 ## Join tolerance data with phenotyper data (plant height and maturity group)
 ```{r join tolerance data with phenotyper data}
 head(subspecies_query_result_part)

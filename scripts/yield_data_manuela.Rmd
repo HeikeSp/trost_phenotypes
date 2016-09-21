@@ -1,0 +1,363 @@
+---
+title: "Yield data analysis for Manuela"
+author: "Heike Sprenger"
+date: "Wednesday, July 13, 2016"
+output:
+  html_document:
+    highlight: tango
+    number_section: yes
+    theme: cerulean
+    toc: yes
+    toc_float: true
+    toc_depth: 4
+---
+
+# Set working directory  
+```{r set working directory}
+getwd()
+#setwd("D:/work/repos/trost_phenotypes")
+#setwd("~/work/repos/trost_phenotypes/")
+```
+
+
+# Load workspace, packages and scripts
+```{r load workspace, message=FALSE}
+# load packages
+library(knitr)
+library(ggplot2)
+library(reshape)
+library(pander)
+library(multcomp)
+library(extrafont)
+library(plyr)
+library(GGally)
+library(gplots)
+library(RColorBrewer)
+
+# set options for pander
+panderOptions('table.split.table', 200)
+
+# set options for knitr
+opts_chunk$set(fig.width=5, fig.height=5, cache=FALSE, highlight = TRUE, fig.show="asis")
+opts_knit$set(root.dir = '../')
+
+# load workspace
+# load("yield_data_manuela.RData")
+```
+
+
+# Source R functions
+```{r source R functions, include=FALSE}
+source("../functions/names.R")
+source("../functions/colors.R")
+source("../functions/func_cv.R")
+source("../functions/func_appendList.R")
+source("../functions/func_anova_v2.R")
+source("../functions/func_ttest.R")
+source("../functions/func_aggregate_values.R")
+source("../functions/func_modify_yield_data.R")
+source("../functions/func_get_yield_data.R")
+source("../functions/func_starch_yield_valdis.R")
+source("../functions/func_calc_stress_index.R")
+source("../functions/func_calc_relSY.R")
+source("../functions/func_calc_relSY_table.R")
+source("../functions/func_calc_drym.R")
+source("../functions/func_calc_drym_table.R")
+source("../functions/func_calc_ssi.R")
+source("../functions/func_calc_ssi_table.R")
+source("../functions/func_venn_diagram.R")
+source("../functions/func_pairs_plot.R")
+
+source("../functions/func_starch_yield_mpipruef.R")
+source("../functions/func_starch_yield_feld.R")
+
+#source("../functions/func_starch_yield_jki_feld_2012.R")
+```
+
+
+# Get yield data (from phenotyper)
+```{r get yield data}
+yield_data_trost <- func_get_yield_data(project = "trost")
+yield_data_valdis <- func_get_yield_data(project = "valdis")
+
+dim(yield_data_trost) # 34821    13
+dim(yield_data_valdis) # 20347    14
+
+table(yield_data_trost$culture)
+table(yield_data_trost$attribute)
+#table(yield_data_trost$culture, yield_data_trost$attribute)
+
+# change colnames
+colnames(yield_data_valdis)[3] <- "cultivar_id"
+colnames(yield_data_valdis)[4] <- "cultivar"
+
+write.table(yield_data_trost, "data/yield_data_manuela_raw.txt", sep="\t")
+write.table(yield_data_valdis, "data/yield_data_manuela_valdis_raw.txt", sep="\t")
+```
+
+
+# Modify yield data
+## Change alias for cultivar names
+```{r change alias for cultivar names}
+yield_data_trost$cultivar <- as.factor(yield_data_trost$cultivar)
+levels(yield_data_trost$cultivar) <- names_cultivars_34
+
+# VALDIS
+idx_desiree <- which(grepl("^\\[St.D.n\\]", yield_data_valdis$name) | grepl("^\\[St.Desiree.n\\]", yield_data_valdis$name))
+idx_ramses <- which(grepl("^\\[St.Ramses.n\\]", yield_data_valdis$name))
+idx_euroresa <- which(grepl("^\\[St.Euroresa.n\\]", yield_data_valdis$name))
+idx_albatros <- which(grepl("^\\[St.Albatros.n\\]", yield_data_valdis$name))
+
+yield_data_valdis$cultivar[idx_desiree] <- "Desiree"
+yield_data_valdis$cultivar[idx_ramses] <- "Ramses"
+yield_data_valdis$cultivar[idx_euroresa] <- "Euroresa"
+yield_data_valdis$cultivar[idx_albatros] <- "Albatros"
+
+yield_data_valdis$cultivar <- as.factor(yield_data_valdis$cultivar)
+table(yield_data_valdis$cultivar)
+
+# remove plant_name column
+yield_data_valdis <- yield_data_valdis[,-5]
+```
+
+
+## Merge Trost and Valdis data
+```{r merge trost and valdis data}
+yield_data <- rbind(yield_data_trost, yield_data_valdis)
+dim(yield_data)
+# 55168 13
+```
+
+
+## Change treatment name
+```{r change treatment name}
+yield_data$treatment_name <- yield_data$treatment
+yield_data$treatment_name[which(yield_data$treatment == "169")] = "control"
+yield_data$treatment_name[which(yield_data$treatment == "170")] = "drought stress"
+yield_data$treatment_name[which(yield_data$treatment == "171")] = "control" # 50% nFK
+yield_data$treatment[which(yield_data$treatment == "171")] = "169" # 50% nFK --> control
+
+# remove entries with 30% nFK (id: 172, from Dethlingen)
+idx_172 <- which(yield_data$treatment == "172")
+yield_data <- yield_data[-idx_172,]
+dim(yield_data)
+# 53266 14
+
+# change class of treatment_name
+yield_data$treatment_name <- as.factor(yield_data$treatment_name)
+levels(yield_data$treatment_name)
+
+# table(yield_data$treatment_name)
+# table(yield_data$treatment)
+```
+
+
+## Replace "-666.66" by NA
+```{r replace -666.66 by NA}
+# change class of number
+yield_data$number <- as.numeric(yield_data$number)
+
+idx_missing <- which(yield_data$number=="-666.66")
+yield_data$number[idx_missing] <- NA
+```
+
+
+## Remove duplicate entries
+```{r remove duplicate entries}
+dim(yield_data)
+# 53266 14
+
+colnames(yield_data)
+
+idx_duplicates <- which(duplicated(yield_data[,-c(6,7)])) # column 6, 7: measurement date and time should be ignored
+
+yield_data_no_duplicates <- yield_data[-idx_duplicates,]
+dim(yield_data_no_duplicates)
+# 47260 14
+
+write.table(yield_data_no_duplicates, "data/yield_data_manuela_no_duplicates.txt", sep="\t")
+```
+
+
+## Find outlier
+```{r find outlier}
+# outlier?
+# idx_outlier <- which(yield_data_no_duplicates$number > 400)
+# pander(yield_data_no_duplicates[idx_outlier,])
+# yield_data_no_duplicates[idx_outlier, "plant_id"]
+
+# remove them?
+# entries with "999" as number belong to plants with FW = 0 --> change to NA
+# yield_data_no_duplicates$number[idx_outlier] <- NA
+```
+
+
+# Get subset for specific cultures and cultivars
+```{r get subset for specific cultures and cultivars}
+table(yield_data$culture)
+#table(yield_data$cultivar)
+
+# without Dethlingen
+# cultures_subset_trost <- c(56875, 62327, 45990, 57803, 44443, 56726, 62326, 56575, 58243, 60319, 62030) 
+
+# with Dethlingen
+cultures_subset_trost <- c(56875, 62327, 45990, 57803, 44443, 56726, 62326, 56575, 58243, 60319, 62030, 46150, 56877, 62328)
+
+cultures_subset_valdis <- c(67199, 67516, 67518, 68015, 72237, 72247, 72275, 72292, 72396, 72482)
+
+cultures_subset <- c(cultures_subset_trost, cultures_subset_valdis)
+
+cultivars_subset <- c("Albatros", "Desiree", "Euroresa", "Ramses")
+entities_subset <- c(12, 19, 810)
+
+yield_subset <- droplevels(subset(yield_data_no_duplicates, yield_data_no_duplicates$culture %in% cultures_subset 
+                                  & yield_data_no_duplicates$cultivar %in% cultivars_subset
+                                  & yield_data_no_duplicates$entity_id %in% entities_subset))
+
+table(yield_subset$culture, yield_subset$cultivar)
+
+# contains unnecessary information
+unwanted_entries <- which(yield_subset$entity_id == 810 & yield_subset$culture == 62326)
+yield_subset <- yield_subset[-unwanted_entries,]
+dim(yield_subset)
+# 2912 14
+
+length(unique(yield_subset$plant_id))
+# 736
+
+# change class of cultivar
+yield_subset$cultivar <- as.factor(yield_subset$cultivar)
+yield_subset$treatment <- as.factor(yield_subset$treatment)
+
+levels(yield_subset$treatment)
+levels(yield_subset$cultivar)
+```
+
+
+## Subset for plant height
+* entity: "Spross" = 19
+* value: "absolute Laenge" = 53
+```{r subset for plant height}
+plant_height <- droplevels(subset(yield_subset, yield_subset$entity_id == 19))
+
+# remove plant height
+yield_subset <- droplevels(subset(yield_subset, yield_subset$entity_id != 19))
+
+
+table(plant_height$culture)
+table(plant_height$measurement_date, plant_height$culture)
+
+table(plant_height$measurement_date)
+early <- c("2011-05-25", "2011-05-27", "2012-03-27", "2012-07-23", "2012-11-12")
+late <- c("2011-06-16", "2012-04-24", "2012-06-18", "2012-08-22", "2012-12-10", "2012-12-11")
+
+valdis_dates <- c("2014-04-30", "2014-05-07", "2014-05-12", "2014-05-21", "2014-05-26", "2014-05-27", 
+                  "2014-05-30", "2014-06-03", "2014-06-10", "2014-06-11", "2015-04-27", "2015-05-04", 
+                  "2015-05-06", "2015-05-12", "2015-05-13", "2015-05-18", "2015-05-20", "2015-05-27",
+                  "2015-05-28", "2015-05-29", "2015-06-05", "2015-06-09", "2015-06-10", "2015-06-26")
+
+plant_height_early <- subset(plant_height, plant_height$measurement_date %in% early)
+plant_height_late <- subset(plant_height, plant_height$measurement_date %in% late)
+
+# CONTAINS NO DATA! 
+plant_height_valdis <- subset(plant_height, plant_height$measurement_date %in% valdis_dates)
+```
+
+
+## Calculate mean for replicated measurements
+* MPI FGH 2014 and 2015 contain replicate measurements for starch contents -> calcualte mean!
+```{r calculate mean for replicated measurements}
+# remove wrong entries for JKI field trial 2012 (56875) from 2013-09-19
+wrong_entries <- which(yield_subset$measurement_date == "2013-09-19" & yield_subset$culture == 56875)
+yield_subset <- yield_subset[-wrong_entries,]
+
+# summarize by calculating mean
+yield_subset_correct <- ddply(yield_subset, c("plant_id", "culture", "cultivar_id", "cultivar", 
+                                              "treatment", "measurement_date", 
+                                              "entity_id", "entity_name",
+                                              "attribute", "value_id", "unit", "treatment_name"), 
+                          summarise, number = mean(as.numeric(number), na.rm = T))
+
+dim(yield_subset) # 2112 14
+dim(yield_subset_correct) # 2091 13
+
+table(yield_subset$culture)
+table(yield_subset_correct$culture)
+```
+
+
+## Calculate starch yield per experiment --> contains drymatter (%), starch content (g/kg) and starch yield (kg/plant and g/plant)
+```{r calculate starch yield}
+# TROST pot trials
+pruef1 <- func_starch_yield_mpipruef(yield_subset, 56575)
+pruef2 <- func_starch_yield_mpipruef(yield_subset, 58243)
+pruef3 <- func_starch_yield_mpipruef(yield_subset, 60319)
+pruef4 <- func_starch_yield_mpipruef(yield_subset, 62030)
+
+jki_shelter_2011 <- func_starch_yield_feld(yield_subset, 45990, 1)
+jki_shelter_2012 <- func_starch_yield_feld(yield_subset, 57803, 2)
+
+# TROST field trials
+mpi_field_2011 <- func_starch_yield_feld(yield_subset, 44443, 8)
+mpi_field_2012 <- func_starch_yield_feld(yield_subset, 56726, 8)
+mpi_field_2013 <- func_starch_yield_feld(yield_subset, 62326, 8)
+
+jki_field_2012 <- func_starch_yield_feld(yield_subset, 56875, 6)
+jki_field_2013 <- func_starch_yield_feld(yield_subset, 62327, 6)
+
+dethlingen_2011 <- func_starch_yield_feld(yield_subset, 46150, 31)
+dethlingen_2012 <- func_starch_yield_feld(yield_subset, 56877, 31)
+dethlingen_2013 <- func_starch_yield_feld(yield_subset, 62328, 31)
+
+# VALDIS
+mpi_fgh_2014 <- func_starch_yield_feld(yield_subset_correct, 67199, 1)
+mpi_fgh_2015 <- func_starch_yield_feld(yield_subset_correct, 72247, 1)
+
+jki_shelter_2014 <- func_starch_yield_feld(yield_subset, 72237, 1)
+jki_shelter_2015 <- func_starch_yield_feld(yield_subset, 72292, 1)
+
+mpi_field_2014 <- func_starch_yield_feld(yield_subset, 67516, 5)
+mpi_field_2015 <- func_starch_yield_feld(yield_subset, 72275, 5)
+
+jki_field_2014 <- func_starch_yield_feld(yield_subset, 67518, 1)
+jki_field_2015 <- func_starch_yield_feld(yield_subset, 72396, 5)
+
+dethlingen_2015 <- func_starch_yield_feld(yield_subset, 72482, 10)
+```
+
+
+## Combine results
+```{r combine results, fig.width=10}
+starch_yield <- rbind(pruef1, pruef2, pruef3, pruef4,
+                      jki_shelter_2011, jki_shelter_2012,
+                      mpi_field_2012, mpi_field_2011, mpi_field_2013,
+                      jki_field_2012, jki_field_2013,
+                      dethlingen_2011, dethlingen_2012, dethlingen_2013,
+                      mpi_fgh_2014, mpi_fgh_2015,
+                      jki_shelter_2014, jki_shelter_2015,
+                      mpi_field_2014, mpi_field_2015,
+                      jki_field_2014, jki_field_2015,
+                      dethlingen_2015)
+
+dim(starch_yield)
+# 736 10
+
+# export table
+write.table(starch_yield, "output/starch_yield_data_for_manu.txt", sep = "\t", quote = F, row.names = F)
+
+length(unique(starch_yield$plant_id))
+# 736
+
+boxplot(starch_yield$starch_yield_g_per_plant ~ starch_yield$treatment * starch_yield$culture, 
+        las = 2, col = c("blue", "red"))
+
+# join starch yield with plant height
+# starch_yield_joined <- join(starch_yield, plant_height_late, by="plant_id")
+```
+
+
+
+# Save workspace
+```{r save workspace}
+save.image("yield_data_manuela.RData")
+```

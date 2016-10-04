@@ -3131,8 +3131,20 @@ y = ssi_only_sp_mean
 x = control_norm_sy_only_sp_mean
 se_x <- control_norm_sy_only_sp_se
 se_y <- ssi_only_sp_se
-col_y <- rgb(0,0,1, alpha=0.5) # blue
-col_x <- rgb(1,0,0, alpha=0.5) # red
+col_y <- rgb(0,0,1, alpha = 0.5) # blue
+col_x <- rgb(1,0,0, alpha = 0.5) # red
+
+# borders for sensitive/intermediate/tolerant --> 1st Qu. and 3rd Qu.
+summary(ssi_only_sp_mean)
+ #   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ # 0.6994  0.8775  0.9882  0.9732  1.0810  1.2430 
+
+# borders for low yield/intermediate/high yield --> 1st Qu. and 3rd Qu.
+ summary(control_norm_sy_only_sp_mean)
+ #    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ # 0.6347  0.9156  1.0220  1.0120  1.1080  1.2820 
+ 
+ # FINAL plot used for selection of lines for RNA-Seq!
 
 pdf("figures/valdis_ssi_vs_control_norm_sy.pdf", width=8, height = 7)
 plot(x, y, pch = 19, cex = 20*se_y, col = col_y, ylab = "SSI", xlab = "control normSY")
@@ -3140,11 +3152,12 @@ grid(lty = 1)
 points(x, y, pch = 19, cex = 20*se_x, col = col_x)
 text(x, y, labels=names(x), pos = 1, cex = 0.5)
 legend("topleft", c("SE of normSY", "SE of SSI"), fill=c(col_x, col_y))
+abline(h = summary(ssi_only_sp_mean)[2], col = "red")
+abline(h = summary(ssi_only_sp_mean)[5], col = "red")
+abline(v = summary(control_norm_sy_only_sp_mean)[2], col = "red")
+abline(v = summary(control_norm_sy_only_sp_mean)[5], col = "red")
 minor.tick(nx = 10, ny = 10)
 dev.off()
-
-summary(ssi_only_sp_mean)
-summary(control_norm_sy_only_sp_mean)
 ```
 
 

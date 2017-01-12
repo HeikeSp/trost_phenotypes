@@ -1,7 +1,18 @@
-RWC data analysis for MPI greenhouse trials
-========================================================
+---
+title: "RWC data analysis for MPI greenhouse trials"
+author: "Heike Sprenger"
+date: "Wednesday, February 17, 2016"
+output:
+  html_document:
+    highlight: tango
+    number_section: yes
+    theme: cerulean
+    toc: yes
+    toc_float: true
+    toc_depth: 4
+---
 
-### set working directory
+# Set working directory
 ```{r set working directory}
 # setwd("D:/work/repos/trost_phenotypes")
 # setwd("~/work/repos/trost_phenotypes")
@@ -9,7 +20,7 @@ RWC data analysis for MPI greenhouse trials
 
 [solution for issue with working directory and knitr](https://github.com/yihui/knitr/issues/277)
 
-### Load workspace, packages and scripts
+# Load workspace, packages and scripts
 ```{r load workspace, message=FALSE}
 # load packages
 library(knitr)
@@ -32,7 +43,7 @@ opts_knit$set(root.dir = '../')
 ```
 
 
-### source R functions
+# Source R functions
 ```{r source R functions, include=FALSE}
 source("../functions/func_get_rwc_data.R")
 source("../functions/colors.R")
@@ -41,7 +52,7 @@ source("../functions/func_anova_v2.R")
 ```
 
 
-### Execute Query from D:\work\repos\database_scripts\rwc_query-2014-06-24.sql to get information about RWC and meta data
+# Execute Query from `D:\work\repos\database_scripts\rwc_query-2014-06-24.sql` to get information about RWC and meta data
 ```{r get data from trost database}
 rwc_query_result <- func_get_rwc_data()
 
@@ -57,7 +68,7 @@ write.table(rwc_query_result, "data/rwc_query_result.txt", sep="\t")
 ```
 
 
-### factors
+# factors
 ```{r factors}
 # treatment
 rwc_query_result$treatment <- as.factor(rwc_query_result$treatment)
@@ -78,7 +89,7 @@ rwc_query_result$description <- factor(rwc_query_result$description,
 ```
 
 
-### correct and remove outlier
+# correct and remove outlier
 ```{r correct and remove outlier}
 rwc_query_result[which(rwc_query_result$RWC>2),]
 which(rwc_query_result$RWC>2)
@@ -99,7 +110,7 @@ write.table(rwc_query_result, "data/rwc_query_result_corrected.txt", sep="\t")
 ```
 
 
-### subsets
+# subsets
 ```{r subsets}
 rwc_test_trials <- subset(rwc_query_result, 
                           rwc_query_result$experiment_id %in% c("48656", "51790"))
@@ -122,7 +133,7 @@ rwc_pruef3 <- subset(rwc_query_result, rwc_query_result$experiment_id == "60319"
 ```
 
 
-### subsets --> timepoints
+## subsets --> timepoints
 ```{r subsets --> timepoints}
 rwc_test1_early_before <- subset(rwc_test1, rwc_test1$description == "early/before")
 rwc_test2_early_before <- subset(rwc_test2, rwc_test2$description == "early/before")
@@ -142,10 +153,10 @@ rwc_test1_desiree <- subset(rwc_test1, rwc_test1$cultivar == "Desiree")
 rwc_test1_desiree$description
 ```
 
-
-### plots test trials
+# Plots
+## Plots test trials
 ```{r plots test trials}
-pdf("figures/rwc_test_trials.pdf", width=7, height=8)
+pdf("figures/rwc/rwc_test_trials.pdf", width=7, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
 
 boxplot(rwc_test_trials$RWC ~ rwc_test_trials$treatment, 
@@ -209,10 +220,10 @@ dev.off()
 ```
 
 
-### plots of test trials for publication
+## Plots of test trials for publication
 ```{r plots of test trials for publication}
 
-pdf("figures/rwc_test_trials_pub.pdf", width=12, height=6)
+pdf("figures/rwc/rwc_test_trials_pub.pdf", width=12, height=6)
 par(mar=c(8, 4.1, 2.1, 1))
 par(mfrow=c(1,2))
 
@@ -245,7 +256,7 @@ dev.off()
 
 
 
-### plot for phd thesis
+## Plot for phd thesis
 ```{r plot for phd thesis}
 # for phd-thesis:
 #pdf("~/work/Doktorarbeit/figures/rwc_mpitest1_late_before.pdf", width=6, height=6)
@@ -264,9 +275,9 @@ legend("topright",
 ```
 
 
-### plots pruef trials
+## Plots pruef trials
 ```{r plots pruef trials}
-pdf("figures/rwc_pruef_trials.pdf", width=7, height=8)
+pdf("figures/rwc/rwc_pruef_trials.pdf", width=7, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
 boxplot(rwc_pruef_trials$RWC ~ rwc_pruef_trials$treatment, 
         col = cols_treatment, 
@@ -302,7 +313,9 @@ boxplot(rwc_pruef3$RWC ~ rwc_pruef3$treatment *
 dev.off()
 ```
 
-### aggregate data per trial, timepoint, cultivar and treatment
+
+# Aggregate
+## Aggregate data per trial, timepoint, cultivar and treatment
 ```{r aggregate data per trial- timepoint- cultivar and treatment}
 # aggregate by experiment_id, cultivar, treatment, description
 rwc_query_result_agg <- aggregate(rwc_query_result[,10:13], 
@@ -344,7 +357,7 @@ rwc_pruef3_agg <- subset(rwc_query_result_agg,
 ```
 
 
-### aggregate data per trial, timepoint and treatment
+## Aggregate data per trial, timepoint and treatment
 ```{r aggregate data per trial- timepoint and treatment}
 # aggregate by experiment_id, cultivar, treatment, description
 rwc_query_result_agg2 <- aggregate(rwc_query_result[,10:13], 
@@ -385,7 +398,7 @@ rwc_pruef3_agg2 <- subset(rwc_query_result_agg2,
 ```
 
 
-### ANOVA 
+# ANOVA 
 ```{r ANOVA}
 rwc_test1_early_before_anova <- func_anova_2fac_ia(rwc_test1_early_before, "RWC", "cultivar", "treatment", 0.01)
 rwc_test2_early_before_anova <- func_anova_2fac_ia(rwc_test2_early_before, "RWC", "cultivar", "treatment", 0.01)
@@ -419,12 +432,12 @@ rownames(rwc_test1_anova) <- c("mpitest1_early/before", "mpitest1_early/after",
 rownames(rwc_test2_anova) <- c("mpitest2_early/before", "mpitest2_early/after", 
                                "mpitest2_late/before", "mpitest2_late/after")
 
-write.table(rwc_test1_anova, "output/rwc_mpi_test1_2_anova.txt", sep="\t", quote=F, row.names = T, col.names = NA)
-write.table(rwc_test2_anova, "output/rwc_mpi_test2_anova.txt", sep="\t", quote=F, row.names = T, col.names = NA)
+write.table(rwc_test1_anova, "output/rwc/rwc_mpi_test1_2_anova.txt", sep="\t", quote=F, row.names = T, col.names = NA)
+write.table(rwc_test2_anova, "output/rwc/rwc_mpi_test2_anova.txt", sep="\t", quote=F, row.names = T, col.names = NA)
 ```
 
 
-
+# Save worksapce
 ```{r save workspace}
 save.image("rwc.RData")
 ```

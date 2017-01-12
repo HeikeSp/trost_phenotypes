@@ -72,9 +72,11 @@ source("../functions/func_pairs_plot.R")
 
 # Get yield data (from phenotyper)
 ```{r get yield data}
-yield_data <- func_get_yield_data(project = "valdis")
+yield_data_raw <- func_get_yield_data(project = "valdis")
 
-dim(yield_data)
+yield_data <- yield_data_raw
+
+dim(yield_data) # 26630 14
 
 pander(table(yield_data$culture))
 pander(table(yield_data$culture, yield_data$attribute))
@@ -137,7 +139,7 @@ table(yield_data$treatment_name)
 idx_desiree <- which(grepl("^\\[St.D.n\\]", yield_data$name) | grepl("^\\[St.Desiree.n\\]", yield_data$name))
 # remove Desiree entries
 yield_data <- yield_data[-idx_desiree,]
-dim(yield_data)
+dim(yield_data) # 25789
 
 idx_ramses <- which(grepl("^\\[St.Ramses.n\\]", yield_data$name))
 idx_euroresa <- which(grepl("^\\[St.Euroresa.n\\]", yield_data$name))
@@ -150,6 +152,7 @@ yield_data$alias[idx_albatros] <- "Albatros"
 yield_data$alias <- as.factor(yield_data$alias)
 
 #table(yield_data$alias, yield_data$culture)
+#levels(yield_data$alias)
 ```
 
 
@@ -166,13 +169,16 @@ yield_data$number[idx_missing] <- NA
 ## Remove duplicate entries
 ```{r remove duplicate entries}
 #table(yield_data$measurement_date, yield_data$culture)
-dim(yield_data)
+dim(yield_data) # 25789 15
+
+# remove wrong entries from MPI field trial 2016 --> seems to be tuber weight before planting
+#wrong_entries <- which(yield_data$measurement_date %in% c("2016-02-03", "2016-02-04"))
+#yield_data <- yield_data[-wrong_entries,]
 
 idx_duplicates <- which(duplicated(yield_data[,-c(7,8)])) # column 7, 8: measurement date and time should be ignored
 
 yield_data_no_duplicates <- yield_data[-idx_duplicates,]
-dim(yield_data_no_duplicates)
-# 14703 15
+dim(yield_data_no_duplicates) # 20386 15
 
 write.table(yield_data_no_duplicates, "data/yield_data_valdis_no_duplicates.txt", sep="\t")
 ```
@@ -182,11 +188,19 @@ write.table(yield_data_no_duplicates, "data/yield_data_valdis_no_duplicates.txt"
 ```{r find outlier}
 # outlier?
 idx_outlier <- which(yield_data_no_duplicates$number > 400)
-pander(yield_data_no_duplicates[idx_outlier,])
+yield_data_no_duplicates[idx_outlier,]
 yield_data_no_duplicates[idx_outlier, "plant_id"]
+
+# remove wrong entry
+yield_data_no_duplicates <- yield_data_no_duplicates[-which(yield_data_no_duplicates$number==1771565),]
+
+# NEEDS TO BE CORRECTED! 0.658kg instead of 658 kg
+yield_data_no_duplicates$number[which(yield_data_no_duplicates$number==658)] <- 0.658 
 
 # remove them?
 # entries with "999" as number belong to plants with FW = 0 --> change to NA
+idx_outlier <- which(yield_data_no_duplicates$number > 400)
+yield_data_no_duplicates[idx_outlier,]
 yield_data_no_duplicates$number[idx_outlier] <- NA
 ```
 
@@ -202,6 +216,7 @@ yield_data_sy <- subset(yield_data_no_duplicates, yield_data_no_duplicates$value
 
 range(yield_data_sc$number, na.rm = T)
 range(yield_data_fw$number, na.rm = T)
+range(yield_data_sy$number, na.rm = T)
 
 hist(yield_data_sc$number, main = "starch content", breaks = 30, col = "grey")
 hist(yield_data_fw$number, main = "fresh weight", breaks = 30, col = "grey")
@@ -216,7 +231,7 @@ hist(yield_data_sy$number, main = "starch yield", breaks = 30, col = "grey")
 ```{r JKI Field 2014: 67518}
 yield_data_67518 <- subset(yield_data_no_duplicates, yield_data_no_duplicates$culture == "67518")
 
-dim(yield_data_67518)
+dim(yield_data_67518) # 2304
 
 length(unique(yield_data_67518$line_id)) # 194
 length(unique(yield_data_67518$alias)) # 194
@@ -234,7 +249,7 @@ yield_data_67518_sc <- subset(yield_data_67518,
 ```{r JKI Pot 2014: 68015 and 72237}
 yield_data_68015 <- subset(yield_data_no_duplicates, yield_data_no_duplicates$culture %in% c("68015","72237"))
 
-dim(yield_data_68015)
+dim(yield_data_68015) # 2352
 
 length(unique(yield_data_68015$line_id)) # 197
 length(unique(yield_data_68015$alias)) # 197
@@ -255,7 +270,7 @@ yield_data_68015_sc <- subset(yield_data_68015,
 ```{r MPI Field 2014: 67516 and 68713}
 yield_data_67516 <- subset(yield_data_no_duplicates, yield_data_no_duplicates$culture %in% c("67516","68713"))
 
-dim(yield_data_67516)
+dim(yield_data_67516) # 829
 
 length(unique(yield_data_67516$line_id)) # 204
 length(unique(yield_data_67516$alias)) # 204
@@ -274,8 +289,8 @@ yield_data_67516_sc <- subset(yield_data_67516,
 # fw: 414
 
 # find duplicates
-which(duplicated(yield_data_67516_sc$plant_id)) # 415
-yield_data_67516_sc$plant_id[415]
+which(duplicated(yield_data_67516_sc$plant_id)) # 41
+yield_data_67516_sc$plant_id[41]
 # plant_id: 1503655
 
 # remove duplicate entry
@@ -288,7 +303,7 @@ yield_data_no_duplicates <- yield_data_no_duplicates[-idx_remove_67516_sc,]
 ```{r MPI FGH 2014: 67199}
 yield_data_67199 <- subset(yield_data_no_duplicates, yield_data_no_duplicates$culture == "67199")
 
-dim(yield_data_67199)
+dim(yield_data_67199) # 2886 15
 
 length(unique(yield_data_67199$line_id)) # 228
 length(unique(yield_data_67199$alias)) # 228
@@ -309,7 +324,7 @@ yield_data_67199_sc <- subset(yield_data_67199,
 
 table(table(yield_data_67199_sc$plant_id))
 #    1    2    3 
-# 1017   32  186
+# 1023   32  186
 # 186 entries were measured thrice! 
 # calculate average of those repeated measurements of starch content (sc)
 
@@ -343,21 +358,21 @@ common_lines_2014 <- intersect(
   intersect(yield_data_67518$alias, yield_data_68015$alias))
 
 common_lines_2014 <- sort(common_lines_2014)
-length(common_lines_2014)
+length(common_lines_2014) # 192
 
 common_parents_2014 <- which(common_lines_2014 %in% c("Albatros", "Euroresa", "Ramses"))
-common_lines_2014_no_par <- common_lines_2014[-common_parents_2014]
+common_lines_2014_no_par <- common_lines_2014[-common_parents_2014] # 189
 ```
 
 ## Define desired subset of lines for further analysis
-**take all 192 common lines and additionally AR21 which is missing in MPI Field 2014 but was selected for SP1**
+**take all 192 common lines and additionally AR21 which is missing in JKII Field 2014 but was selected for SP1**
 
 ```{r define desired subset of lines}
 lines_2014 <- sort( c(common_lines_2014, "AR21") )
-length(lines_2014)
+length(lines_2014) # 193
 
 lines_parents_2014 <- which(lines_2014 %in% c("Albatros", "Euroresa", "Ramses"))
-lines_2014_no_par <- lines_2014[-lines_parents_2014]
+lines_2014_no_par <- lines_2014[-lines_parents_2014] # 190
 ```
 
 
@@ -366,7 +381,7 @@ lines_2014_no_par <- lines_2014[-lines_parents_2014]
 ```{r MPI FGH 2015: 72247}
 yield_data_72247 <- droplevels(subset(yield_data_no_duplicates, yield_data_no_duplicates$culture == "72247"))
 
-dim(yield_data_72247)
+dim(yield_data_72247) # 1525
 
 # subsets for different attributes
 yield_data_72247_fw <- subset(yield_data_72247,
@@ -395,7 +410,7 @@ dim(yield_data_72247_sc_mean_per_plant)
 ```{r MPI Feld 2015: 72275}
 yield_data_72275 <- droplevels(subset(yield_data_no_duplicates, yield_data_no_duplicates$culture == "72275"))
 
-dim(yield_data_72275)
+dim(yield_data_72275) # 1132
 
 # subsets for different attributes
 yield_data_72275_fw <- subset(yield_data_72275,
@@ -420,11 +435,13 @@ yield_data_no_duplicates <- yield_data_no_duplicates[-idx_remove_72275_fw,]
 
 # find duplicates: sy
 which(duplicated(yield_data_72275_sc$plant_id))
-yield_data_72275_sc$plant_id[c(363, 364, 379)]
+yield_data_72275_sc$plant_id[c(253, 254, 255)]
 pander(yield_data_72275_sc[which(yield_data_72275_sc$plant_id == "1649445"),])
 
 idx_remove_72275_sc <- which(yield_data_no_duplicates$plant_id == "1649445" & yield_data_no_duplicates$number %in% c(170, 172, 175))
 yield_data_no_duplicates <- yield_data_no_duplicates[-idx_remove_72275_sc,]
+
+dim(yield_data_no_duplicates) # 20380
 ```
 
 
@@ -434,9 +451,9 @@ yield_data_72292 <- droplevels(subset(yield_data_no_duplicates, yield_data_no_du
 yield_data_72396 <- droplevels(subset(yield_data_no_duplicates, yield_data_no_duplicates$culture == "72396"))
 yield_data_72482 <- droplevels(subset(yield_data_no_duplicates, yield_data_no_duplicates$culture == "72482"))
 
-dim(yield_data_72292)
-dim(yield_data_72396)
-dim(yield_data_72482)
+dim(yield_data_72292) # 2235
+dim(yield_data_72396) # 720
+dim(yield_data_72482) # 720
 ```
 
 
@@ -468,10 +485,10 @@ common_lines_2015 <- intersect(
   intersect(yield_data_72396$alias, yield_data_72292$alias))
 
 common_lines_2015 <- sort(common_lines_2015)
-length(common_lines_2015)
+length(common_lines_2015) # 60
 
 common_parents_2015 <- which(common_lines_2015 %in% c("Albatros", "Euroresa", "Ramses"))
-common_parents_2015_no_par <- common_lines_2015[-common_parents_2015]
+common_parents_2015_no_par <- common_lines_2015[-common_parents_2015] # 57
 
 # all lines --> union
 all_lines_2015 <- union(
@@ -480,18 +497,120 @@ all_lines_2015 <- union(
 
 all_lines_2015 <- sort(all_lines_2015)
 
-length(all_lines_2015)
+length(all_lines_2015) # 63
 # 3 lines more than in common lines: "AR183" "EA131" "EA174" (not present in jki field and dethlingen 2015)
 
 all_parents_2015 <- which(all_lines_2015 %in% c("Albatros", "Euroresa", "Ramses"))
 all_lines_2015_no_par <- all_lines_2015[-all_parents_2015]
 
 length(intersect(common_lines_2014, all_lines_2015))
-# 62 of 63, because AR21 is missing in MPI Field 2014
+# 62 of 63, because AR21 is missing in JKI Field 2014
 
 setdiff(all_lines_2015, common_lines_2015)
 ```
 
+
+# Experiments 2016
+## MPI FGH 2016: 76240
+```{r MPI FGH 2016: 76240}
+yield_data_76240 <- droplevels(subset(yield_data_no_duplicates, yield_data_no_duplicates$culture == "76240"))
+
+dim(yield_data_76240) # 1581
+
+# subsets for different attributes
+yield_data_76240_fw <- subset(yield_data_76240,
+                              yield_data_76240$value_id == "188")
+yield_data_76240_sc <- subset(yield_data_76240,
+                              yield_data_76240$value_id == "190")
+# fw: 756
+# sc: 825
+
+table(table(yield_data_76240_fw$plant_id))
+table(table(yield_data_76240_sc$plant_id))
+#   1   2   3 
+# 715  13  28
+# some entries were measured twice or thrice! 
+# calculate average of those repeated measurements of starch content (sc)
+
+# calculate mean starch content per plant
+yield_data_76240_sc_mean_per_plant <- ddply(yield_data_76240_sc, "plant_id", summarise,
+                                            mean = mean(as.numeric(number), na.rm = T))
+pander(head(yield_data_76240_sc_mean_per_plant))
+dim(yield_data_76240_sc_mean_per_plant)
+# 756 --> equal to fw
+
+# write.table(yield_data_76240_fw, "data/yield_data_76240_fw.txt", sep="\t")
+```
+
+
+## MPI Feld 2016: 76219
+```{r MPI Feld 2016: 76219}
+yield_data_76219 <- droplevels(subset(yield_data_no_duplicates, yield_data_no_duplicates$culture == "76219"))
+dim(yield_data_76219) # 756
+
+# subsets for different attributes
+yield_data_76219_fw <- subset(yield_data_76219, yield_data_76219$value_id == "188")
+yield_data_76219_sc <- subset(yield_data_76219, yield_data_76219$value_id == "190")
+# fw: 378
+# sc: 378 --> fine!
+```
+
+
+## JKI und Dethlingen 2016
+```{r JKI und Dethlingen 2016}
+yield_data_76354 <- droplevels(subset(yield_data_no_duplicates, yield_data_no_duplicates$culture == "76354")) # JKI shelter
+yield_data_76529 <- droplevels(subset(yield_data_no_duplicates, yield_data_no_duplicates$culture == "76529")) # JKI feld
+yield_data_76528 <- droplevels(subset(yield_data_no_duplicates, yield_data_no_duplicates$culture == "76528")) # Dethlingen
+
+dim(yield_data_76354) # 2151
+dim(yield_data_76529) # 480
+dim(yield_data_76528) # 714
+
+# subsets for different attributes
+# yield_data_76354_fw <- subset(yield_data_76354, yield_data_76354$value_id == "188")
+# yield_data_76354_sc <- subset(yield_data_76354, yield_data_76354$value_id == "190")
+# 
+# yield_data_76529_fw <- subset(yield_data_76529, yield_data_76529$value_id == "188")
+# yield_data_76529_sc <- subset(yield_data_76529, yield_data_76529$value_id == "190")
+# 
+# yield_data_76528_fw <- subset(yield_data_76528, yield_data_76528$value_id == "188")
+# yield_data_76528_sc <- subset(yield_data_76528, yield_data_76528$value_id == "190")
+```
+
+## Lines 2016
+```{r lines 2016}
+# only overlapping lines --> intersect
+common_lines_2016 <- intersect(
+  intersect(yield_data_76219$alias, yield_data_76240$alias), 
+  intersect(yield_data_76354$alias, yield_data_76529$alias))
+
+common_lines_2016 <- sort(common_lines_2016)
+length(common_lines_2016) # 60
+
+common_parents_2016 <- which(common_lines_2016 %in% c("Albatros", "Euroresa", "Ramses"))
+common_parents_2016_no_par <- common_lines_2016[-common_parents_2016] # 57
+
+# all lines --> union
+all_lines_2016 <- union(
+  union(yield_data_76219$alias, yield_data_76240$alias), 
+  yield_data_76354$alias)
+
+all_lines_2016 <- sort(all_lines_2016)
+
+length(all_lines_2016) # 63
+# 3 more lines than in common_lines
+setdiff(all_lines_2016, common_lines_2016)
+# "AR183" "EA131" "EA174" (not present in jki field 2015, 2016 and dethlingen 2015)
+
+all_parents_2016 <- which(all_lines_2016 %in% c("Albatros", "Euroresa", "Ramses"))
+all_lines_2016_no_par <- all_lines_2016[-all_parents_2016]
+
+length(intersect(common_lines_2014, all_lines_2016))
+# 62 of 63, because AR21 is missing in JKI Field 2014
+
+setdiff(common_lines_2015, common_lines_2016)
+setdiff(common_lines_2016, common_lines_2015)
+```
 
 # Create correct yield data table 
 
@@ -503,23 +622,28 @@ yield_data_correct <- ddply(yield_data_no_duplicates, c("culture", "plant_id", "
                           summarise, number = mean(as.numeric(number), na.rm = T))
 
 pander(head(yield_data_correct))
-dim(yield_data_correct)
-dim(yield_data_no_duplicates)
+dim(yield_data_correct) # 19894
+dim(yield_data_no_duplicates) # 20380
 
 pander(table(yield_data_correct$culture, yield_data_correct$attribute))
 
 # subsets per year
 cultures_2014 <- c(67199, 67516, 68713, 68015, 72237, 67518)
 cultures_2015 <- c(72247, 72275, 72482, 72396, 72292)
+cultures_2016 <- c(76219, 76240, 76354, 76528, 76529)
 
 # use a subset of 193 lines from either experiments of 2014 or 2015
 yield_data_correct_2014 <- droplevels(subset(yield_data_correct, 
                                              yield_data_correct$culture %in% cultures_2014 & 
                                                yield_data_correct$alias %in% lines_2014))
-dim(yield_data_correct_2014)
-length(levels(yield_data_correct_2014$alias))
+dim(yield_data_correct_2014) # 7480
+length(levels(yield_data_correct_2014$alias)) # 193
 
 yield_data_correct_2015 <- droplevels(subset(yield_data_correct, yield_data_correct$culture %in% cultures_2015))
+dim(yield_data_correct_2015) # 6315
+
+yield_data_correct_2016 <- droplevels(subset(yield_data_correct, yield_data_correct$culture %in% cultures_2016))
+dim(yield_data_correct_2016) # 5613
 ```
 
 
@@ -546,7 +670,7 @@ yield_data_correct_2014$number [which(yield_data_correct_2014$plant_id %in% SC_N
                                       & yield_data_correct_2014$attribute == "Staerkegehalt")] <- 0
 
 length(which(is.na(yield_data_correct_2014$number)==TRUE))
-
+# 9
 
 # SOME EXCEPTIONS FOR LINES OF SPs (for 2015):
 exceptions_alias <- levels(yield_data_correct_2014_NA_FW$alias)[which(levels(yield_data_correct_2014_NA_FW$alias) %in% all_lines_2015)]
@@ -592,7 +716,7 @@ sp_infos_ordered <- sp_infos[order(sp_infos$alias),]
 
 # this file contains duplicate entries for lines that belong to two SP for ALL 193 LINES FROM 2014
 sp_infos_dup_2014 <- read.table("data/valdis_subpopulations_duplicates_all_2014.txt", sep="\t", header=TRUE)
-length(levels(sp_infos_dup_2014$alias))
+length(levels(sp_infos_dup_2014$alias)) # 193
 
 # WITHOUT PARENTS
 sp_infos_dup_no_parents <- droplevels( subset(sp_infos_dup, !sp_infos_dup$population == "parent"))
@@ -603,22 +727,30 @@ sp_infos_dup_2014_no_parents <- droplevels( subset(sp_infos_dup_2014, !sp_infos_
 ## Merge SP information with yield data from 2014
 ```{r merge SP information with yield data from 2014}
 yield_data_2014_sp <- merge(yield_data_correct_2014, sp_infos, by = "alias", all = TRUE)
-dim(yield_data_2014_sp)
+dim(yield_data_2014_sp) # 7480
 
 yield_data_2014_sp_dup <- merge(yield_data_correct_2014, sp_infos_dup_no_parents, by = "alias", all = TRUE)
-dim(yield_data_2014_sp_dup)
+dim(yield_data_2014_sp_dup) # 7834
 ```
 
 
 ## Merge SP information with yield data from 2015
 ```{r merge SP information with yield data from 2015}
 yield_data_2015_sp <- merge(yield_data_correct_2015, sp_infos, by = "alias", all = TRUE)
-dim(yield_data_2015_sp)
+dim(yield_data_2015_sp) # 6315
 
 yield_data_2015_sp_dup <- merge(yield_data_correct_2015, sp_infos_dup_no_parents, by = "alias", all = TRUE)
-dim(yield_data_2015_sp_dup)
+dim(yield_data_2015_sp_dup) # 7206
 ```
 
+## Merge SP information with yield data from 2016
+```{r merge SP information with yield data from 2016}
+yield_data_2016_sp <- merge(yield_data_correct_2016, sp_infos, by = "alias", all = TRUE)
+dim(yield_data_2016_sp) # 5613
+
+yield_data_2016_sp_dup <- merge(yield_data_correct_2016, sp_infos_dup_no_parents, by = "alias", all = TRUE)
+dim(yield_data_2016_sp_dup) # 6409
+```
 
 # Subsets per attribute
 ```{r subsets per attribute}
@@ -632,25 +764,33 @@ yield_data_2015_fw <- subset(yield_data_correct_2015, yield_data_correct_2015$va
 yield_data_2015_sc <- subset(yield_data_correct_2015, yield_data_correct_2015$value_id == "190")
 yield_data_2015_sy <- subset(yield_data_correct_2015, yield_data_correct_2015$value_id == "191")
 
+# 2016
+yield_data_2016_fw <- subset(yield_data_correct_2016, yield_data_correct_2016$value_id == "188")
+yield_data_2016_sc <- subset(yield_data_correct_2016, yield_data_correct_2016$value_id == "190")
+yield_data_2016_sy <- subset(yield_data_correct_2016, yield_data_correct_2016$value_id == "191")
+
 
 # histograms of attributes
-par(mfrow=c(1,2))
+par(mfrow=c(1,3))
 hist(yield_data_2014_fw$number, breaks = 20, col = "grey", main = "fresh weight 2014")
 hist(yield_data_2015_fw$number, breaks = 20, col = "grey", main = "fresh weight 2015")
+hist(yield_data_2016_fw$number, breaks = 20, col = "grey", main = "fresh weight 2016")
 hist(yield_data_2014_sc$number, breaks = 20, col = "grey", main = "starch content 2014")
 hist(yield_data_2015_sc$number, breaks = 20, col = "grey", main = "starch content 2015")
+hist(yield_data_2016_sc$number, breaks = 20, col = "grey", main = "starch content 2016")
 hist(yield_data_2014_sy$number, breaks = 20, col = "grey", main = "starch yield 2014")
 hist(yield_data_2015_sy$number, breaks = 20, col = "grey", main = "starch yield 2015")
+hist(yield_data_2016_sy$number, breaks = 20, col = "grey", main = "starch yield 2016")
 par(mfrow=c(1,1))
 ```
 
 
 # Calculate starch yield per experiment 
 **contains drymatter (%), starch content (g/kg) and starch yield (kg/plant and g/plant)**
-
+* last number in function refers to number of plants per plot
 ```{r calculate starch yield}
 # 2014
-mpi_fgh_2014 <- func_starch_yield_feld(yield_data_2014_sp_dup, 67199, 1)
+mpi_fgh_2014 <- func_starch_yield_feld(yield_data_2014_sp_dup, 67199, 1) 
 mpi_feld_2014 <- func_starch_yield_feld(yield_data_2014_sp_dup, c(67516, 68713), 5)
 jki_shelter_2014 <- func_starch_yield_feld(yield_data_2014_sp_dup, c(68015, 72237), 1)
 jki_feld_2014 <- func_starch_yield_feld(yield_data_2014_sp_dup, 67518, 1)
@@ -661,6 +801,13 @@ mpi_feld_2015 <- func_starch_yield_feld(yield_data_2015_sp_dup, 72275, 5)
 jki_shelter_2015 <- func_starch_yield_feld(yield_data_2015_sp_dup, 72292, 1)
 jki_feld_2015 <- func_starch_yield_feld(yield_data_2015_sp_dup, 72396, 5)
 dethlingen_2015 <- func_starch_yield_feld(yield_data_2015_sp_dup, 72482, 10)
+
+# 2016
+mpi_fgh_2016 <- func_starch_yield_feld(yield_data_2016_sp_dup, 76240, 1)
+mpi_feld_2016 <- func_starch_yield_feld(yield_data_2016_sp_dup, 76219, 5)
+jki_shelter_2016 <- func_starch_yield_feld(yield_data_2016_sp_dup, 76354, 1)
+jki_feld_2016 <- func_starch_yield_feld(yield_data_2016_sp_dup, 76529, 5)
+dethlingen_2016 <- func_starch_yield_feld(yield_data_2016_sp_dup, 76528, 10)
 
 # remove entries that have starch yield of zero
 # which(mpi_feld_2014$starch_yield_g_per_plant == 0)
@@ -713,6 +860,22 @@ jki_feld_2015_cv <- ddply(jki_feld_2015, c("alias","treatment_name"),
 
 dethlingen_2015_cv <- ddply(dethlingen_2015, c("alias","treatment_name"), 
                          summarise, cv = func_CV(starch_yield_g_per_plant))
+
+# 2016
+mpi_fgh_2016_cv <- ddply(mpi_fgh_2016, c("alias","treatment_name"),
+                         summarise, cv = func_CV(starch_yield_g_per_plant))
+
+mpi_feld_2016_cv <- ddply(mpi_feld_2016, c("alias","treatment_name"), 
+                         summarise, cv = func_CV(starch_yield_g_per_plant))
+
+jki_shelter_2016_cv <- ddply(jki_shelter_2016, c("alias","treatment_name"), 
+                         summarise, cv = func_CV(starch_yield_g_per_plant))
+
+jki_feld_2016_cv <- ddply(jki_feld_2016, c("alias","treatment_name"),
+                         summarise, cv = func_CV(starch_yield_g_per_plant))
+
+dethlingen_2016_cv <- ddply(dethlingen_2016, c("alias","treatment_name"),
+                         summarise, cv = func_CV(starch_yield_g_per_plant))
 ```
 
 
@@ -739,6 +902,18 @@ jki_feld_2015_mean_per_line <- ddply(jki_feld_2015, c("alias", "treatment_name")
                                     starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
 dethlingen_2015_mean_per_line <- ddply(dethlingen_2015, c("alias", "treatment_name"), summarise,  
                                     starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+
+# 2016
+mpi_fgh_2016_mean_per_line <- ddply(mpi_fgh_2016, c("alias", "treatment_name"), summarise,
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+mpi_feld_2016_mean_per_line <- ddply(mpi_feld_2016, c("alias", "treatment_name"), summarise,  
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+jki_shelter_2016_mean_per_line <- ddply(jki_shelter_2016, c("alias", "treatment_name"), summarise,  
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+jki_feld_2016_mean_per_line <- ddply(jki_feld_2016, c("alias", "treatment_name"), summarise,
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
+dethlingen_2016_mean_per_line <- ddply(dethlingen_2016, c("alias", "treatment_name"), summarise,
+                                    starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T))
 ```
 
 
@@ -756,6 +931,31 @@ mpi_feld_2015_control <- subset(mpi_feld_2015, mpi_feld_2015$treatment_name == "
 jki_feld_2015_control <- subset(jki_feld_2015, jki_feld_2015$treatment_name == "control")
 jki_shelter_2015_control <- subset(jki_shelter_2015, jki_shelter_2015$treatment_name == "control")
 dethlingen_2015_control <- subset(dethlingen_2015, dethlingen_2015$treatment_name == "control")
+
+# 2016
+mpi_fgh_2016_control <- subset(mpi_fgh_2016, mpi_fgh_2016$treatment_name == "control")
+mpi_feld_2016_control <- subset(mpi_feld_2016, mpi_feld_2016$treatment_name == "control")
+jki_shelter_2016_control <- subset(jki_shelter_2016, jki_shelter_2016$treatment_name == "control")
+jki_feld_2016_control <- subset(jki_feld_2016, jki_feld_2016$treatment_name == "control")
+dethlingen_2016_control <- subset(dethlingen_2016, dethlingen_2016$treatment_name == "control")
+```
+
+
+### ANOVA for subset of control starch yield
+```{r ANOVA for subset of control starch yield}
+# 2015
+summary(aov(mpi_fgh_2015_control$starch_yield_g_per_plant ~ mpi_fgh_2015_control$SP))
+summary(aov(mpi_feld_2015_control$starch_yield_g_per_plant ~ mpi_feld_2015_control$SP))
+summary(aov(jki_shelter_2015_control$starch_yield_g_per_plant ~ jki_shelter_2015_control$SP))
+summary(aov(jki_feld_2015_control$starch_yield_g_per_plant ~ jki_feld_2015_control$SP))
+summary(aov(dethlingen_2015_control$starch_yield_g_per_plant ~ dethlingen_2015_control$SP))
+
+# 2016
+summary(aov(mpi_fgh_2016_control$starch_yield_g_per_plant ~ mpi_fgh_2016_control$SP))
+summary(aov(mpi_feld_2016_control$starch_yield_g_per_plant ~ mpi_feld_2016_control$SP))
+summary(aov(jki_shelter_2016_control$starch_yield_g_per_plant ~ jki_shelter_2016_control$SP))
+summary(aov(jki_feld_2016_control$starch_yield_g_per_plant ~ jki_feld_2016_control$SP))
+summary(aov(dethlingen_2016_control$starch_yield_g_per_plant ~ dethlingen_2016_control$SP))
 ```
 
 
@@ -773,6 +973,31 @@ mpi_feld_2015_stress <- subset(mpi_feld_2015, mpi_feld_2015$treatment_name == "d
 jki_feld_2015_stress <- subset(jki_feld_2015, jki_feld_2015$treatment_name == "drought stress")
 jki_shelter_2015_stress <- subset(jki_shelter_2015, jki_shelter_2015$treatment_name == "drought stress")
 dethlingen_2015_stress <- subset(dethlingen_2015, dethlingen_2015$treatment_name == "drought stress")
+
+# 2016
+mpi_fgh_2016_stress <- subset(mpi_fgh_2016, mpi_fgh_2016$treatment_name == "drought stress")
+mpi_feld_2016_stress <- subset(mpi_feld_2016, mpi_feld_2016$treatment_name == "drought stress")
+jki_shelter_2016_stress <- subset(jki_shelter_2016, jki_shelter_2016$treatment_name == "drought stress")
+jki_feld_2016_stress <- subset(jki_feld_2016, jki_feld_2016$treatment_name == "drought stress")
+dethlingen_2016_stress <- subset(dethlingen_2016, dethlingen_2016$treatment_name == "drought stress")
+```
+
+
+### ANOVA for subset of stress starch yield
+```{r ANOVA for subset of stress starch yield}
+# 2015
+summary(aov(mpi_fgh_2015_stress$starch_yield_g_per_plant ~ mpi_fgh_2015_stress$SP))
+summary(aov(mpi_feld_2015_stress$starch_yield_g_per_plant ~ mpi_feld_2015_stress$SP))
+summary(aov(jki_shelter_2015_stress$starch_yield_g_per_plant ~ jki_shelter_2015_stress$SP))
+summary(aov(jki_feld_2015_stress$starch_yield_g_per_plant ~ jki_feld_2015_stress$SP))
+summary(aov(dethlingen_2015_stress$starch_yield_g_per_plant ~ dethlingen_2015_stress$SP))
+
+# 2016
+summary(aov(mpi_fgh_2016_stress$starch_yield_g_per_plant ~ mpi_fgh_2016_stress$SP))
+summary(aov(mpi_feld_2016_stress$starch_yield_g_per_plant ~ mpi_feld_2016_stress$SP))
+summary(aov(jki_shelter_2016_stress$starch_yield_g_per_plant ~ jki_shelter_2016_stress$SP))
+summary(aov(jki_feld_2016_stress$starch_yield_g_per_plant ~ jki_feld_2016_stress$SP))
+summary(aov(dethlingen_2016_stress$starch_yield_g_per_plant ~ dethlingen_2016_stress$SP))
 ```
 
 
@@ -799,6 +1024,18 @@ jki_shelter_2015_control_mean_per_line <- ddply(jki_shelter_2015_control, "alias
 dethlingen_2015_control_mean_per_line <- ddply(dethlingen_2015_control, "alias", summarise, 
                                             mean = mean(starch_yield_g_per_plant))
 
+# 2016
+mpi_fgh_2016_control_mean_per_line <- ddply(mpi_fgh_2016_control, "alias", summarise,
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+mpi_feld_2016_control_mean_per_line <- ddply(mpi_feld_2016_control, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+jki_shelter_2016_control_mean_per_line <- ddply(jki_shelter_2016_control, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+jki_feld_2016_control_mean_per_line <- ddply(jki_feld_2016_control, "alias", summarise,
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+dethlingen_2016_control_mean_per_line <- ddply(dethlingen_2016_control, "alias", summarise,
+                                            mean = mean(starch_yield_g_per_plant))
+
 # calculate overall median of mean values per line (only control data)
 # 2014
 mpi_fgh_2014_control_median <- median(mpi_fgh_2014_control_mean_per_line$mean, na.rm = T) # 117.20
@@ -812,6 +1049,13 @@ mpi_feld_2015_control_median <- median(mpi_feld_2015_control_mean_per_line$mean)
 jki_feld_2015_control_median <- median(jki_feld_2015_control_mean_per_line$mean) # 242.85
 jki_shelter_2015_control_median <- median(jki_shelter_2015_control_mean_per_line$mean) # 71.91
 dethlingen_2015_control_median <- median(dethlingen_2015_control_mean_per_line$mean) # 216.81
+
+# 2016
+mpi_fgh_2016_control_median <- median(mpi_fgh_2016_control_mean_per_line$mean) # 177.21
+mpi_feld_2016_control_median <- median(mpi_feld_2016_control_mean_per_line$mean) # 216.114
+jki_shelter_2016_control_median <- median(jki_shelter_2016_control_mean_per_line$mean) # 50.92209
+jki_feld_2016_control_median <- median(jki_feld_2016_control_mean_per_line$mean) # 289.83
+dethlingen_2016_control_median <- median(dethlingen_2016_control_mean_per_line$mean) # 265.1388
 
 ###############
 
@@ -856,6 +1100,17 @@ jki_shelter_2015_stress_mean_per_line <- ddply(jki_shelter_2015_stress, "alias",
                                             mean = mean(starch_yield_g_per_plant, na.rm = T))
 dethlingen_2015_stress_mean_per_line <- ddply(dethlingen_2015_stress, "alias", summarise, 
                                             mean = mean(starch_yield_g_per_plant))
+# 2016
+mpi_fgh_2016_stress_mean_per_line <- ddply(mpi_fgh_2016_stress, "alias", summarise,
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+mpi_feld_2016_stress_mean_per_line <- ddply(mpi_feld_2016_stress, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+jki_shelter_2016_stress_mean_per_line <- ddply(jki_shelter_2016_stress, "alias", summarise, 
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+jki_feld_2016_stress_mean_per_line <- ddply(jki_feld_2016_stress, "alias", summarise,
+                                            mean = mean(starch_yield_g_per_plant, na.rm = T))
+dethlingen_2016_stress_mean_per_line <- ddply(dethlingen_2016_stress, "alias", summarise,
+                                            mean = mean(starch_yield_g_per_plant))
 ```
 
 
@@ -882,6 +1137,18 @@ jki_shelter_2015_control_median_per_line <- ddply(jki_shelter_2015_control, "ali
                                             median = median(starch_yield_g_per_plant, na.rm = T))
 dethlingen_2015_control_median_per_line <- ddply(dethlingen_2015_control, "alias", summarise, 
                                             median = median(starch_yield_g_per_plant, na.rm = T))
+
+# 2016
+mpi_fgh_2016_control_median_per_line <- ddply(mpi_fgh_2016_control, "alias", summarise,
+                                            median = median(starch_yield_g_per_plant, na.rm = T))
+mpi_feld_2016_control_median_per_line <- ddply(mpi_feld_2016_control, "alias", summarise, 
+                                            median = median(starch_yield_g_per_plant, na.rm = T))
+jki_shelter_2016_control_median_per_line <- ddply(jki_shelter_2016_control, "alias", summarise, 
+                                            median = median(starch_yield_g_per_plant, na.rm = T))
+jki_feld_2016_control_median_per_line <- ddply(jki_feld_2016_control, "alias", summarise,
+                                            median = median(starch_yield_g_per_plant, na.rm = T))
+dethlingen_2016_control_median_per_line <- ddply(dethlingen_2016_control, "alias", summarise, 
+                                           median = median(starch_yield_g_per_plant, na.rm = T))
 ```
 
 
@@ -900,6 +1167,13 @@ mpi_feld_2015$normalized_starch_yield_per_plant <- mpi_feld_2015$starch_yield_g_
 jki_feld_2015$normalized_starch_yield_per_plant <- jki_feld_2015$starch_yield_g_per_plant / jki_feld_2015_control_median
 jki_shelter_2015$normalized_starch_yield_per_plant <- jki_shelter_2015$starch_yield_g_per_plant / jki_shelter_2015_control_median
 dethlingen_2015$normalized_starch_yield_per_plant <- dethlingen_2015$starch_yield_g_per_plant / dethlingen_2015_control_median
+
+# 2016
+mpi_fgh_2016$normalized_starch_yield_per_plant <- mpi_fgh_2016$starch_yield_g_per_plant / mpi_fgh_2016_control_median
+mpi_feld_2016$normalized_starch_yield_per_plant <- mpi_feld_2016$starch_yield_g_per_plant / mpi_feld_2016_control_median
+jki_shelter_2016$normalized_starch_yield_per_plant <- jki_shelter_2016$starch_yield_g_per_plant / jki_shelter_2016_control_median
+jki_feld_2016$normalized_starch_yield_per_plant <- jki_feld_2016$starch_yield_g_per_plant / jki_feld_2016_control_median
+dethlingen_2016$normalized_starch_yield_per_plant <- dethlingen_2016$starch_yield_g_per_plant / dethlingen_2016_control_median
 ```
 
 
@@ -916,14 +1190,19 @@ dethlingen_2015$normalized_starch_yield_per_plant <- dethlingen_2015$starch_yiel
 http://www.cookbook-r.com/Manipulating_data/Summarizing_data/#filling-empty-combinations-with-zeros-1
 
 ```{r bind all processed yield data}
-#yield_data_final_2014_all <- rbind(mpi_fgh_2014, mpi_feld_2014, jki_feld_2014, jki_shelter_2014)
+yield_data_final_2014_all <- rbind(mpi_fgh_2014, mpi_feld_2014, jki_feld_2014, jki_shelter_2014)
 yield_data_final_2014 <- rbind(mpi_fgh_2014, jki_feld_2014, jki_shelter_2014)
 yield_data_final_2015_all <- rbind(mpi_fgh_2015, mpi_feld_2015, jki_feld_2015, jki_shelter_2015, dethlingen_2015)
 yield_data_final_2015 <- rbind(mpi_fgh_2015, mpi_feld_2015, jki_feld_2015, jki_shelter_2015)
+yield_data_final_2016_all <- rbind(mpi_fgh_2016, mpi_feld_2016, jki_shelter_2016, jki_feld_2016, dethlingen_2016)
+yield_data_final_2016 <- rbind(mpi_fgh_2016, mpi_feld_2016, jki_shelter_2016, jki_feld_2016)
 
 dim(yield_data_final_2014)
+dim(yield_data_final_2014_all)
 dim(yield_data_final_2015)
 dim(yield_data_final_2015_all)
+dim(yield_data_final_2016)
+dim(yield_data_final_2016_all)
 
 yield_data_final_2015_all$SP_report <- as.character(yield_data_final_2015_all$SP)
 yield_data_final_2015_all$SP_report[which(yield_data_final_2015_all$alias=="Albatros")] <- "Albatros"
@@ -944,26 +1223,52 @@ yield_data_final_2015_stress <- droplevels(subset(yield_data_final_2015, yield_d
 yield_data_final_2015_control <- droplevels(subset(yield_data_final_2015, yield_data_final_2015$treatment_name == "control"))
 dim(yield_data_final_2015_control)
 dim(yield_data_final_2015_stress)
+
+# all trials of 2015
+yield_data_final_2015_all_control <- droplevels(subset(yield_data_final_2015_all, yield_data_final_2015_all$treatment_name == "control"))
+yield_data_final_2015_all_stress <- droplevels(subset(yield_data_final_2015_all, yield_data_final_2015_all$treatment_name == "drought stress"))
+dim(yield_data_final_2015_all_control)
+dim(yield_data_final_2015_all_stress)
+
+# 2016
+yield_data_final_2016_stress <- droplevels(subset(yield_data_final_2016, yield_data_final_2016$treatment_name == "drought stress"))
+yield_data_final_2016_control <- droplevels(subset(yield_data_final_2016, yield_data_final_2016$treatment_name == "control"))
+dim(yield_data_final_2016_control)
+dim(yield_data_final_2016_stress)
+
+# all trials of 2016
+yield_data_final_2016_all_control <- droplevels(subset(yield_data_final_2016_all, yield_data_final_2016_all$treatment_name == "control"))
+yield_data_final_2016_all_stress <- droplevels(subset(yield_data_final_2016_all, yield_data_final_2016_all$treatment_name == "drought stress"))
+dim(yield_data_final_2016_all_control)
+dim(yield_data_final_2016_all_stress)
 ```
 
 
-## Calculate mean of starch yield per line and experiment (all conditions)
-```{r calculate mean of starch yield per line and experiment (all conditions)}
+## Calculate mean of starch yield per line, treatment and experiment (all conditions)
+```{r calculate mean of starch yield per line treatment and experiment (all conditions)}
 # 2014
-# calculate mean of starch yield per line and experiment
+# calculate mean of starch yield per line, treatment and experiment
 yield_data_final_2014_sy_mean <- ddply(yield_data_final_2014, c("alias", "culture","treatment_name"), summarise, 
                                        sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
 
 pander(head(yield_data_final_2014_sy_mean))
-dim(yield_data_final_2014_sy_mean)
+dim(yield_data_final_2014_sy_mean) # 1158
 
 # 2015
-# calculate mean of starch yield per line and experiment
+# calculate mean of starch yield per line, treatment and experiment
 yield_data_final_2015_sy_mean <- ddply(yield_data_final_2015, c("alias", "culture","treatment_name"), summarise, 
                                       sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
 
 pander(head(yield_data_final_2015_sy_mean))
-dim(yield_data_final_2015_sy_mean)
+dim(yield_data_final_2015_sy_mean) # 504
+
+# 2016
+# calculate mean of starch yield per line, treatment and experiment
+yield_data_final_2016_sy_mean <- ddply(yield_data_final_2016, c("alias", "culture","treatment_name"), summarise, 
+                                      sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
+
+pander(head(yield_data_final_2016_sy_mean))
+dim(yield_data_final_2016_sy_mean) # 504
 ```
 
 
@@ -975,7 +1280,7 @@ yield_data_final_2014_control_sy_mean <- ddply(yield_data_final_2014_control, c(
                                             sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
 
 pander(head(yield_data_final_2014_control_sy_mean))
-dim(yield_data_final_2014_control_sy_mean)
+dim(yield_data_final_2014_control_sy_mean) # 579
 
 # 2015
 # calculate mean of starch yield per line and experiment
@@ -983,15 +1288,52 @@ yield_data_final_2015_control_sy_mean <- ddply(yield_data_final_2015_control, c(
                                             sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
 
 pander(head(yield_data_final_2015_control_sy_mean))
-dim(yield_data_final_2015_control_sy_mean)
+dim(yield_data_final_2015_control_sy_mean) # 252
 
+# all trials 2015
+yield_data_final_2015_all_control_sy_mean <- ddply(yield_data_final_2015_all_control, c("alias", "culture"), summarise, 
+                                                   sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
+dim(yield_data_final_2015_all_control_sy_mean) # 315
+
+# 2016
+# calculate mean of starch yield per line and experiment
+yield_data_final_2016_control_sy_mean <- ddply(yield_data_final_2016_control, c("alias", "culture"), summarise, 
+                                            sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
+
+pander(head(yield_data_final_2016_control_sy_mean))
+dim(yield_data_final_2016_control_sy_mean) # 252
+
+# all trials 2016
+yield_data_final_2016_all_control_sy_mean <- ddply(yield_data_final_2016_all_control, c("alias", "culture"), summarise, 
+                                                   sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
+dim(yield_data_final_2016_all_control_sy_mean) # 315
+```
+
+### Cast mean of starch yield per line and experiment (only control)
+```{r Cast mean of starch yield per line and experiment (only control)}
 # cast results, so that one column per experiment
+# 2014
 yield_data_final_2014_control_sy_mean_cast <- cast(yield_data_final_2014_control_sy_mean, 
                                                    alias ~ culture, value = "sy")
 
+# 2015
 yield_data_final_2015_control_sy_mean_cast <- cast(yield_data_final_2015_control_sy_mean, 
                                                    alias ~ culture, value = "sy")
 head(yield_data_final_2015_control_sy_mean_cast)
+
+# all trials 2015
+yield_data_final_2015_all_control_sy_mean_cast <- cast(yield_data_final_2015_all_control_sy_mean, 
+                                                   alias ~ culture, value = "sy")
+head(yield_data_final_2015_all_control_sy_mean_cast)
+
+
+# 2016
+yield_data_final_2016_control_sy_mean_cast <- cast(yield_data_final_2016_control_sy_mean, 
+                                                   alias ~ culture, value = "sy")
+# all trials 2016
+yield_data_final_2016_all_control_sy_mean_cast <- cast(yield_data_final_2016_all_control_sy_mean, 
+                                                   alias ~ culture, value = "sy")
+head(yield_data_final_2016_all_control_sy_mean_cast)
 ```
 
 
@@ -1003,7 +1345,7 @@ yield_data_final_2014_stress_sy_mean <- ddply(yield_data_final_2014_stress, c("a
                                             sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
 
 pander(head(yield_data_final_2014_stress_sy_mean))
-dim(yield_data_final_2014_stress_sy_mean)
+dim(yield_data_final_2014_stress_sy_mean) # 579
 
 # 2015
 # calculate mean of starch yield per line and experiment
@@ -1011,7 +1353,51 @@ yield_data_final_2015_stress_sy_mean <- ddply(yield_data_final_2015_stress, c("a
                                             sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
 
 pander(head(yield_data_final_2015_stress_sy_mean))
-dim(yield_data_final_2015_stress_sy_mean)
+dim(yield_data_final_2015_stress_sy_mean) # 252
+
+# all trials 2015
+yield_data_final_2015_all_stress_sy_mean <- ddply(yield_data_final_2015_all_stress, c("alias", "culture"), summarise, 
+                                                   sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
+dim(yield_data_final_2015_all_stress_sy_mean) # 315
+
+# 2016
+# calculate mean of starch yield per line and experiment
+yield_data_final_2016_stress_sy_mean <- ddply(yield_data_final_2016_stress, c("alias", "culture"), summarise, 
+                                            sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
+
+pander(head(yield_data_final_2016_stress_sy_mean))
+dim(yield_data_final_2016_stress_sy_mean) # 252
+
+# all trials 2016
+yield_data_final_2016_all_stress_sy_mean <- ddply(yield_data_final_2016_all_stress, c("alias", "culture"), summarise, 
+                                                   sy = mean(starch_yield_g_per_plant, na.rm = T), .drop=FALSE)
+dim(yield_data_final_2016_all_stress_sy_mean) # 315
+```
+
+### Cast mean of starch yield per line and experiment (only stress)
+```{r cast mean of starch yield per line and experiment (only stress)}
+# cast results, so that one column per experiment
+# 2014
+yield_data_final_2014_stress_sy_mean_cast <- cast(yield_data_final_2014_stress_sy_mean, 
+                                                   alias ~ culture, value = "sy")
+
+# 2015
+yield_data_final_2015_stress_sy_mean_cast <- cast(yield_data_final_2015_stress_sy_mean, 
+                                                   alias ~ culture, value = "sy")
+
+# all trials 2015
+yield_data_final_2015_all_stress_sy_mean_cast <- cast(yield_data_final_2015_all_stress_sy_mean, 
+                                                   alias ~ culture, value = "sy")
+head(yield_data_final_2015_all_stress_sy_mean_cast)
+
+# 2016
+yield_data_final_2016_stress_sy_mean_cast <- cast(yield_data_final_2016_stress_sy_mean, 
+                                                   alias ~ culture, value = "sy")
+
+# all trials 2016
+yield_data_final_2016_all_stress_sy_mean_cast <- cast(yield_data_final_2016_all_stress_sy_mean, 
+                                                   alias ~ culture, value = "sy")
+head(yield_data_final_2016_all_stress_sy_mean_cast)
 ```
 
 
@@ -1022,14 +1408,27 @@ yield_data_final_2014_control_norm_sy_mean <- ddply(yield_data_final_2014_contro
                                                norm_sy = mean(normalized_starch_yield_per_plant, na.rm = T), .drop=FALSE)
 
 pander(head(yield_data_final_2014_control_norm_sy_mean))
-dim(yield_data_final_2014_control_norm_sy_mean)
+dim(yield_data_final_2014_control_norm_sy_mean) # 579
 
 # 2015
 yield_data_final_2015_control_norm_sy_mean <- ddply(yield_data_final_2015_control, c("alias", "culture"), summarise, 
                                                norm_sy = mean(normalized_starch_yield_per_plant, na.rm = T), .drop=FALSE)
 
 pander(head(yield_data_final_2015_control_norm_sy_mean))
-dim(yield_data_final_2015_control_norm_sy_mean)
+dim(yield_data_final_2015_control_norm_sy_mean) # 252
+
+# 2016
+yield_data_final_2016_control_norm_sy_mean <- ddply(yield_data_final_2016_control, c("alias", "culture"), summarise, 
+                                               norm_sy = mean(normalized_starch_yield_per_plant, na.rm = T), .drop=FALSE)
+
+pander(head(yield_data_final_2016_control_norm_sy_mean))
+dim(yield_data_final_2016_control_norm_sy_mean) # 252
+
+# all trials 2016
+yield_data_final_2016_all_control_norm_sy_mean <- ddply(yield_data_final_2016_all_control, c("alias", "culture"), summarise, 
+                                                   norm_sy = mean(normalized_starch_yield_per_plant, na.rm = T), .drop=FALSE)
+dim(yield_data_final_2016_all_control_norm_sy_mean) # 315
+
 
 # cast results, so that one column per experiment
 yield_data_final_2014_control_norm_sy_mean_cast <- cast(yield_data_final_2014_control_norm_sy_mean, 
@@ -1038,6 +1437,12 @@ yield_data_final_2014_control_norm_sy_mean_cast <- cast(yield_data_final_2014_co
 yield_data_final_2015_control_norm_sy_mean_cast <- cast(yield_data_final_2015_control_norm_sy_mean, 
                                                    alias ~ culture, value = "norm_sy")
 head(yield_data_final_2015_control_norm_sy_mean_cast)
+
+yield_data_final_2016_control_norm_sy_mean_cast <- cast(yield_data_final_2016_control_norm_sy_mean, 
+                                                   alias ~ culture, value = "norm_sy")
+
+yield_data_final_2016_all_control_norm_sy_mean_cast <- cast(yield_data_final_2016_all_control_norm_sy_mean, 
+                                                   alias ~ culture, value = "norm_sy")
 ```
 
 
@@ -1107,6 +1512,41 @@ t.test(yield_data_final_2015_stress_sp1$normalized_starch_yield_per_plant,
 ```
 
 
+## Subsets for subpopulations 2016
+```{r subsets for subpopulations 2016}
+# all data
+yield_data_final_2016_sp1 <- subset(yield_data_final_2016, yield_data_final_2016$SP == "SP1")
+yield_data_final_2016_sp2 <- subset(yield_data_final_2016, yield_data_final_2016$SP == "SP2")
+yield_data_final_2016_sp3 <- subset(yield_data_final_2016, yield_data_final_2016$SP == "SP3")
+
+# treatment: control
+yield_data_final_2016_control_sp1 <- subset(yield_data_final_2016_control, yield_data_final_2016_control$SP == "SP1")
+yield_data_final_2016_control_sp2 <- subset(yield_data_final_2016_control, yield_data_final_2016_control$SP == "SP2")
+yield_data_final_2016_control_sp3 <- subset(yield_data_final_2016_control, yield_data_final_2016_control$SP == "SP2")
+
+## SP1 vs. SP2
+t.test(yield_data_final_2016_control_sp1$normalized_starch_yield_per_plant, 
+       yield_data_final_2016_control_sp2$normalized_starch_yield_per_plant)
+
+## SP2 vs. SP3
+t.test(yield_data_final_2016_control_sp2$normalized_starch_yield_per_plant, 
+       yield_data_final_2016_control_sp3$normalized_starch_yield_per_plant)
+
+## SP1 vs. SP3
+t.test(yield_data_final_2016_control_sp1$normalized_starch_yield_per_plant, 
+       yield_data_final_2016_control_sp3$normalized_starch_yield_per_plant)
+
+
+# treatment: drought stress
+yield_data_final_2016_stress_sp1 <- subset(yield_data_final_2016_stress, yield_data_final_2016_stress$SP == "SP1")
+yield_data_final_2016_stress_sp2 <- subset(yield_data_final_2016_stress, yield_data_final_2016_stress$SP == "SP2")
+yield_data_final_2016_stress_sp3 <- subset(yield_data_final_2016_stress, yield_data_final_2016_stress$SP == "SP3")
+
+## SP1 vs. SP2
+t.test(yield_data_final_2016_stress_sp1$normalized_starch_yield_per_plant, 
+       yield_data_final_2016_stress_sp2$normalized_starch_yield_per_plant)
+```
+
 # Explorative plots
 ## Explorative plots - absolute starch yield - treatment 2014
 ```{r explorative plots - absolute starch yield - treatment 2014}
@@ -1169,6 +1609,41 @@ pdf("figures/valdis_boxplot_starch_yield_treatment_culture_2015.pdf", width = 8,
 
 boxplot(yield_data_final_2015$starch_yield_g_per_plant ~ yield_data_final_2015$treatment_name * yield_data_final_2015$culture, 
         col = cols_treatment, main = "SY all experiments 2015", ylim = ylim_values, ylab = "Stärkeertrag in g/Pflanze")
+legend("topright", legend=c("Kontrolle", "Trockenstress"), fill=cols_treatment)
+
+dev.off()
+```
+
+
+## Explorative plots - absolute starch yield - treatment 2016
+```{r explorative plots - absolute starch yield - treatment 2016}
+# absolute starch yield
+pdf("figures/valdis_boxplot_starch_yield_treatment_2016.pdf")
+boxplot(mpi_fgh_2016$starch_yield_g_per_plant ~ mpi_fgh_2016$treatment_name, 
+        col = cols_treatment, main = "MPI foil greenhouse 2016")
+
+boxplot(mpi_feld_2016$starch_yield_g_per_plant ~ mpi_feld_2016$treatment_name, 
+        col = cols_treatment, main = "MPI field 2016")
+
+boxplot(jki_shelter_2016$starch_yield_g_per_plant ~ jki_shelter_2016$treatment_name, 
+        col = cols_treatment, main = "JKI shelter 2016")
+
+boxplot(jki_feld_2016$starch_yield_g_per_plant ~ jki_feld_2016$treatment_name,
+        col = cols_treatment, main = "JKI field 2016")
+
+boxplot(dethlingen_2016$starch_yield_g_per_plant ~ dethlingen_2016$treatment_name,
+        col = cols_treatment, main = "Dethlingen 2016")
+dev.off()
+
+
+# treatment * culture
+range(yield_data_final_2016$starch_yield_g_per_plant, na.rm = T)
+ylim_values <- c(0, 500)
+
+pdf("figures/valdis_boxplot_starch_yield_treatment_culture_2016.pdf", width = 8, height = 6)
+
+boxplot(yield_data_final_2016$starch_yield_g_per_plant ~ yield_data_final_2016$treatment_name * yield_data_final_2016$culture, 
+        col = cols_treatment, main = "SY all experiments 2016", ylim = ylim_values, ylab = "Stärkeertrag in g/Pflanze")
 legend("topright", legend=c("Kontrolle", "Trockenstress"), fill=cols_treatment)
 
 dev.off()
@@ -1266,6 +1741,52 @@ pander(ddply(yield_data_final_2015, c("culture", "treatment"), summarise,
              median = median(normalized_starch_yield_per_plant)))
 ```
 
+## Explorative plots - normalized starch yield - treatment 2016
+```{r explorative plots - normalized starch yield - treatment 2016}
+ylim_values <- c(0,2)
+
+pdf("figures/valdis_boxplot_starch_yield_norm_treatment_2016.pdf")
+
+boxplot(yield_data_final_2016$normalized_starch_yield_per_plant ~ yield_data_final_2016$treatment_name, 
+        col = cols_treatment, main = "all experiments 2016", ylim = ylim_values)
+
+boxplot(mpi_fgh_2016$normalized_starch_yield_per_plant ~ mpi_fgh_2016$treatment_name, 
+        col = cols_treatment, main = "MPI foil greenhouse 2016", ylim = ylim_values)
+
+boxplot(mpi_feld_2016$normalized_starch_yield_per_plant ~ mpi_feld_2016$treatment_name, 
+        col = cols_treatment, main = "MPI field 2016", ylim = ylim_values)
+
+boxplot(jki_shelter_2016$normalized_starch_yield_per_plant ~ jki_shelter_2016$treatment_name, 
+        col = cols_treatment, main = "JKI shelter 2016", ylim = ylim_values)
+
+boxplot(jki_feld_2016$normalized_starch_yield_per_plant ~ jki_feld_2016$treatment_name,
+        col = cols_treatment, main = "JKI field 2016", ylim = ylim_values)
+
+boxplot(dethlingen_2016$normalized_starch_yield_per_plant ~ dethlingen_2016$treatment_name,
+        col = cols_treatment, main = "Dethlingen 2016", ylim = ylim_values)
+dev.off()
+
+
+# treatment * culture
+ylim_values <- c(0, 2.2)
+
+pdf("figures/valdis_boxplot_starch_yield_norm_treatment_culture_2016.pdf", width = 8, height = 6)
+
+boxplot(yield_data_final_2016$normalized_starch_yield_per_plant ~ yield_data_final_2016$treatment_name * yield_data_final_2016$culture, 
+        col = cols_treatment, main = "normalized SY all experiments 2016", ylim = ylim_values, ylab = "normalisierter Stärkeertrag")
+legend("topright", legend=c("Kontrolle", "Trockenstress"), fill=cols_treatment)
+
+dev.off()
+
+
+# mean of norm SY per culture and treatment
+pander(ddply(yield_data_final_2016, c("culture", "treatment"), summarise, 
+             mean = mean(normalized_starch_yield_per_plant)))
+# median
+pander(ddply(yield_data_final_2016, c("culture", "treatment"), summarise, 
+             median = median(normalized_starch_yield_per_plant, na.rm = T)))
+```
+
 
 ## Explorative plots - absolute starch yield - treatment * plant line 2014
 ```{r explorative plots - absolute starch yield - treatment * plant line 2014}
@@ -1309,6 +1830,28 @@ boxplot(dethlingen_2015$starch_yield_g_per_plant ~ dethlingen_2015$treatment_nam
 dev.off()
 ```
 
+
+## Explorative plots - absolute starch yield - treatment * plant line 2016
+```{r explorative plots - absolute starch yield - treatment * plant line 2016}
+pdf("figures/valdis_boxplot_starch_yield_treatment_line_2016.pdf", width=16, height=8)
+par(mar=c(8,4,4,2))
+
+boxplot(mpi_fgh_2016$starch_yield_g_per_plant ~ mpi_fgh_2016$treatment_name * mpi_fgh_2016$alias, 
+        col = cols_treatment, las = 2, cex.axis = 0.8, main = "MPI foil greenhouse 2016")
+
+boxplot(mpi_feld_2016$starch_yield_g_per_plant ~ mpi_feld_2016$treatment_name * mpi_feld_2016$alias, 
+        col = cols_treatment, las = 2, cex.axis = 0.8, main = "MPI field 2016")
+
+boxplot(jki_shelter_2016$starch_yield_g_per_plant ~ jki_shelter_2016$treatment_name * jki_shelter_2016$alias, 
+        col = cols_treatment, las = 2, cex.axis = 0.8, main = "JKI shelter 2016")
+
+boxplot(jki_feld_2016$starch_yield_g_per_plant ~ jki_feld_2016$treatment_name * jki_feld_2016$alias,
+        col = cols_treatment, las = 2, cex.axis = 0.8, main = "JKI field 2016")
+
+boxplot(dethlingen_2016$starch_yield_g_per_plant ~ dethlingen_2016$treatment_name * dethlingen_2016$alias,
+        col = cols_treatment, las = 2, cex.axis = 0.8, main = "Dethlingen 2016")
+dev.off()
+```
 
 ## func_boxplot_ordered_by_median
 ```{r func_boxplot_ordered_by_median}
@@ -1383,6 +1926,32 @@ dev.off()
 ```
 
 
+## Explorative plots - absolute starch yield - treatment * plant line ordered 2016
+```{r explorative plots - absolute starch yield - treatment * plant line ordered 2016}
+pdf("figures/valdis_boxplot_starch_yield_treatment_line_ordered_2016.pdf", width=16, height=8)
+par(mar=c(8,4,4,2))
+
+func_boxplot_ordered_by_median() # default: MPI FGH 2016
+
+func_boxplot_ordered_by_median(control_data = mpi_feld_2016_control,
+                               all_data = mpi_feld_2016,
+                               main_string = "MPI field 2016")
+
+func_boxplot_ordered_by_median(control_data = jki_shelter_2016_control,
+                               all_data = jki_shelter_2016,
+                               main_string = "JKI shelter 2016")
+
+func_boxplot_ordered_by_median(control_data = jki_feld_2016_control,
+                               all_data = jki_feld_2016,
+                               main_string = "JKI field 2016")
+
+func_boxplot_ordered_by_median(control_data = dethlingen_2016_control,
+                               all_data = dethlingen_2016,
+                               main_string = "Dethlingen 2016")
+dev.off()
+```
+
+
 ## Explorative plots - normalized starch yield - treatment * plant line 2014
 ```{r explorative plots - normalized starch yield - treatment * plant line 2014}
 range(yield_data_final_2014$normalized_starch_yield_per_plant, na.rm = T)
@@ -1426,6 +1995,27 @@ dev.off()
 ```
 
 
+## Explorative plots - normalized starch yield - treatment * plant line 2016
+```{r explorative plots - normalized starch yield - treatment * plant line 2016}
+ylim_values <- c(0, 1.85)
+pdf("figures/valdis_boxplot_starch_yield_norm_treatment_line_2016.pdf", width=16, height=8)
+par(mar=c(8,4,4,2))
+boxplot(yield_data_final_2016$normalized_starch_yield_per_plant ~ yield_data_final_2016$treatment_name * yield_data_final_2016$alias, 
+        col = cols_treatment, las = 2, cex.axis = 0.8, main = "all experiments 2016", ylim = ylim_values)
+
+boxplot(mpi_fgh_2016$normalized_starch_yield_per_plant ~ mpi_fgh_2016$treatment_name * mpi_fgh_2016$alias, 
+        col = cols_treatment, las = 2, cex.axis = 0.8, main = "MPI foil greenhouse 2016", ylim = ylim_values)
+boxplot(mpi_feld_2016$normalized_starch_yield_per_plant ~ mpi_feld_2016$treatment_name * mpi_feld_2016$alias, 
+        col = cols_treatment, las = 2, cex.axis = 0.8, main = "MPI field 2016", ylim = ylim_values)
+boxplot(jki_shelter_2016$normalized_starch_yield_per_plant ~ jki_shelter_2016$treatment_name * jki_shelter_2016$alias, 
+        col = cols_treatment, las = 2, cex.axis = 0.8, main = "JKI shelter 2016", ylim = ylim_values)
+boxplot(jki_feld_2016$normalized_starch_yield_per_plant ~ jki_feld_2016$treatment_name * jki_feld_2016$alias,
+        col = cols_treatment, las = 2, cex.axis = 0.8, main = "JKI field 2016", ylim = ylim_values)
+boxplot(dethlingen_2016$normalized_starch_yield_per_plant ~ dethlingen_2016$treatment_name * dethlingen_2016$alias,
+        col = cols_treatment, las = 2, cex.axis = 0.8, main = "Dethlingen 2016", ylim = ylim_values)
+dev.off()
+```
+
 ## Explorative plots - normalized starch yield - treatment * plant line ordered
 ```{r explorative plots - normalized starch yield - treatment * plant line ordered}
 # normalized SY ordered by control median
@@ -1450,11 +2040,22 @@ func_boxplot_ordered_by_median(control_data = yield_data_final_2015_control,
                                main_string = "all experiments")
 
 dev.off()
+
+# 2016
+pdf("figures/valdis_boxplot_starch_yield_norm_treatment_line_ordered_2016.pdf", width=16, height=8)
+par(mar=c(8,4,4,2))
+
+func_boxplot_ordered_by_median(control_data = yield_data_final_2016_control, 
+                               all_data = yield_data_final_2016,
+                               parameter = "normalized_starch_yield_per_plant",
+                               main_string = "all experiments")
+
+dev.off()
 ```
 
 
-## Explorative plots - absolute starch yield - treatment * SP
-```{r explorative plots - absolute starch yield - treatment * SP}
+## Explorative plots - absolute starch yield - treatment * SP 2015
+```{r explorative plots - absolute starch yield - treatment * SP 2015}
 
 boxplot_names <- levels(interaction(yield_data_2015_sp_dup$treatment_name, yield_data_2015_sp_dup$SP))
 boxplot_names <- gsub("\\.", "\n", boxplot_names)
@@ -1478,6 +2079,35 @@ boxplot(jki_shelter_2015$starch_yield_g_per_plant ~ jki_shelter_2015$treatment_n
 
 boxplot(dethlingen_2015$starch_yield_g_per_plant ~ dethlingen_2015$treatment_name * dethlingen_2015$SP, 
         col = cols_sp_treatment, main = "Dehtlingen 2015", ylim = c(0,400), names = boxplot_names, cex.axis = 0.8)
+dev.off()
+```
+
+
+## Explorative plots - absolute starch yield - treatment * SP 2016
+```{r explorative plots - absolute starch yield - treatment * SP 2016}
+
+boxplot_names <- levels(interaction(yield_data_2016_sp_dup$treatment_name, yield_data_2016_sp_dup$SP))
+boxplot_names <- gsub("\\.", "\n", boxplot_names)
+
+pdf("figures/valdis_boxplot_starch_yield_treatment_sp_2016.pdf", width=8, height=6)
+
+boxplot(yield_data_final_2016$starch_yield_g_per_plant ~ yield_data_final_2016$treatment_name * yield_data_final_2016$SP, 
+        col = cols_sp_treatment, main = "all experiments 2016", ylim = c(0,450), names = boxplot_names, cex.axis = 0.8)
+
+boxplot(mpi_fgh_2016$starch_yield_g_per_plant ~ mpi_fgh_2016$treatment_name * mpi_fgh_2016$SP, 
+        col = cols_sp_treatment, main = "MPI FGH 2016", ylim = c(0,300), names = boxplot_names, cex.axis = 0.8)
+
+boxplot(mpi_feld_2016$starch_yield_g_per_plant ~ mpi_feld_2016$treatment_name * mpi_feld_2016$SP, 
+        col = cols_sp_treatment, main = "MPI Feld 2016", ylim = c(0,400), names = boxplot_names, cex.axis = 0.8)
+
+boxplot(jki_shelter_2016$starch_yield_g_per_plant ~ jki_shelter_2016$treatment_name * jki_shelter_2016$SP, 
+        col = cols_sp_treatment, main = "JKI Shelter 2016", ylim = c(0,100), names = boxplot_names, cex.axis = 0.8)
+
+boxplot(jki_feld_2016$starch_yield_g_per_plant ~ jki_feld_2016$treatment_name * jki_feld_2016$SP,
+        col = cols_sp_treatment, main = "JKI Feld 2016", ylim = c(0,450), names = boxplot_names, cex.axis = 0.8)
+
+boxplot(dethlingen_2016$starch_yield_g_per_plant ~ dethlingen_2016$treatment_name * dethlingen_2016$SP,
+        col = cols_sp_treatment, main = "Dehtlingen 2016", ylim = c(0,450), names = boxplot_names, cex.axis = 0.8)
 dev.off()
 ```
 
@@ -1543,6 +2173,38 @@ boxplot(dethlingen_2015$normalized_starch_yield_per_plant ~ dethlingen_2015$trea
 dev.off()
 ```
 
+
+## Explorative plots - normalized starch yield - treatment * SP 2016
+```{r explorative plots - normalized starch yield - treatment * SP 2016}
+ylim_values <- c(0,1.9)
+
+pdf("figures/valdis_boxplot_starch_yield_norm_treatment_sp_2016.pdf", width=8, height=6)
+
+boxplot(yield_data_final_2016$normalized_starch_yield_per_plant ~ yield_data_final_2016$treatment_name * yield_data_final_2016$SP, 
+        col = cols_sp_treatment, main = "all experiments 2016", ylim = ylim_values, names = boxplot_names, 
+        cex.axis = 0.8, ylab = "normalisierter Stärkeertrag")
+
+boxplot(mpi_fgh_2016$normalized_starch_yield_per_plant ~ mpi_fgh_2016$treatment_name * mpi_fgh_2016$SP, 
+        col = cols_sp_treatment, main = "MPI FGH 2016", ylim = ylim_values, names = boxplot_names, 
+        cex.axis = 0.8, ylab = "normalisierter Stärkeertrag")
+
+boxplot(mpi_feld_2016$normalized_starch_yield_per_plant ~ mpi_feld_2016$treatment_name * mpi_feld_2016$SP, 
+        col = cols_sp_treatment, main = "MPI Feld 2016", ylim = ylim_values, names = boxplot_names, 
+        cex.axis = 0.8, ylab = "normalisierter Stärkeertrag")
+
+boxplot(jki_shelter_2016$normalized_starch_yield_per_plant ~ jki_shelter_2016$treatment_name * jki_shelter_2016$SP, 
+        col = cols_sp_treatment, main = "JKI Shelter 2016", ylim = ylim_values, names = boxplot_names, 
+        cex.axis = 0.8, ylab = "normalisierter Stärkeertrag")
+
+boxplot(jki_feld_2016$normalized_starch_yield_per_plant ~ jki_feld_2016$treatment_name * jki_feld_2016$SP,
+        col = cols_sp_treatment, main = "JKI Feld 2016", ylim = ylim_values, names = boxplot_names,
+        cex.axis = 0.8, ylab = "normalisierter Stärkeertrag")
+
+boxplot(dethlingen_2016$normalized_starch_yield_per_plant ~ dethlingen_2016$treatment_name * dethlingen_2016$SP,
+        col = cols_sp_treatment, main = "Dehtlingen 2016", ylim = ylim_values, names = boxplot_names,
+        cex.axis = 0.8, ylab = "normalisierter Stärkeertrag")
+dev.off()
+```
 
 
 ## Plot for Report - absolute starch yield - treatment * SP 2015
@@ -1660,9 +2322,31 @@ jki_shelter_2014_anova <- func_anova_2fac_ia(jki_shelter_2014, "starch_yield_g_p
 # 2015
 mpi_fgh_2015_anova <- func_anova_2fac_ia(mpi_fgh_2015, "starch_yield_g_per_plant", "alias", "treatment", 0.05)
 mpi_feld_2015_anova <- func_anova_2fac_ia(mpi_feld_2015, "starch_yield_g_per_plant", "alias", "treatment", 0.05)
-jki_feld_2015_anova <- func_anova_2fac_ia(jki_feld_2015, "starch_yield_g_per_plant", "alias", "treatment", 0.05)
 jki_shelter_2015_anova <- func_anova_2fac_ia(jki_shelter_2015, "starch_yield_g_per_plant", "alias", "treatment", 0.05)
+jki_feld_2015_anova <- func_anova_2fac_ia(jki_feld_2015, "starch_yield_g_per_plant", "alias", "treatment", 0.05)
 dethlingen_2015_anova <- func_anova_2fac_ia(dethlingen_2015, "starch_yield_g_per_plant", "alias", "treatment", 0.05)
+
+# 2016
+mpi_fgh_2016_anova <- func_anova_2fac_ia(mpi_fgh_2016, "starch_yield_g_per_plant", "alias", "treatment", 0.05)
+mpi_feld_2016_anova <- func_anova_2fac_ia(mpi_feld_2016, "starch_yield_g_per_plant", "alias", "treatment", 0.05)
+jki_shelter_2016_anova <- func_anova_2fac_ia(jki_shelter_2016, "starch_yield_g_per_plant", "alias", "treatment", 0.05)
+jki_feld_2016_anova <- func_anova_2fac_ia(jki_feld_2016, "starch_yield_g_per_plant", "alias", "treatment", 0.05)
+dethlingen_2016_anova <- func_anova_2fac_ia(dethlingen_2016, "starch_yield_g_per_plant", "alias", "treatment", 0.05)
+
+#### SP #####
+# 2015
+func_anova_2fac_ia(mpi_fgh_2015, "starch_yield_g_per_plant", "SP", "treatment", 0.05)
+func_anova_2fac_ia(mpi_feld_2015, "starch_yield_g_per_plant", "SP", "treatment", 0.05)
+func_anova_2fac_ia(jki_shelter_2015, "starch_yield_g_per_plant", "SP", "treatment", 0.05)
+func_anova_2fac_ia(jki_feld_2015, "starch_yield_g_per_plant", "SP", "treatment", 0.05)
+func_anova_2fac_ia(dethlingen_2015, "starch_yield_g_per_plant", "SP", "treatment", 0.05)
+
+# 2016
+func_anova_2fac_ia(mpi_fgh_2016, "starch_yield_g_per_plant", "SP", "treatment", 0.05)
+func_anova_2fac_ia(mpi_feld_2016, "starch_yield_g_per_plant", "SP", "treatment", 0.05)
+func_anova_2fac_ia(jki_shelter_2016, "starch_yield_g_per_plant", "SP", "treatment", 0.05)
+func_anova_2fac_ia(jki_feld_2016, "starch_yield_g_per_plant", "SP", "treatment", 0.05)
+func_anova_2fac_ia(dethlingen_2016, "starch_yield_g_per_plant", "SP", "treatment", 0.05)
 ```
 
 
@@ -1696,6 +2380,20 @@ mpi_feld_2015_si <- func_calc_stress_index_valdis(mpi_feld_2015)
 jki_shelter_2015_si <- func_calc_stress_index_valdis(jki_shelter_2015)
 jki_feld_2015_si <- func_calc_stress_index_valdis(jki_feld_2015)
 dethlingen_2015_si <- func_calc_stress_index_valdis(dethlingen_2015)
+
+# 2016
+dflist_2016 <- list(mpi_feld_2016, mpi_fgh_2016, jki_shelter_2016, jki_feld_2016, dethlingen_2016)
+
+all_SI_list_2016 <- lapply(dflist_2016, func_calc_stress_index_valdis)
+names(all_SI_list_2016) <- c("mpi_feld_2016", "mpi_fgh_2016", "jki_shelter_2016",
+                             "jki_feld_2016", "dethlingen_2016")
+all_SI_2016 <- unlist(all_SI_list_2016)
+
+mpi_fgh_2016_si <- func_calc_stress_index_valdis(mpi_fgh_2016)
+mpi_feld_2016_si <- func_calc_stress_index_valdis(mpi_feld_2016)
+jki_shelter_2016_si <- func_calc_stress_index_valdis(jki_shelter_2016)
+jki_feld_2016_si <- func_calc_stress_index_valdis(jki_feld_2016)
+dethlingen_2016_si <- func_calc_stress_index_valdis(dethlingen_2016)
 ```
 
 
@@ -1715,6 +2413,13 @@ jki_shelter_2015_relSY <- func_calc_relSY_valdis(jki_shelter_2015, plant_lines =
 dethlingen_2015_relSY <- func_calc_relSY_valdis(dethlingen_2015, plant_lines = all_lines_2015)
 
 
+# 2016
+mpi_fgh_2016_relSY <- func_calc_relSY_valdis(mpi_fgh_2016, plant_lines = all_lines_2016)
+mpi_feld_2016_relSY <- func_calc_relSY_valdis(mpi_feld_2016, plant_lines = all_lines_2016)
+jki_shelter_2016_relSY <- func_calc_relSY_valdis(jki_shelter_2016, plant_lines = all_lines_2016)
+jki_feld_2016_relSY <- func_calc_relSY_valdis(jki_feld_2016, plant_lines = all_lines_2016)
+dethlingen_2016_relSY <- func_calc_relSY_valdis(dethlingen_2016, plant_lines = all_lines_2016)
+
 
 # median per plant line
 # 2014
@@ -1730,6 +2435,13 @@ jki_feld_2015_relSY_median <- func_calc_relSY_median(jki_feld_2015_relSY)
 jki_shelter_2015_relSY_median <- func_calc_relSY_median(jki_shelter_2015_relSY)
 dethlingen_2015_relSY_median <- func_calc_relSY_median(dethlingen_2015_relSY)
 
+# 2016
+mpi_fgh_2016_relSY_median <- func_calc_relSY_median(mpi_fgh_2016_relSY)
+mpi_feld_2016_relSY_median <- func_calc_relSY_median(mpi_feld_2016_relSY)
+jki_shelter_2016_relSY_median <- func_calc_relSY_median(jki_shelter_2016_relSY)
+jki_feld_2016_relSY_median <- func_calc_relSY_median(jki_feld_2016_relSY)
+dethlingen_2016_relSY_median <- func_calc_relSY_median(dethlingen_2016_relSY)
+
 # use mean per line (mean is calculated first, then relSY is calculated)
 mpi_fgh_2014_relSY_mean <- func_calc_relSY_valdis(mpi_fgh_2014_mean_per_line, plant_lines = lines_2014)
 ```
@@ -1737,6 +2449,12 @@ mpi_fgh_2014_relSY_mean <- func_calc_relSY_valdis(mpi_fgh_2014_mean_per_line, pl
 
 # Calculate Relative Starch Yield (RelSY) TABLE
 ```{r calculate RelSY TABLE}
+# 2014
+mpi_fgh_2014_relSY_table <- func_calc_relSY_valdis_table(mpi_fgh_2014, plant_lines = all_lines_2014)
+mpi_feld_2014_relSY_table <- func_calc_relSY_valdis_table(mpi_feld_2014, plant_lines = all_lines_2014)
+jki_feld_2014_relSY_table <- func_calc_relSY_valdis_table(jki_feld_2014, plant_lines = all_lines_2014)
+jki_shelter_2014_relSY_table <- func_calc_relSY_valdis_table(jki_shelter_2014, plant_lines = all_lines_2014)
+
 # 2015
 mpi_fgh_2015_relSY_table <- func_calc_relSY_valdis_table(mpi_fgh_2015, plant_lines = all_lines_2015)
 mpi_feld_2015_relSY_table <- func_calc_relSY_valdis_table(mpi_feld_2015, plant_lines = all_lines_2015)
@@ -1745,6 +2463,14 @@ jki_shelter_2015_relSY_table <- func_calc_relSY_valdis_table(jki_shelter_2015, p
 dethlingen_2015_relSY_table <- func_calc_relSY_valdis_table(dethlingen_2015, plant_lines = all_lines_2015)
 
 head(mpi_fgh_2015_relSY_table)
+
+# 2016
+mpi_fgh_2016_relSY_table <- func_calc_relSY_valdis_table(mpi_fgh_2016, plant_lines = all_lines_2016)
+mpi_feld_2016_relSY_table <- func_calc_relSY_valdis_table(mpi_feld_2016, plant_lines = all_lines_2016)
+jki_shelter_2016_relSY_table <- func_calc_relSY_valdis_table(jki_shelter_2016, plant_lines = all_lines_2016)
+jki_feld_2016_relSY_table <- func_calc_relSY_valdis_table(jki_feld_2016, plant_lines = all_lines_2016)
+dethlingen_2016_relSY_table <- func_calc_relSY_valdis_table(dethlingen_2016, plant_lines = all_lines_2016)
+
 ```
 
 
@@ -1805,7 +2531,48 @@ dethlingen_2015_drym_median <- lapply(dethlingen_2015_drym, median, na.rm=T)
 ```
 
 
-## Calculate DRYM 2015 TABLE
+## Calculate DRYM 2016
+```{r calculate DRYM 2016}
+# creates a LIST!
+mpi_fgh_2016_drym <- func_calc_drym(mpi_fgh_2016_relSY, mpi_fgh_2016_relSY_median, 
+                                    cultivar_names = all_lines_2016)
+
+mpi_feld_2016_drym <- func_calc_drym(mpi_feld_2016_relSY, mpi_feld_2016_relSY_median, 
+                                     cultivar_names = all_lines_2016)
+
+jki_shelter_2016_drym <- func_calc_drym(jki_shelter_2016_relSY, jki_shelter_2016_relSY_median, 
+                                        cultivar_names = all_lines_2016)
+
+jki_feld_2016_drym <- func_calc_drym(jki_feld_2016_relSY, jki_feld_2016_relSY_median,
+                                     cultivar_names = all_lines_2016)
+
+dethlingen_2016_drym <- func_calc_drym(dethlingen_2016_relSY, dethlingen_2016_relSY_median,
+                                     cultivar_names = all_lines_2016)
+
+# median of DRYM per plant line (is a LIST!)
+mpi_fgh_2016_drym_median <- lapply(mpi_fgh_2016_drym, median, na.rm=T)
+mpi_feld_2016_drym_median <- lapply(mpi_feld_2016_drym, median, na.rm=T)
+jki_shelter_2016_drym_median <- lapply(jki_shelter_2016_drym, median, na.rm=T)
+jki_feld_2016_drym_median <- lapply(jki_feld_2016_drym, median, na.rm=T)
+dethlingen_2016_drym_median <- lapply(dethlingen_2016_drym, median, na.rm=T)
+
+# Use median per line per experiment because of the different number of replicates in each experiment.
+# This would lead to the emphasis of experiments with more replicates!
+```
+
+
+## Calculate DRYM TABLE
+### Calculate DRYM 2014 TABLE
+```{r calculate DRYM 2015 TABLE}
+# creates a LIST!
+mpi_fgh_2014_drym_table <- func_calc_drym_table(mpi_fgh_2014_relSY_table)
+mpi_feld_2014_drym_table <- func_calc_drym_table(mpi_feld_2014_relSY_table)
+jki_feld_2014_drym_table <- func_calc_drym_table(jki_feld_2014_relSY_table)
+jki_shelter_2014_drym_table <- func_calc_drym_table(jki_shelter_2014_relSY_table)
+```
+
+
+### Calculate DRYM 2015 TABLE
 ```{r calculate DRYM 2015 TABLE}
 # creates a LIST!
 mpi_fgh_2015_drym_table <- func_calc_drym_table(mpi_fgh_2015_relSY_table)
@@ -1813,6 +2580,40 @@ mpi_feld_2015_drym_table <- func_calc_drym_table(mpi_feld_2015_relSY_table)
 jki_feld_2015_drym_table <- func_calc_drym_table(jki_feld_2015_relSY_table)
 jki_shelter_2015_drym_table <- func_calc_drym_table(jki_shelter_2015_relSY_table)
 dethlingen_2015_drym_table <- func_calc_drym_table(dethlingen_2015_relSY_table)
+```
+
+
+### Calculate DRYM 2016 TABLE
+```{r calculate DRYM 2016 TABLE}
+# creates a LIST!
+mpi_fgh_2016_drym_table <- func_calc_drym_table(mpi_fgh_2016_relSY_table)
+mpi_feld_2016_drym_table <- func_calc_drym_table(mpi_feld_2016_relSY_table)
+jki_shelter_2016_drym_table <- func_calc_drym_table(jki_shelter_2016_relSY_table)
+jki_feld_2016_drym_table <- func_calc_drym_table(jki_feld_2016_relSY_table)
+dethlingen_2016_drym_table <- func_calc_drym_table(dethlingen_2016_relSY_table)
+```
+
+
+### Bind unique DRYM table 2014-2016
+```{r Bind unique DRYM table 2014-2016}
+
+drym_table_2014 <- rbind(mpi_fgh_2014_drym_table, mpi_feld_2014_drym_table, 
+                         jki_feld_2014_drym_table, jki_shelter_2014_drym_table)
+drym_table_2015 <- rbind(mpi_fgh_2015_drym_table, mpi_feld_2015_drym_table, 
+                         jki_feld_2015_drym_table, jki_shelter_2015_drym_table, dethlingen_2015_drym_table)
+
+drym_table_2016 <- rbind(mpi_fgh_2016_drym_table, mpi_feld_2016_drym_table, 
+                         jki_feld_2016_drym_table, jki_shelter_2016_drym_table, dethlingen_2016_drym_table)
+
+# take unique drym values per plantID (without considering duplicate SP infos)
+drym_table_2014_unique <- drym_table_2014[-which(duplicated(drym_table_2014[,-12])),]
+drym_table_2015_unique <- drym_table_2015[-which(duplicated(drym_table_2015[,-12])),]
+drym_table_2016_unique <- drym_table_2016[-which(duplicated(drym_table_2016[,-12])),]
+
+dim(drym_table_2014) # 3117 20
+dim(drym_table_2014_unique)
+dim(drym_table_2015_unique)
+dim(drym_table_2016_unique)
 ```
 
 
@@ -1926,7 +2727,55 @@ pander(head(drym_experiments_2015_all_melt))
 drym_experiments_2015_all_melt_sp_dup <- merge(drym_experiments_2015_all_melt, sp_infos_dup_no_parents, by = "alias")
 dim(drym_experiments_2015_all_melt_sp_dup)
 pander(head(drym_experiments_2015_all_melt_sp_dup))
+```
 
+
+## Combine DRYM median per line per experiment 2016
+```{r combine DRYM median per line per experiment 2016}
+drym_experiments_2016 <- rbind(as.data.frame(mpi_feld_2016_drym_median),     # 76219
+                               as.data.frame(mpi_fgh_2016_drym_median),    # 76240
+                               as.data.frame(jki_shelter_2016_drym_median), # 76354
+                               as.data.frame(jki_feld_2016_drym_median))    # 76529
+                               #as.data.frame(dethlingen_2016_drym_median))  # 76528 --> without dethlingen 2016 (low SI)
+
+dim(drym_experiments_2016) # 63 lines
+
+drym_experiments_2016_melt <- melt(drym_experiments_2016)
+colnames(drym_experiments_2016_melt) <- c("alias", "drym")
+
+# add column for culture id
+drym_experiments_2016_melt$culture <- rep( sort(unique(yield_data_final_2016$culture)), 63)
+dim(drym_experiments_2016_melt)
+pander(head(drym_experiments_2016_melt))
+
+# merge melted drym table with SP infos
+drym_experiments_2016_melt_sp_dup <- merge(drym_experiments_2016_melt, sp_infos_dup_no_parents, by = "alias")
+dim(drym_experiments_2016_melt_sp_dup)
+pander(head(drym_experiments_2016_melt_sp_dup))
+
+##################################################
+
+# WITH Dethlingen 2016!
+drym_experiments_2016_all <- rbind(as.data.frame(mpi_feld_2016_drym_median),    # 76219
+                                   as.data.frame(mpi_fgh_2016_drym_median),     # 76240
+                                   as.data.frame(jki_shelter_2016_drym_median), # 76354
+                                   as.data.frame(dethlingen_2016_drym_median),  # 76528
+                                   as.data.frame(jki_feld_2016_drym_median))  # 76529
+
+dim(drym_experiments_2016_all)
+
+drym_experiments_2016_all_melt <- melt(drym_experiments_2016_all)
+colnames(drym_experiments_2016_all_melt) <- c("alias", "drym")
+
+# add column for culture id
+drym_experiments_2016_all_melt$culture <- rep( sort(unique(yield_data_final_2016_all$culture)), 63)
+dim(drym_experiments_2016_all_melt)
+pander(head(drym_experiments_2016_all_melt))
+
+# merge melted drym table with SP infos
+drym_experiments_2016_all_melt_sp_dup <- merge(drym_experiments_2016_all_melt, sp_infos_dup_no_parents, by = "alias")
+dim(drym_experiments_2016_all_melt_sp_dup)
+pander(head(drym_experiments_2016_all_melt_sp_dup))
 ```
 
 
@@ -1968,6 +2817,25 @@ drym_dethlingen_2015 <- subset(drym_experiments_2015_all_melt_sp_dup, drym_exper
 ```
 
 
+## Compare DRYM of subpopulations 2016
+```{r compare DRYM of subpopulations 2016}
+drym_median_2016_sp1 <- droplevels(subset(drym_experiments_2016_melt_sp_dup, drym_experiments_2016_melt_sp_dup$SP == "SP1"))
+drym_median_2016_sp2 <- droplevels(subset(drym_experiments_2016_melt_sp_dup, drym_experiments_2016_melt_sp_dup$SP == "SP2"))
+drym_median_2016_sp3 <- droplevels(subset(drym_experiments_2016_melt_sp_dup, drym_experiments_2016_melt_sp_dup$SP == "SP3"))
+
+t.test(drym_median_2016_sp1$drym, drym_median_2016_sp2$drym)
+t.test(drym_median_2016_sp1$drym, drym_median_2016_sp3$drym)
+t.test(drym_median_2016_sp2$drym, drym_median_2016_sp3$drym)
+
+# drym subsets per experiment
+drym_mpi_fgh_2016 <- subset(drym_experiments_2016_melt_sp_dup, drym_experiments_2016_melt_sp_dup$culture == "76240")
+drym_mpi_feld_2016 <- subset(drym_experiments_2016_melt_sp_dup, drym_experiments_2016_melt_sp_dup$culture == "76219")
+drym_jki_shelter_2016 <- subset(drym_experiments_2016_melt_sp_dup, drym_experiments_2016_melt_sp_dup$culture == "76354")
+drym_jki_feld_2016 <- subset(drym_experiments_2016_melt_sp_dup, drym_experiments_2016_melt_sp_dup$culture == "76529")
+drym_dethlingen_2016 <- subset(drym_experiments_2016_all_melt_sp_dup, drym_experiments_2016_all_melt_sp_dup$culture == "76528")
+```
+
+
 ## Plot DRYM per experiment and SP
 ```{r plot DRYM per experiment and SP}
 # 2014
@@ -1986,9 +2854,21 @@ boxplot(drym_experiments_2015_melt_sp_dup$drym ~ drym_experiments_2015_melt_sp_d
         main = "all experiments", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
 boxplot(drym_mpi_fgh_2015$drym ~ drym_mpi_fgh_2015$SP, main = "MPI FGH 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
 boxplot(drym_mpi_feld_2015$drym ~ drym_mpi_feld_2015$SP, main = "MPI Feld 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
-boxplot(drym_jki_shelter_2015$drym ~ drym_jki_shelter_2015$SP, main = "JKI Shelter 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+boxplot(drym_jki_shelter_2015$drym ~ drym_jki_shelter_2015$SP, 
+        main = "JKI Shelter 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
 boxplot(drym_jki_feld_2015$drym ~ drym_jki_feld_2015$SP, main = "JKI Feld 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
-#boxplot(drym_dethlingen_2015$drym ~ drym_dethlingen_2015$SP, main = "Dethlingen 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+# boxplot(drym_dethlingen_2015$drym ~ drym_dethlingen_2015$SP, main = "Dethlingen 2015", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+dev.off()
+
+# 2016
+pdf("figures/valdis_boxplot_drym_sp_2016.pdf", width = 5, height = 5)
+boxplot(drym_experiments_2016_melt_sp_dup$drym ~ drym_experiments_2016_melt_sp_dup$SP, 
+        main = "all experiments", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+boxplot(drym_mpi_fgh_2016$drym ~ drym_mpi_fgh_2016$SP, main = "MPI FGH 2016", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+boxplot(drym_mpi_feld_2016$drym ~ drym_mpi_feld_2016$SP, main = "MPI Feld 2016", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+boxplot(drym_jki_shelter_2016$drym ~ drym_jki_shelter_2016$SP, main = "JKI Shelter 2016", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+boxplot(drym_jki_feld_2016$drym ~ drym_jki_feld_2016$SP, main = "JKI Feld 2016", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
+boxplot(drym_dethlingen_2016$drym ~ drym_dethlingen_2016$SP, main = "Dethlingen 2016", col = cols_sp_no_parents, ylab = "DRYM (median per line)")
 dev.off()
 ```
 
@@ -1998,8 +2878,8 @@ dev.off()
 pander(head(drym_experiments_2015_melt_sp_dup))
 dim(drym_experiments_2015_melt_sp_dup)
 
-drym_anova <- func_anova_2fac_ia(drym_experiments_2015_melt_sp_dup, "drym", "culture", "SP", 0.05)
-drym_anova
+drym_anova_2015 <- func_anova_2fac_ia(drym_experiments_2015_melt_sp_dup, "drym", "culture", "SP", 0.05)
+drym_anova_2015
 
 # SP * culture
 summary(aov(drym_experiments_2015_melt_sp_dup$drym ~ drym_experiments_2015_melt_sp_dup$SP * drym_experiments_2015_melt_sp_dup$culture))
@@ -2016,7 +2896,34 @@ summary(aov(drym_mpi_fgh_2015$drym ~ drym_mpi_fgh_2015$SP))
 summary(aov(drym_mpi_feld_2015$drym ~ drym_mpi_feld_2015$SP))
 summary(aov(drym_jki_shelter_2015$drym ~ drym_jki_shelter_2015$SP))
 summary(aov(drym_jki_feld_2015$drym ~ drym_jki_feld_2015$SP))
-#summary(aov(drym_dethlingen_2015$drym ~ drym_dethlingen_2015$SP))
+summary(aov(drym_dethlingen_2015$drym ~ drym_dethlingen_2015$SP))
+```
+
+
+## ANOVA of DRYM 2016
+```{r ANOVA of DRYM 2016}
+pander(head(drym_experiments_2016_melt_sp_dup))
+dim(drym_experiments_2016_melt_sp_dup)
+
+drym_anova_2016 <- func_anova_2fac_ia(drym_experiments_2016_melt_sp_dup, "drym", "culture", "SP", 0.05)
+drym_anova_2016
+
+# SP * culture
+summary(aov(drym_experiments_2016_melt_sp_dup$drym ~ drym_experiments_2016_melt_sp_dup$SP * drym_experiments_2016_melt_sp_dup$culture))
+
+# alias (genotype)
+summary(aov(drym_experiments_2016_melt_sp_dup$drym ~ drym_experiments_2016_melt_sp_dup$alias))
+# alias (genotype) * culture
+summary(aov(drym_experiments_2016_melt_sp_dup$drym ~ drym_experiments_2016_melt_sp_dup$alias * drym_experiments_2016_melt_sp_dup$culture))
+
+dim(drym_mpi_fgh_2016)
+pander(head(drym_mpi_fgh_2016))
+
+summary(aov(drym_mpi_fgh_2016$drym ~ drym_mpi_fgh_2016$SP))
+summary(aov(drym_mpi_feld_2016$drym ~ drym_mpi_feld_2016$SP))
+summary(aov(drym_jki_shelter_2016$drym ~ drym_jki_shelter_2016$SP))
+summary(aov(drym_jki_feld_2016$drym ~ drym_jki_feld_2016$SP))
+summary(aov(drym_dethlingen_2016$drym ~ drym_dethlingen_2016$SP))
 ```
 
 
@@ -2081,6 +2988,43 @@ par(mfrow = c(1,1))
 # 
 # # ANOVA to check influcence of factor plant_line on DRYM
 # summary(aov(drym_experiments_2015_melt$drym ~ drym_experiments_2015_melt$plant_line))
+```
+
+
+## Plot DRYM 2016
+```{r plot DRYM 2016}
+ylim_values <- range(drym_experiments_2016_melt_sp_dup$drym, na.rm=T)
+# -0.2550120  0.1948655
+
+pdf("figures/valdis_boxplot_drym_per_line_sp_2016.pdf", width = 9, height = 5)
+par(mfrow = c(1,3))
+boxplot(drym_median_2016_sp1$drym ~ drym_median_2016_sp1$alias, las = 2, ylab = "DRYM", 
+        main = "DRYM of SP1", col = cols_sp[2], ylim = ylim_values)
+abline(h=0, col = "red", lwd=2)
+boxplot(drym_median_2016_sp2$drym ~ drym_median_2016_sp2$alias, las = 2, ylab = "DRYM", 
+        main = "DRYM of SP2", col = cols_sp[3], ylim = ylim_values)
+abline(h=0, col = "red", lwd=2)
+boxplot(drym_median_2016_sp3$drym ~ drym_median_2016_sp3$alias, las = 2, ylab = "DRYM", 
+        main = "DRYM of SP3", col = cols_sp[4], ylim = ylim_values)
+abline(h=0, col = "red", lwd=2)
+
+# order by median
+drym_median_2016_sp1_ordered <- with(drym_median_2016_sp1, reorder(alias, -drym, median, na.rm=T))
+drym_median_2016_sp2_ordered <- with(drym_median_2016_sp2, reorder(alias, -drym, median, na.rm=T))
+drym_median_2016_sp3_ordered <- with(drym_median_2016_sp3, reorder(alias, -drym, median, na.rm=T))
+
+boxplot(drym ~ drym_median_2016_sp1_ordered, data=drym_median_2016_sp1, las = 2, ylab = "DRYM", 
+        main = "DRYM of SP1", col = cols_sp[2], ylim = ylim_values)
+abline(h=0, col = "red", lwd=2)
+boxplot(drym ~ drym_median_2016_sp2_ordered, data=drym_median_2016_sp2, las = 2, ylab = "DRYM", 
+        main = "DRYM of SP2", col = cols_sp[3], ylim = ylim_values)
+abline(h=0, col = "red", lwd=2)
+boxplot(drym ~ drym_median_2016_sp3_ordered, data=drym_median_2016_sp3, las = 2, ylab = "DRYM", 
+        main = "DRYM of SP3", col = cols_sp[4], ylim = ylim_values)
+abline(h=0, col = "red", lwd=2)
+
+dev.off()
+par(mfrow = c(1,1))
 ```
 
 
@@ -2150,6 +3094,8 @@ drym_mean_2014 <- ddply(drym_experiments_2014_melt_sp_dup,
                         c("alias","SP"), summarise,  
                         drym = mean(drym, na.rm = T))
 
+head(drym_mean_2014)
+
 plot(control_norm_sy_mean_2014$norm_sy, drym_mean_2014$drym, pch=19)
 palette(cols_sp)
 plot(control_norm_sy_mean_2014$norm_sy, drym_mean_2014$drym, pch=19, cex=1.3, col=drym_mean_2014$SP)
@@ -2175,7 +3121,6 @@ dim(drym_experiments_2015_melt)
 cor.test(yield_data_final_2015_control_norm_sy_mean$norm_sy, drym_experiments_2015_melt$drym)
 # p-value = 2.068e-09
 # cor: -0.3324953
-
 
 dim(drym_experiments_2015_melt_sp_dup)
 pander(head(drym_experiments_2015_melt_sp_dup))
@@ -2228,6 +3173,8 @@ drym_mean_2015 <- ddply(drym_experiments_2015_melt_sp_dup,
                         c("alias","SP"), summarise,  
                         drym = mean(drym, na.rm = T))
 
+head(drym_mean_2015)
+
 plot(control_norm_sy_mean_2015$norm_sy, drym_mean_2015$drym, pch=19, cex=1.3)
 palette(cols_sp_no_parents)
 plot(control_norm_sy_mean_2015$norm_sy, drym_mean_2015$drym, pch=19, cex=1.3, col=drym_mean_2015$SP)
@@ -2238,6 +3185,82 @@ abline(v=1, col="black")
 cor.test(control_norm_sy_mean_2015$norm_sy, drym_mean_2015$drym)
 # p-value = 0.00409
 # R = -0.3414
+```
+
+
+## Plot DRYM versus normalized SY 2016
+```{r plot DRYM versus normalized SY 2016}
+pander(head(yield_data_final_2016_control_norm_sy_mean))
+dim(yield_data_final_2016_control_norm_sy_mean)
+
+pander(head(drym_experiments_2016_melt))
+dim(drym_experiments_2016_melt)
+
+cor.test(yield_data_final_2016_control_norm_sy_mean$norm_sy, drym_experiments_2016_melt$drym)
+# p-value = 0.000719
+# cor: -0.212
+
+dim(drym_experiments_2016_melt_sp_dup)
+pander(head(drym_experiments_2016_melt_sp_dup))
+
+# merge control_norm_SY table with SP infos
+yield_data_final_2016_control_norm_sy_mean_sp_dup <- merge(yield_data_final_2016_control_norm_sy_mean, sp_infos_dup_no_parents, by = "alias")
+pander(head(yield_data_final_2016_control_norm_sy_mean_sp_dup))
+dim(yield_data_final_2016_control_norm_sy_mean_sp_dup)
+
+pdf("figures/valdis_control_norm_SY_vs_DRYM_2016.pdf")
+plot(yield_data_final_2016_control_norm_sy_mean$norm_sy, drym_experiments_2016_melt$drym, pch = 19,
+     xlab = "normalized starch yield of control", ylab = "median DRYM per line and per experiment")
+
+# equivalent (da duplizierte Punkte sich überlagern)
+# plot(yield_data_final_2016_control_norm_sy_mean_sp_dup$norm_sy, drym_experiments_2016_melt_sp_dup$drym, pch = 19,
+#      xlab = "normalized starch yield of control", ylab = "median DRYM per line and per experiment")
+
+palette(rainbow(5))
+plot(yield_data_final_2016_control_norm_sy_mean$norm_sy, drym_experiments_2016_melt$drym, pch = 19,
+     xlab = "normalized starch yield of control", ylab = "median DRYM per line and per experiment",
+     col = as.factor(drym_experiments_2016_melt$culture))
+legend("topright", fill = rainbow(5),
+       legend = c("MPI FGH 2016", "MPI Feld 2016", "JKI Shelter 2016", "JKI Feld 2016", "Dethlingen 2016"))
+
+palette(cols_sp_no_parents)
+plot(yield_data_final_2016_control_norm_sy_mean_sp_dup$norm_sy, drym_experiments_2016_melt_sp_dup$drym, pch = 19,
+     xlab = "normalized starch yield of control", ylab = "median DRYM per line and per experiment",
+     col = drym_experiments_2016_melt_sp_dup$SP, cex = 1.2)
+legend("topright", fill = cols_sp_no_parents, legend = c("SP1", "SP2", "SP3"))
+
+plot(yield_data_final_2016_control_norm_sy_mean_sp_dup$norm_sy, drym_experiments_2016_melt_sp_dup$drym, pch = 19,
+     xlab = "normalized starch yield of control", ylab = "median DRYM per line and per experiment",
+     col = drym_experiments_2016_melt_sp_dup$SP, cex = 1.2)
+text(yield_data_final_2016_control_norm_sy_mean_sp_dup$norm_sy, drym_experiments_2016_melt_sp_dup$drym,
+     labels = yield_data_final_2016_control_norm_sy_mean_sp_dup$alias, cex = 0.7)
+legend("topright", fill = cols_sp_no_parents, legend = c("SP1", "SP2", "SP3"))
+
+dev.off()
+```
+
+
+## Plot DRYM versus normalized SY 2016 (MEAN)
+```{r plot DRYM versus normalized SY 2016 (MEAN)}
+# mean over all three experiments 2016
+control_norm_sy_mean_2016 <- ddply(yield_data_final_2016_control_norm_sy_mean_sp_dup, 
+                              c("alias","SP"), summarise,  
+                              norm_sy = mean(norm_sy, na.rm = T))
+
+drym_mean_2016 <- ddply(drym_experiments_2016_melt_sp_dup, 
+                        c("alias","SP"), summarise,  
+                        drym = mean(drym, na.rm = T))
+
+plot(control_norm_sy_mean_2016$norm_sy, drym_mean_2016$drym, pch=19, cex=1.3)
+palette(cols_sp_no_parents)
+plot(control_norm_sy_mean_2016$norm_sy, drym_mean_2016$drym, pch=19, cex=1.3, col=drym_mean_2016$SP)
+legend("topleft", legend = levels(drym_mean_2016$SP), fill = cols_sp_no_parents)
+abline(h=0, col="red")
+abline(v=1, col="black")
+
+cor.test(control_norm_sy_mean_2016$norm_sy, drym_mean_2016$drym)
+# p-value = 0.0511
+# R = -0.2358
 ```
 
 
@@ -2359,6 +3382,26 @@ dev.off()
 ```
 
 
+## Correlation between starch yield and starch content 2016
+```{r Correlation between starch yield and starch content 2016}
+pdf("figures/valdis_2016_SY_vs_SC.pdf", width=8, height=8)
+par(mfrow=c(2,2))
+func_plot_sy_vs_sc(mpi_fgh_2016, "MPI FGH 2016")
+func_boxplot_sc(mpi_fgh_2016, "MPI FGH 2016")
+
+func_plot_sy_vs_sc(mpi_feld_2016, "MPI Feld 2016")
+func_boxplot_sc(mpi_feld_2016, "MPI Feld 2016")
+
+func_plot_sy_vs_sc(jki_shelter_2016, "JKI Pot 2016")
+func_boxplot_sc(jki_shelter_2016, "JKI Pot 2016")
+
+func_plot_sy_vs_sc(jki_feld_2016, "JKI Feld 2016")
+func_boxplot_sc(jki_feld_2016, "JKI Feld 2016")
+
+func_plot_sy_vs_sc(dethlingen_2016, "Dethlingen 2016")
+func_boxplot_sc(dethlingen_2016, "Dethlingen 2016")
+dev.off()
+```
 
 # Calculate Stress Sensitivity Index (SSI)
 
@@ -2396,6 +3439,20 @@ mpi_feld_2015_ssi_mean <- func_calc_ssi(mpi_feld_2015, plant_lines = all_lines_2
 jki_shelter_2015_ssi_mean <- func_calc_ssi(jki_shelter_2015, plant_lines = all_lines_2015, jki_shelter_2015_si, keep_replicates = "no")
 jki_feld_2015_ssi_mean <- func_calc_ssi(jki_feld_2015, plant_lines = all_lines_2015, jki_feld_2015_si, keep_replicates = "no")
 dethlingen_2015_ssi_mean <- func_calc_ssi(dethlingen_2015, plant_lines = all_lines_2015, dethlingen_2015_si, keep_replicates = "no")
+
+# 2016
+mpi_fgh_2016_ssi <- func_calc_ssi(mpi_fgh_2016, plant_lines = all_lines_2016, mpi_fgh_2016_si)
+mpi_feld_2016_ssi <- func_calc_ssi(mpi_feld_2016, plant_lines = all_lines_2016, mpi_feld_2016_si)
+jki_shelter_2016_ssi <- func_calc_ssi(jki_shelter_2016, plant_lines = all_lines_2016, jki_shelter_2016_si)
+jki_feld_2016_ssi <- func_calc_ssi(jki_feld_2016, plant_lines = all_lines_2016, jki_feld_2016_si)
+dethlingen_2016_ssi <- func_calc_ssi(dethlingen_2016, plant_lines = all_lines_2016, dethlingen_2016_si)
+
+# mean per line
+mpi_fgh_2016_ssi_mean <- func_calc_ssi(mpi_fgh_2016, plant_lines = all_lines_2016, mpi_fgh_2016_si, keep_replicates = "no")
+mpi_feld_2016_ssi_mean <- func_calc_ssi(mpi_feld_2016, plant_lines = all_lines_2016, mpi_feld_2016_si, keep_replicates = "no")
+jki_shelter_2016_ssi_mean <- func_calc_ssi(jki_shelter_2016, plant_lines = all_lines_2016, jki_shelter_2016_si, keep_replicates = "no")
+jki_feld_2016_ssi_mean <- func_calc_ssi(jki_feld_2016, plant_lines = all_lines_2016, jki_feld_2016_si, keep_replicates = "no")
+dethlingen_2016_ssi_mean <- func_calc_ssi(dethlingen_2016, plant_lines = all_lines_2016, dethlingen_2016_si, keep_replicates = "no")
 ```
 
 
@@ -2407,6 +3464,13 @@ jki_shelter_2015_ssi_table <- func_calc_ssi_table(jki_shelter_2015_drym_table, j
 jki_feld_2015_ssi_table <- func_calc_ssi_table(jki_feld_2015_drym_table, jki_feld_2015_si)
 dethlingen_2015_ssi_table <- func_calc_ssi_table(dethlingen_2015_drym_table, dethlingen_2015_si)
 
+
+# 2016
+mpi_fgh_2016_ssi_table <- func_calc_ssi_table(mpi_fgh_2016_drym_table, mpi_fgh_2016_si)
+mpi_feld_2016_ssi_table <- func_calc_ssi_table(mpi_feld_2016_drym_table, mpi_feld_2016_si)
+jki_shelter_2016_ssi_table <- func_calc_ssi_table(jki_shelter_2016_drym_table, jki_shelter_2016_si)
+jki_feld_2016_ssi_table <- func_calc_ssi_table(jki_feld_2016_drym_table, jki_feld_2016_si)
+dethlingen_2016_ssi_table <- func_calc_ssi_table(dethlingen_2016_drym_table, dethlingen_2016_si)
 ```
 
 ## Plot SSI versus DRYM
@@ -2425,6 +3489,8 @@ plot(unlist(jki_feld_2014_ssi), unlist(jki_feld_2014_drym))
 plot(unlist(jki_shelter_2014_ssi), unlist(jki_shelter_2014_drym))
 
 # negative correlation between drym and ssi --> higher ssi means more sensitive
+
+plot(unlist(mpi_feld_2016_ssi), unlist(mpi_feld_2016_relSY))
 ```
 
 
@@ -2463,8 +3529,8 @@ pander(head(ssi_experiments_2014_melt_sp_dup))
 ssi_experiments_2015 <- rbind(as.data.frame(mpi_fgh_2015_ssi_mean),     # 72247
                                as.data.frame(mpi_feld_2015_ssi_mean),    # 72275
                                as.data.frame(jki_shelter_2015_ssi_mean), # 72292
-                               as.data.frame(jki_feld_2015_ssi_mean),    # 72396
-                               as.data.frame(dethlingen_2015_ssi_mean))  # 72482
+                               as.data.frame(jki_feld_2015_ssi_mean))    # 72396
+                               #as.data.frame(dethlingen_2015_ssi_mean))  # 72482
 
 dim(ssi_experiments_2015)
 
@@ -2473,8 +3539,8 @@ colnames(ssi_experiments_2015_melt) <- c("alias", "ssi")
 dim(ssi_experiments_2015_melt)
 
 # add column for culture id
-#ssi_experiments_2015_melt$culture <- rep( sort(unique(yield_data_final_2015$culture))[-5], 63)
-ssi_experiments_2015_melt$culture <- rep( sort(unique(yield_data_final_2015_all$culture)), 63)
+ssi_experiments_2015_melt$culture <- rep( sort(unique(yield_data_final_2015$culture))[-5], 63)
+#ssi_experiments_2015_melt$culture <- rep( sort(unique(yield_data_final_2015_all$culture)), 63)
 dim(ssi_experiments_2015_melt)
 pander(head(ssi_experiments_2015_melt))
 
@@ -2488,6 +3554,35 @@ dim(ssi_experiments_2015_melt_sp_dup)
 pander(head(ssi_experiments_2015_melt_sp_dup))
 ```
 
+
+## Combine ssi mean per line per experiment 2016
+```{r combine ssi mean per line per experiment 2016}
+ssi_experiments_2016 <- rbind(as.data.frame(mpi_fgh_2016_ssi_mean),     # 76240
+                               as.data.frame(mpi_feld_2016_ssi_mean),    # 76219
+                               as.data.frame(jki_shelter_2016_ssi_mean), # 76354
+                               as.data.frame(dethlingen_2016_ssi_mean),    # 76528
+                               as.data.frame(jki_feld_2016_ssi_mean))  # 76529
+
+dim(ssi_experiments_2016)
+
+ssi_experiments_2016_melt <- melt(ssi_experiments_2016)
+colnames(ssi_experiments_2016_melt) <- c("alias", "ssi")
+dim(ssi_experiments_2016_melt)
+
+# add column for culture id
+ssi_experiments_2016_melt$culture <- rep( sort(unique(yield_data_final_2016_all$culture)), 63)
+dim(ssi_experiments_2016_melt)
+pander(head(ssi_experiments_2016_melt))
+
+# cast results, so that one column per experiment
+ssi_experiments_2016_cast <- cast(ssi_experiments_2016_melt, alias ~ culture, value = "ssi")
+head(ssi_experiments_2016_cast)
+
+# merge melted ssi table with SP infos
+ssi_experiments_2016_melt_sp_dup <- merge(ssi_experiments_2016_melt, sp_infos_dup_no_parents, by = "alias")
+dim(ssi_experiments_2016_melt_sp_dup)
+pander(head(ssi_experiments_2016_melt_sp_dup))
+```
 
 ## Compare SSI of subpopulations 2014
 ```{r compare SSI of subpopulations 2014}
@@ -2535,6 +3630,24 @@ ssi_dethlingen_2015 <- subset(ssi_experiments_2015_melt_sp_dup, ssi_experiments_
 ```
 
 
+## Compare SSI of subpopulations 2016
+```{r compare SSI of subpopulations 2016}
+ssi_mean_2016_sp1 <- droplevels(subset(ssi_experiments_2016_melt_sp_dup, ssi_experiments_2016_melt_sp_dup$SP == "SP1"))
+ssi_mean_2016_sp2 <- droplevels(subset(ssi_experiments_2016_melt_sp_dup, ssi_experiments_2016_melt_sp_dup$SP == "SP2"))
+ssi_mean_2016_sp3 <- droplevels(subset(ssi_experiments_2016_melt_sp_dup, ssi_experiments_2016_melt_sp_dup$SP == "SP3"))
+
+t.test(ssi_mean_2016_sp1$ssi, ssi_mean_2016_sp2$ssi)
+t.test(ssi_mean_2016_sp1$ssi, ssi_mean_2016_sp3$ssi)
+t.test(ssi_mean_2016_sp2$ssi, ssi_mean_2016_sp3$ssi)
+
+# ssi subsets per experiment
+ssi_mpi_fgh_2016 <- subset(ssi_experiments_2016_melt_sp_dup, ssi_experiments_2016_melt_sp_dup$culture == "76240")
+ssi_mpi_feld_2016 <- subset(ssi_experiments_2016_melt_sp_dup, ssi_experiments_2016_melt_sp_dup$culture == "76219")
+ssi_jki_shelter_2016 <- subset(ssi_experiments_2016_melt_sp_dup, ssi_experiments_2016_melt_sp_dup$culture == "76354")
+ssi_jki_feld_2016 <- subset(ssi_experiments_2016_melt_sp_dup, ssi_experiments_2016_melt_sp_dup$culture == "76529")
+ssi_dethlingen_2016 <- subset(ssi_experiments_2016_melt_sp_dup, ssi_experiments_2016_melt_sp_dup$culture == "76528")
+```
+
 ## Plot SSI per experiment and SP
 ```{r plot SSI per experiment and SP}
 # 2014
@@ -2558,6 +3671,17 @@ boxplot(ssi_jki_feld_2015$ssi ~ ssi_jki_feld_2015$SP, main = "JKI Feld 2015", co
 #boxplot(ssi_dethlingen_2015$ssi ~ ssi_dethlingen_2015$SP, main = "Dethlingen 2015", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
 dev.off()
 
+# 2016
+pdf("figures/valdis_boxplot_ssi_sp_2016.pdf", width = 5, height = 5)
+boxplot(ssi_experiments_2016_melt_sp_dup$ssi ~ ssi_experiments_2016_melt_sp_dup$SP, 
+        main = "all experiments", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+boxplot(ssi_mpi_fgh_2016$ssi ~ ssi_mpi_fgh_2016$SP, main = "MPI FGH 2016", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+boxplot(ssi_mpi_feld_2016$ssi ~ ssi_mpi_feld_2016$SP, main = "MPI Feld 2016", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+boxplot(ssi_jki_shelter_2016$ssi ~ ssi_jki_shelter_2016$SP, main = "JKI Shelter 2016", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+boxplot(ssi_jki_feld_2016$ssi ~ ssi_jki_feld_2016$SP, main = "JKI Feld 2016", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+boxplot(ssi_dethlingen_2016$ssi ~ ssi_dethlingen_2016$SP, main = "Dethlingen 2016", col = cols_sp_no_parents, ylab = "SSI (mean per line)")
+dev.off()
+
 
 names_trial_2015 <- c("MPI pot 2015","MPI field 2015","JKI pot 2015","JKI field 2015")
 names_sp <- c("SP1","SP2","SP3")
@@ -2578,6 +3702,15 @@ boxplot(ssi_experiments_2015_melt_sp_dup$ssi ~ ssi_experiments_2015_melt_sp_dup$
           ssi_experiments_2015_melt_sp_dup$culture, 
         col = cols_sp_no_parents, 
         #names = names_sp_trial_2015,
+        cex.axis = 1, las = 2, ylab = "SSI",
+        ylim=c(-0.2, 1.9))
+legend("topright", legend = names_sp, fill = cols_sp_no_parents)
+dev.off()
+
+pdf("figures/valdis_boxplot_ssi_sp_2016_combined.pdf", width = 7, height = 7)
+boxplot(ssi_experiments_2016_melt_sp_dup$ssi ~ ssi_experiments_2016_melt_sp_dup$SP * 
+          ssi_experiments_2016_melt_sp_dup$culture, 
+        col = cols_sp_no_parents, 
         cex.axis = 1, las = 2, ylab = "SSI",
         ylim=c(-0.2, 1.9))
 legend("topright", legend = names_sp, fill = cols_sp_no_parents)
@@ -2611,6 +3744,31 @@ summary(aov(ssi_jki_feld_2015$ssi ~ ssi_jki_feld_2015$SP))
 #summary(aov(ssi_dethlingen_2015$ssi ~ ssi_dethlingen_2015$SP))
 ```
 
+## ANOVA of SSI 2016
+```{r ANOVA of SSI 2016}
+pander(head(ssi_experiments_2016_melt_sp_dup))
+dim(ssi_experiments_2016_melt_sp_dup)
+
+ssi_anova <- func_anova_2fac_ia(ssi_experiments_2016_melt_sp_dup, "ssi", "culture", "SP", 0.05)
+ssi_anova
+
+# SP * culture
+summary(aov(ssi_experiments_2016_melt_sp_dup$ssi ~ ssi_experiments_2016_melt_sp_dup$SP * ssi_experiments_2016_melt_sp_dup$culture))
+
+# alias (genotype)
+summary(aov(ssi_experiments_2016_melt_sp_dup$ssi ~ ssi_experiments_2016_melt_sp_dup$alias))
+# alias (genotype) * culture
+summary(aov(ssi_experiments_2016_melt_sp_dup$ssi ~ ssi_experiments_2016_melt_sp_dup$alias * ssi_experiments_2016_melt_sp_dup$culture))
+
+dim(ssi_mpi_fgh_2016)
+pander(head(ssi_mpi_fgh_2016))
+
+summary(aov(ssi_mpi_fgh_2016$ssi ~ ssi_mpi_fgh_2016$SP))
+summary(aov(ssi_mpi_feld_2016$ssi ~ ssi_mpi_feld_2016$SP))
+summary(aov(ssi_jki_shelter_2016$ssi ~ ssi_jki_shelter_2016$SP))
+summary(aov(ssi_jki_feld_2016$ssi ~ ssi_jki_feld_2016$SP))
+summary(aov(ssi_dethlingen_2016$ssi ~ ssi_dethlingen_2016$SP))
+```
 
 ## Plot SSI 2015
 ```{r plot SSI 2015}
@@ -2642,6 +3800,35 @@ dev.off()
 par(mfrow = c(1,1))
 ```
 
+## Plot SSI 2016
+```{r plot SSI 2016}
+ylim_values <- range(ssi_experiments_2016_melt_sp_dup$ssi, na.rm=T)
+# 0.4899314 1.4345289
+
+pdf("figures/valdis_boxplot_ssi_per_line_sp_2016.pdf", width = 9, height = 5)
+par(mfrow = c(1,3))
+boxplot(ssi_mean_2016_sp1$ssi ~ ssi_mean_2016_sp1$alias, las = 2, ylab = "SSI", 
+        main = "SSI of SP1", col = cols_sp[2], ylim = ylim_values)
+boxplot(ssi_mean_2016_sp2$ssi ~ ssi_mean_2016_sp2$alias, las = 2, ylab = "SSI", 
+        main = "SSI of SP2", col = cols_sp[3], ylim = ylim_values)
+boxplot(ssi_mean_2016_sp3$ssi ~ ssi_mean_2016_sp3$alias, las = 2, ylab = "SSI", 
+        main = "SSI of SP3", col = cols_sp[4], ylim = ylim_values)
+
+# order by median
+ssi_mean_2016_sp1_ordered <- with(ssi_mean_2016_sp1, reorder(alias, -ssi, median, na.rm=T))
+ssi_mean_2016_sp2_ordered <- with(ssi_mean_2016_sp2, reorder(alias, -ssi, median, na.rm=T))
+ssi_mean_2016_sp3_ordered <- with(ssi_mean_2016_sp3, reorder(alias, -ssi, median, na.rm=T))
+
+boxplot(ssi ~ ssi_mean_2016_sp1_ordered, data=ssi_mean_2016_sp1, las = 2, ylab = "SSI", 
+        main = "SSI of SP1", col = cols_sp[2], ylim = ylim_values)
+boxplot(ssi ~ ssi_mean_2016_sp2_ordered, data=ssi_mean_2016_sp2, las = 2, ylab = "SSI", 
+        main = "SSI of SP2", col = cols_sp[3], ylim = ylim_values)
+boxplot(ssi ~ ssi_mean_2016_sp3_ordered, data=ssi_mean_2016_sp3, las = 2, ylab = "SSI", 
+        main = "SSI of SP3", col = cols_sp[4], ylim = ylim_values)
+dev.off()
+
+par(mfrow = c(1,1))
+```
 
 ## Plot SSI versus normalized SY 2014 (MEAN)
 ```{r plot SSI versus normalized SY 2014 (MEAN)}
@@ -2707,31 +3894,63 @@ cor.test(control_norm_sy_mean_2015$norm_sy, ssi_mean_2015$ssi)
 # R = 0.3687636
 ```
 
+## Plot SSI versus normalized SY 2016 (MEAN)
+```{r plot SSI versus normalized SY 2016 (MEAN)}
+# mean over all three experiments 2016
+control_norm_sy_mean_2016 <- ddply(yield_data_final_2016_control_norm_sy_mean_sp_dup, 
+                              c("alias","SP"), summarise,  
+                              norm_sy = mean(norm_sy, na.rm = T))
+
+ssi_mean_2016 <- ddply(ssi_experiments_2016_melt_sp_dup, 
+                        c("alias","SP"), summarise,  
+                        ssi = mean(ssi, na.rm = T))
+
+plot(control_norm_sy_mean_2016$norm_sy, ssi_mean_2016$ssi, pch=19, cex=1.3)
+palette(cols_sp_no_parents)
+plot(control_norm_sy_mean_2016$norm_sy, ssi_mean_2016$ssi, pch=19, cex=1.3, col=drym_mean_2016$SP)
+legend("bottomleft", legend = levels(ssi_mean_2016$SP), fill = cols_sp_no_parents)
+abline(h=1, col="red")
+abline(v=1, col="black")
+
+cor.test(control_norm_sy_mean_2016$norm_sy, ssi_mean_2016$ssi)
+# p-value = 0.03396
+# R = 0.2557
+```
+
 
 ## Compare SSI of 60 SP lines from 2014 and 2015
 ```{r compare SSI of 60 SP lines from 2014 and 2015}
 
 ssi_mean_2014_2015 <- merge(unique(ssi_mean_2015[,-2]), 
                             unique(ssi_mean_2014[,-2]), by="alias")
-head(ssi_mean_2014_2015)
 dim(ssi_mean_2014_2015)
 
 colnames(ssi_mean_2014_2015) <- c("alias", "ssi_2015", "ssi_2014")
 
+ssi_mean_2014_2015_2016 <- merge(unique(ssi_mean_2016[,-2]), 
+                            ssi_mean_2014_2015, by="alias")
+
+colnames(ssi_mean_2014_2015_2016)[2] <- c("ssi_2016")
+head(ssi_mean_2014_2015_2016)
+dim(ssi_mean_2014_2015_2016)
+
 #ssi_mean_2014_2015 <- merge(ssi_mean_2014_2015, sp_infos_dup_no_parents, by = "alias")
-ssi_mean_2014_2015 <- droplevels(merge(ssi_mean_2014_2015, sp_infos, by = "alias"))
+ssi_mean_2014_2015_2016 <- droplevels(merge(ssi_mean_2014_2015_2016, sp_infos, by = "alias"))
 
-cor.test(ssi_mean_2014_2015$ssi_2014, ssi_mean_2014_2015$ssi_2015)
-# p-value = 5.904e-05
-# R = 0.49457
+cor.test(ssi_mean_2014_2015_2016$ssi_2014, ssi_mean_2014_2015_2016$ssi_2015)
+# p-value = 0.0001465, R = 0.47
+cor.test(ssi_mean_2014_2015_2016$ssi_2015, ssi_mean_2014_2015_2016$ssi_2016)
+# p-value = 6.153e-05, R = 0.49
 
-plot(ssi_mean_2014_2015$ssi_2014, ssi_mean_2014_2015$ssi_2015, pch = 19, cex = 1.3)
+plot(ssi_mean_2014_2015_2016$ssi_2014, ssi_mean_2014_2015_2016$ssi_2015, pch = 19, cex = 1.3)
+plot(ssi_mean_2014_2015_2016$ssi_2015, ssi_mean_2014_2015_2016$ssi_2016, pch = 19, cex = 1.3)
+
 #palette(cols_sp_no_parents)
 palette("default")
-plot(ssi_mean_2014_2015$ssi_2014, ssi_mean_2014_2015$ssi_2015, 
-     pch = 19, cex = 1.3, col = ssi_mean_2014_2015$SP,
+plot(ssi_mean_2014_2015_2016$ssi_2014, ssi_mean_2014_2015_2016$ssi_2015, 
+     pch = 19, cex = 1.3, col = ssi_mean_2014_2015_2016$SP,
      xlab = "SSI 2014", ylab = "SSI 2015")
-legend("bottomright", legend = levels(ssi_mean_2014_2015$SP), fill = 1:5)
+legend("bottomright", legend = levels(ssi_mean_2014_2015_2016$SP), fill = 1:5)
 abline(h=1, col="black")
 abline(v=1, col="black")
 ```
@@ -2740,8 +3959,11 @@ abline(v=1, col="black")
 ## export cast SSI and normSY values
 ```{r export cast SSI and normSY values}
 ssi_only_sp <- merge(ssi_experiments_2015_cast, ssi_experiments_2014_cast, by = "alias")
+ssi_only_sp <- merge(ssi_experiments_2016_cast, ssi_only_sp, by = "alias")
 
-colnames(ssi_only_sp)[2:8] <- c("MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015","MPI_FGH_2014","JKI_Feld_2014","JKI_Shelter_2014")
+colnames(ssi_only_sp)[2:13] <- c("MPI_FGH_2016","MPI_Feld_2016","JKI_Shelter_2016","Dethlingen_2016","JKI_Feld_2016",
+                                "MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015",
+                                "MPI_FGH_2014","JKI_Feld_2014","JKI_Shelter_2014")
 rownames(ssi_only_sp) <- ssi_only_sp$alias
 ssi_only_sp <- ssi_only_sp[,-1]
 head(ssi_only_sp)
@@ -2750,8 +3972,12 @@ dim(ssi_only_sp)
 
 control_norm_sy_only_sp <- merge(yield_data_final_2015_control_norm_sy_mean_cast, 
                                  yield_data_final_2014_control_norm_sy_mean_cast, by = "alias")
+control_norm_sy_only_sp <- merge(yield_data_final_2016_all_control_norm_sy_mean_cast,            # with Dethlingen 2016!
+                                 control_norm_sy_only_sp, by = "alias")
 
-colnames(control_norm_sy_only_sp)[2:8] <- c("MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015","MPI_FGH_2014","JKI_Feld_2014","JKI_Shelter_2014")
+colnames(control_norm_sy_only_sp)[2:13] <- c("MPI_FGH_2016","MPI_Feld_2016","JKI_Shelter_2016","Dethlingen_2016","JKI_Feld_2016",
+                                            "MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015",
+                                            "MPI_FGH_2014","JKI_Feld_2014","JKI_Shelter_2014")
 rownames(control_norm_sy_only_sp) <- control_norm_sy_only_sp$alias
 control_norm_sy_only_sp <- control_norm_sy_only_sp[,-1]
 head(control_norm_sy_only_sp)
@@ -2760,16 +3986,20 @@ head(control_norm_sy_only_sp)
 
 control_sy_only_sp <- merge(yield_data_final_2015_control_sy_mean_cast, 
                             yield_data_final_2014_control_sy_mean_cast, by = "alias")
+control_sy_only_sp <- merge(yield_data_final_2016_all_control_sy_mean_cast, 
+                            control_sy_only_sp, by = "alias")
 
-colnames(control_sy_only_sp)[2:8] <- c("MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015","MPI_FGH_2014","JKI_Feld_2014","JKI_Shelter_2014")
+colnames(control_sy_only_sp)[2:13] <- c("MPI_FGH_2016","MPI_Feld_2016","JKI_Shelter_2016","Dethlingen_2016","JKI_Feld_2016",
+                                       "MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015",
+                                       "MPI_FGH_2014","JKI_Feld_2014","JKI_Shelter_2014")
 rownames(control_sy_only_sp) <- control_sy_only_sp$alias
 control_sy_only_sp <- control_sy_only_sp[,-1]
 head(control_sy_only_sp)
 
 
-write.table(ssi_only_sp, "output/ssi_only_sp_2014_2015.txt", sep="\t", row.names = T)
-write.table(control_norm_sy_only_sp, "output/control_norm_sy_only_sp_2014_2015.txt", sep="\t", row.names = T)
-write.table(control_sy_only_sp, "output/control_sy_only_sp_2014_2015.txt", sep="\t", row.names = T)
+write.table(ssi_only_sp, "output/ssi_only_sp_2014_2015_2016.txt", sep="\t", row.names = T)
+write.table(control_norm_sy_only_sp, "output/control_norm_sy_only_sp_2014_2015_2016.txt", sep="\t", row.names = T)
+write.table(control_sy_only_sp, "output/control_sy_only_sp_2014_2015_2016.txt", sep="\t", row.names = T)
 ```
 
 
@@ -2799,6 +4029,19 @@ plot(control_norm_sy_only_sp$JKI_Feld_2015, ssi_only_sp$JKI_Feld_2015,
 # JKI pot 2015
 plot(control_norm_sy_only_sp$JKI_Shelter_2015, ssi_only_sp$JKI_Shelter_2015, 
      pch=19, cex=1.3, xlab = "norm SY (control)", ylab = "SSI", main = "JKI pot 2015") 
+
+# MPI field 2016
+plot(control_norm_sy_only_sp$MPI_Feld_2016, ssi_only_sp$MPI_Feld_2016, 
+     pch=19, cex=1.3, xlab = "norm SY (control)", ylab = "SSI", main = "MPI field 2016") 
+# MPI FGH 2016
+plot(control_norm_sy_only_sp$MPI_FGH_2016, ssi_only_sp$MPI_FGH_2016, 
+     pch=19, cex=1.3, xlab = "norm SY (control)", ylab = "SSI", main = "MPI FGH 2016") 
+# JKI field 2016
+plot(control_norm_sy_only_sp$JKI_Feld_2016, ssi_only_sp$JKI_Feld_2016, 
+     pch=19, cex=1.3, xlab = "norm SY (control)", ylab = "SSI", main = "JKI field 2016") 
+# JKI pot 2016
+plot(control_norm_sy_only_sp$JKI_Shelter_2016, ssi_only_sp$JKI_Shelter_2016, 
+     pch=19, cex=1.3, xlab = "norm SY (control)", ylab = "SSI", main = "JKI pot 2016") 
 
 dev.off()
 ```
@@ -2830,6 +4073,19 @@ plot(control_sy_only_sp$JKI_Feld_2015, ssi_only_sp$JKI_Feld_2015,
 # JKI pot 2015
 plot(control_sy_only_sp$JKI_Shelter_2015, ssi_only_sp$JKI_Shelter_2015, 
      pch=19, cex=1.3, xlab = "SY (control)", ylab = "SSI", main = "JKI pot 2015") 
+
+# MPI field 2016
+plot(control_sy_only_sp$MPI_Feld_2016, ssi_only_sp$MPI_Feld_2016, 
+     pch=19, cex=1.3, xlab = "SY (control)", ylab = "SSI", main = "MPI field 2016") 
+# MPI FGH 2016
+plot(control_sy_only_sp$MPI_FGH_2016, ssi_only_sp$MPI_FGH_2016, 
+     pch=19, cex=1.3, xlab = "SY (control)", ylab = "SSI", main = "MPI FGH 2016") 
+# JKI field 2016
+plot(control_sy_only_sp$JKI_Feld_2016, ssi_only_sp$JKI_Feld_2016, 
+     pch=19, cex=1.3, xlab = "SY (control)", ylab = "SSI", main = "JKI field 2016") 
+# JKI pot 2016
+plot(control_sy_only_sp$JKI_Shelter_2016, ssi_only_sp$JKI_Shelter_2016, 
+     pch=19, cex=1.3, xlab = "SY (control)", ylab = "SSI", main = "JKI pot 2016") 
 dev.off()
 ```
 
@@ -2846,13 +4102,13 @@ cor.test(control_norm_sy_only_sp$JKI_Shelter_2014, control_norm_sy_only_sp$JKI_S
 
 
 pdf("figures/valdis_pairs_control_norm_sy.pdf", width=8, height=8)
-pairs(control_norm_sy_only_sp[,2:8], lower.panel=panel.smooth, upper.panel=panel.cor, pch=19, na.action=na.omit)
+pairs(control_norm_sy_only_sp[,1:8], lower.panel=panel.smooth, upper.panel=panel.cor, pch=19, na.action=na.omit)
 
-pairs(control_norm_sy_only_sp[,2:8], pch=19)
+pairs(control_norm_sy_only_sp[,1:8], pch=19)
 
-pairs.annot(control_norm_sy_only_sp[,2:8], pch=19)
+pairs.annot(control_norm_sy_only_sp[,1:8], pch=19)
 
-ggpairs(control_norm_sy_only_sp[,2:8])
+ggpairs(control_norm_sy_only_sp[,1:8])
 
 dev.off()
 ```
@@ -2867,13 +4123,13 @@ cor.test(ssi_only_sp$MPI_FGH_2015, ssi_only_sp$MPI_Feld_2015)
 
 
 pdf("figures/valdis_pairs_ssi.pdf", width=8, height=8)
-pairs(ssi_only_sp[,2:8], lower.panel=panel.smooth, upper.panel=panel.cor, pch=19)
+pairs(ssi_only_sp[,1:8], lower.panel=panel.smooth, upper.panel=panel.cor, pch=19)
 
-pairs(ssi_only_sp[,2:8], pch=19)
+pairs(ssi_only_sp[,1:8], pch=19)
 
-pairs.annot(ssi_only_sp[,2:8], pch=19)
+pairs.annot(ssi_only_sp[,1:8], pch=19)
 
-ggpairs(ssi_only_sp[,2:8])
+ggpairs(ssi_only_sp[,1:8])
 
 dev.off()
 ```
@@ -2908,7 +4164,7 @@ ssi_intermediate <- apply(ssi_only_sp_no_par, 2, function(x) quantile(x, c(lower
 dim(ssi_intermediate)
 
 ssi_intermediate_lines <- list()
-for (i in 1:7){
+for (i in 1:12){
   intermediate_idx <- which(ssi_only_sp_no_par[,i] > ssi_intermediate[1,i] & ssi_only_sp_no_par[,i] < ssi_intermediate[2,i])
   ssi_intermediate_lines[[i]] <- rownames(ssi_only_sp_no_par)[intermediate_idx]
 }
@@ -3004,7 +4260,7 @@ dim(control_sy_border)
 control_ly <- list()
 control_hy <- list()
 
-for (i in 1:7){
+for (i in 1:12){
 #   ly_idx <- which(control_sy_only_sp_no_par[,i] < control_sy_border[2,i])
 #   hy_idx <- which(control_sy_only_sp_no_par[,i] > control_sy_border[2,i])
   
@@ -3054,6 +4310,8 @@ dev.off()
 # remove duplicates due to double SP info
 yield_data_final_2014_unique <- yield_data_final_2014[-which(duplicated(yield_data_final_2014[,-12])),]
 yield_data_final_2015_unique <- yield_data_final_2015[-which(duplicated(yield_data_final_2015[,-12])),]
+yield_data_final_2016_unique <- yield_data_final_2016[-which(duplicated(yield_data_final_2016[,-12])),]
+
 
 # count replicates per experiment, treatment and alias 
 count_2014 <- ddply(yield_data_final_2014_unique, c("culture", "alias", "treatment_name"), summarise,
@@ -3156,7 +4414,7 @@ abline(h = summary(ssi_only_sp_mean)[2], col = "red")
 abline(h = summary(ssi_only_sp_mean)[5], col = "red")
 abline(v = summary(control_norm_sy_only_sp_mean)[2], col = "red")
 abline(v = summary(control_norm_sy_only_sp_mean)[5], col = "red")
-minor.tick(nx = 10, ny = 10)
+#minor.tick(nx = 10, ny = 10)
 dev.off()
 ```
 
@@ -3236,13 +4494,408 @@ dev.off()
 
 # Export data for Manuela
 ```{r export data for Manuela}
-final_2015_ssi_table <- rbind(mpi_fgh_2015_ssi_table, 
-                              mpi_feld_2015_ssi_table, 
-                              jki_shelter_2015_ssi_table, 
-                              jki_feld_2015_ssi_table, 
-                              dethlingen_2015_ssi_table)
+# final_2015_ssi_table <- rbind(mpi_fgh_2015_ssi_table, 
+#                               mpi_feld_2015_ssi_table, 
+#                               jki_shelter_2015_ssi_table, 
+#                               jki_feld_2015_ssi_table, 
+#                               dethlingen_2015_ssi_table)
+# 
+# write.table(final_2015_ssi_table, "output/final_yield_table_2015.txt", sep="\t", row.names = F)
 
-write.table(final_2015_ssi_table, "output/final_yield_table_2015.txt", sep="\t", row.names = F)
+# final_2016_ssi_table <- rbind(mpi_fgh_2016_ssi_table, 
+#                               mpi_feld_2016_ssi_table, 
+#                               jki_shelter_2016_ssi_table, 
+#                               jki_feld_2016_ssi_table)
+#                               #dethlingen_2015_ssi_table)
+# 
+# write.table(final_2016_ssi_table, "output/final_yield_table_2016.txt", sep="\t", row.names = F)
+```
+
+
+# Plot of DRYM versus SY_control per SP and trial 2015
+* aufgrund Besprechung vom 25.10.2016 mit Karin, Ellen, Dirk und Manu
+```{r Plot of DRYM versus SY_control per SP and trial 2015}
+# SY control (mean)
+head(yield_data_final_2015_all_control_sy_mean_cast)
+dim(yield_data_final_2015_all_control_sy_mean_cast)
+colnames(yield_data_final_2015_all_control_sy_mean_cast)
+
+# add column for mean
+yield_data_final_2015_all_control_sy_mean_cast$mean <- apply(yield_data_final_2015_all_control_sy_mean_cast, 1, mean, na.rm=T)
+
+yield_data_final_2015_all_control_sy_mean_cast_SP1 <- 
+  yield_data_final_2015_all_control_sy_mean_cast[yield_data_final_2015_all_control_sy_mean_cast$alias %in% plant_lines_sp1,]
+yield_data_final_2015_all_control_sy_mean_cast_SP2 <- 
+  yield_data_final_2015_all_control_sy_mean_cast[yield_data_final_2015_all_control_sy_mean_cast$alias %in% plant_lines_sp2,]
+yield_data_final_2015_all_control_sy_mean_cast_SP3 <- 
+  yield_data_final_2015_all_control_sy_mean_cast[yield_data_final_2015_all_control_sy_mean_cast$alias %in% plant_lines_sp3,]
+
+head(yield_data_final_2015_all_control_sy_mean_cast_SP1)
+
+# DRYM
+# drym_experiments_2015_all <- rbind(as.data.frame(mpi_fgh_2015_drym_median), # 72247
+#                                as.data.frame(mpi_feld_2015_drym_median),    # 72275
+#                                as.data.frame(jki_shelter_2015_drym_median), # 72292
+#                                as.data.frame(jki_feld_2015_drym_median))    # 72396
+#                                as.data.frame(dethlingen_2015_drym_median)) # 72482 --> WITH dethlingen 2015 (low SI)
+
+drym_experiments_2015_all_t <- as.data.frame(t(drym_experiments_2015_all))
+head(drym_experiments_2015_all_t)
+colnames(drym_experiments_2015_all_t) <- colnames(yield_data_final_2015_all_control_sy_mean_cast)[2:6]
+
+# add column for mean
+drym_experiments_2015_all_t$mean <- apply(drym_experiments_2015_all_t, 1, mean, na.rm=T)
+
+drym_experiments_2015_all_t_SP1 <- drym_experiments_2015_all_t[rownames(drym_experiments_2015_all_t) %in% plant_lines_sp1,]
+drym_experiments_2015_all_t_SP2 <- drym_experiments_2015_all_t[rownames(drym_experiments_2015_all_t) %in% plant_lines_sp2,]
+drym_experiments_2015_all_t_SP3 <- drym_experiments_2015_all_t[rownames(drym_experiments_2015_all_t) %in% plant_lines_sp3,]
+head(drym_experiments_2015_all_t_SP1)
+
+trials_plot_2015 <- c("MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015", "Dethlingen_2015", "mean_2015")
+
+x_vals <- yield_data_final_2015_all_control_sy_mean_cast
+y_vals <- drym_experiments_2015_all_t
+
+pdf("figures/valdis_drym_vs_sy_control_per_trial_SP_2015.pdf", width=12, height=4)
+for(i in 1:6){
+
+  xlim_values <- c(min(x_vals[,i+1], na.rm = T),
+                   max(x_vals[,i+1], na.rm = T))
+  
+  ylim_values <- c(min(y_vals[,i], na.rm = T),
+                   max(y_vals[,i], na.rm = T))
+  
+  par(mfrow=c(1,3), mar=c(5,4,6,2))
+  
+  plot(yield_data_final_2015_all_control_sy_mean_cast_SP1[,i+1], drym_experiments_2015_all_t_SP1[,i], 
+       pch = 19, main = "SP1", xlim = xlim_values, ylim = ylim_values, xlab = "SY control", ylab = "DRYM")
+  abline(v = median(x_vals[,i+1], na.rm = T))
+  abline(h = median(y_vals[,i], na.rm = T))
+  
+  plot(yield_data_final_2015_all_control_sy_mean_cast_SP2[,i+1], drym_experiments_2015_all_t_SP2[,i], 
+       pch = 19, main = "SP2", xlim = xlim_values, ylim = ylim_values, xlab = "SY control", ylab = "DRYM")
+  abline(v = median(x_vals[,i+1], na.rm = T))
+  abline(h = median(y_vals[,i], na.rm = T))
+  
+  mtext(trials_plot_2015[i], side=3, line=4, adj=1)
+  
+  plot(yield_data_final_2015_all_control_sy_mean_cast_SP3[,i+1], drym_experiments_2015_all_t_SP3[,i], 
+       pch = 19, main = "SP3", xlim = xlim_values, ylim = ylim_values, xlab = "SY control", ylab = "DRYM")
+  abline(v = median(x_vals[,i+1], na.rm = T))
+  abline(h = median(y_vals[,i], na.rm = T))
+}
+dev.off()
+```
+
+
+# Plot of DRYM versus SY_control per SP and trial 2016
+* aufgrund Besprechung vom 25.10.2016 mit Karin, Ellen, Dirk und Manu
+```{r Plot of DRYM versus SY_control per SP and trial 2016}
+# SY control (mean)
+head(yield_data_final_2016_control_sy_mean_cast)
+dim(yield_data_final_2016_control_sy_mean_cast)
+colnames(yield_data_final_2016_control_sy_mean_cast)
+
+# add column for mean
+yield_data_final_2016_control_sy_mean_cast$mean <- apply(yield_data_final_2016_control_sy_mean_cast, 1, mean, na.rm=T)
+#yield_data_final_2016_control_sy_mean_cast$median <- apply(yield_data_final_2016_control_sy_mean_cast, 1, median, na.rm=T)
+
+yield_data_final_2016_control_sy_mean_cast_SP1 <- 
+  yield_data_final_2016_control_sy_mean_cast[yield_data_final_2016_control_sy_mean_cast$alias %in% plant_lines_sp1,]
+yield_data_final_2016_control_sy_mean_cast_SP2 <- 
+  yield_data_final_2016_control_sy_mean_cast[yield_data_final_2016_control_sy_mean_cast$alias %in% plant_lines_sp2,]
+yield_data_final_2016_control_sy_mean_cast_SP3 <- 
+  yield_data_final_2016_control_sy_mean_cast[yield_data_final_2016_control_sy_mean_cast$alias %in% plant_lines_sp3,]
+
+head(yield_data_final_2016_control_sy_mean_cast_SP1)
+
+# DRYM
+drym_experiments_2016 <- rbind(as.data.frame(mpi_feld_2016_drym_median),    # 76219
+                               as.data.frame(mpi_fgh_2016_drym_median),     # 76240
+                               as.data.frame(jki_shelter_2016_drym_median), # 76354
+                               as.data.frame(dethlingen_2016_drym_median),    # 76528
+                               as.data.frame(jki_feld_2016_drym_median)) # 76529
+drym_experiments_2016_t <- as.data.frame(t(drym_experiments_2016))
+head(drym_experiments_2016_t)
+colnames(drym_experiments_2016_t) <- colnames(yield_data_final_2016_control_sy_mean_cast)[2:5]
+
+# add column for mean
+drym_experiments_2016_t$mean <- apply(drym_experiments_2016_t, 1, mean, na.rm=T)
+
+drym_experiments_2016_t_SP1 <- drym_experiments_2016_t[rownames(drym_experiments_2016_t) %in% plant_lines_sp1,]
+drym_experiments_2016_t_SP2 <- drym_experiments_2016_t[rownames(drym_experiments_2016_t) %in% plant_lines_sp2,]
+drym_experiments_2016_t_SP3 <- drym_experiments_2016_t[rownames(drym_experiments_2016_t) %in% plant_lines_sp3,]
+head(drym_experiments_2016_t_SP1)
+
+trials_plot_2016 <- c("MPI_Feld_2016","MPI_FGH_2016","JKI_Shelter_2016","Dethlingen_2016","JKI_Feld_2016","mean_2016")
+
+x_vals <- yield_data_final_2016_control_sy_mean_cast
+y_vals <- drym_experiments_2016_t
+
+pdf("figures/valdis_drym_vs_sy_control_per_trial_SP_2016.pdf", width=12, height=4)
+for(i in 1:5){
+
+  xlim_values <- c(min(x_vals[,i+1], na.rm = T),
+                   max(x_vals[,i+1], na.rm = T))
+  
+  ylim_values <- c(min(y_vals[,i], na.rm = T),
+                   max(y_vals[,i], na.rm = T))
+  
+  par(mfrow=c(1,3), mar=c(5,4,6,2))
+  
+  plot(yield_data_final_2016_control_sy_mean_cast_SP1[,i+1], drym_experiments_2016_t_SP1[,i], 
+       pch = 19, main = "SP1", xlim = xlim_values, ylim = ylim_values, xlab = "SY control", ylab = "DRYM")
+  abline(v = median(x_vals[,i+1], na.rm = T))
+  abline(h = median(y_vals[,i], na.rm = T))
+  
+  plot(yield_data_final_2016_control_sy_mean_cast_SP2[,i+1], drym_experiments_2016_t_SP2[,i], 
+       pch = 19, main = "SP2", xlim = xlim_values, ylim = ylim_values, xlab = "SY control", ylab = "DRYM")
+  abline(v = median(x_vals[,i+1], na.rm = T))
+  abline(h = median(y_vals[,i], na.rm = T))
+  
+  mtext(trials_plot_2016[i], side=3, line=4, adj=1)
+  
+  plot(yield_data_final_2016_control_sy_mean_cast_SP3[,i+1], drym_experiments_2016_t_SP3[,i], 
+       pch = 19, main = "SP3", xlim = xlim_values, ylim = ylim_values, xlab = "SY control", ylab = "DRYM")
+  abline(v = median(x_vals[,i+1], na.rm = T))
+  abline(h = median(y_vals[,i], na.rm = T))
+}
+dev.off()
+```
+
+
+# Plot of DRYM versus SY_stress per SP and trial 2015
+* aufgrund Besprechung vom 25.10.2015 mit Karin, Ellen, Dirk und Manu
+```{r Plot of DRYM versus SY_stress per SP and trial 2015}
+# SY stress (mean)
+head(yield_data_final_2015_all_stress_sy_mean_cast)
+dim(yield_data_final_2015_all_stress_sy_mean_cast)
+colnames(yield_data_final_2015_all_stress_sy_mean_cast)
+
+# add column for mean
+yield_data_final_2015_all_stress_sy_mean_cast$mean <- apply(yield_data_final_2015_all_stress_sy_mean_cast, 1, mean, na.rm=T)
+#yield_data_final_2015_all_stress_sy_mean_cast$median <- apply(yield_data_final_2015_all_stress_sy_mean_cast, 1, median, na.rm=T)
+
+yield_data_final_2015_all_stress_sy_mean_cast_SP1 <- 
+  yield_data_final_2015_all_stress_sy_mean_cast[yield_data_final_2015_all_stress_sy_mean_cast$alias %in% plant_lines_sp1,]
+yield_data_final_2015_all_stress_sy_mean_cast_SP2 <- 
+  yield_data_final_2015_all_stress_sy_mean_cast[yield_data_final_2015_all_stress_sy_mean_cast$alias %in% plant_lines_sp2,]
+yield_data_final_2015_all_stress_sy_mean_cast_SP3 <- 
+  yield_data_final_2015_all_stress_sy_mean_cast[yield_data_final_2015_all_stress_sy_mean_cast$alias %in% plant_lines_sp3,]
+# parental cultivars
+yield_data_final_2015_all_stress_sy_mean_cast_parents <- 
+  yield_data_final_2015_all_stress_sy_mean_cast[yield_data_final_2015_all_stress_sy_mean_cast$alias %in% group_parents,]
+
+head(yield_data_final_2015_all_stress_sy_mean_cast_SP1)
+
+# DRYM
+head(drym_experiments_2015_all_t)
+
+drym_experiments_2015_t_parents <- drym_experiments_2015_all_t[rownames(drym_experiments_2015_all_t) %in% group_parents,]
+drym_experiments_2015_t_parents
+
+trials_plot_2015 <- c("MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015", "Dethlingen_2015", "mean_2015")
+
+x_vals <- yield_data_final_2015_all_stress_sy_mean_cast
+y_vals <- drym_experiments_2015_all_t
+
+pdf("figures/valdis_drym_vs_sy_stress_per_trial_SP_2015.pdf", width=12, height=4)
+for(i in 1:6){
+
+  xlim_values <- c(min(x_vals[,i+1], na.rm = T),
+                   max(x_vals[,i+1], na.rm = T))
+  
+  ylim_values <- c(min(y_vals[,i], na.rm = T),
+                   max(y_vals[,i], na.rm = T))
+  
+  par(mfrow=c(1,3), mar=c(5,4,6,2))
+  
+  plot(yield_data_final_2015_all_stress_sy_mean_cast_SP1[,i+1], drym_experiments_2015_all_t_SP1[,i], 
+       pch = 19, main = "SP1", xlim = xlim_values, ylim = ylim_values, xlab = "SY stress", ylab = "DRYM")
+  abline(v = median(x_vals[,i+1], na.rm = T))
+  abline(h = median(y_vals[,i], na.rm = T))
+  points(yield_data_final_2015_all_stress_sy_mean_cast_parents[,i+1], drym_experiments_2015_t_parents[,i], col = "red", pch = 19)
+  text(yield_data_final_2015_all_stress_sy_mean_cast_parents[,i+1], drym_experiments_2015_t_parents[,i], col = "black", labels = c("A", "E", "R"))
+  
+  plot(yield_data_final_2015_all_stress_sy_mean_cast_SP2[,i+1], drym_experiments_2015_all_t_SP2[,i], 
+       pch = 19, main = "SP2", xlim = xlim_values, ylim = ylim_values, xlab = "SY stress", ylab = "DRYM")
+  abline(v = median(x_vals[,i+1], na.rm = T))
+  abline(h = median(y_vals[,i], na.rm = T))
+  points(yield_data_final_2015_all_stress_sy_mean_cast_parents[,i+1], drym_experiments_2015_t_parents[,i], col = "red", pch = 19)
+  text(yield_data_final_2015_all_stress_sy_mean_cast_parents[,i+1], drym_experiments_2015_t_parents[,i], col = "black", labels = c("A", "E", "R"))
+  
+  mtext(trials_plot_2015[i], side=3, line=4, adj=1)
+  
+  plot(yield_data_final_2015_all_stress_sy_mean_cast_SP3[,i+1], drym_experiments_2015_all_t_SP3[,i], 
+       pch = 19, main = "SP3", xlim = xlim_values, ylim = ylim_values, xlab = "SY stress", ylab = "DRYM")
+  abline(v = median(x_vals[,i+1], na.rm = T))
+  abline(h = median(y_vals[,i], na.rm = T))
+  points(yield_data_final_2015_all_stress_sy_mean_cast_parents[,i+1], drym_experiments_2015_t_parents[,i], col = "red", pch = 19)
+  text(yield_data_final_2015_all_stress_sy_mean_cast_parents[,i+1], drym_experiments_2015_t_parents[,i], col = "black", labels = c("A", "E", "R"))
+}
+dev.off()
+```
+
+
+# Plot of DRYM versus SY_stress per SP and trial 2016
+* aufgrund Besprechung vom 25.10.2016 mit Karin, Ellen, Dirk und Manu
+```{r Plot of DRYM versus SY_stress per SP and trial 2016}
+# SY stress (mean)
+head(yield_data_final_2016_stress_sy_mean_cast)
+dim(yield_data_final_2016_stress_sy_mean_cast)
+colnames(yield_data_final_2016_stress_sy_mean_cast)
+
+# add column for mean
+yield_data_final_2016_stress_sy_mean_cast$mean <- apply(yield_data_final_2016_stress_sy_mean_cast, 1, mean, na.rm=T)
+#yield_data_final_2016_stress_sy_mean_cast$median <- apply(yield_data_final_2016_stress_sy_mean_cast, 1, median, na.rm=T)
+
+yield_data_final_2016_stress_sy_mean_cast_SP1 <- 
+  yield_data_final_2016_stress_sy_mean_cast[yield_data_final_2016_stress_sy_mean_cast$alias %in% plant_lines_sp1,]
+yield_data_final_2016_stress_sy_mean_cast_SP2 <- 
+  yield_data_final_2016_stress_sy_mean_cast[yield_data_final_2016_stress_sy_mean_cast$alias %in% plant_lines_sp2,]
+yield_data_final_2016_stress_sy_mean_cast_SP3 <- 
+  yield_data_final_2016_stress_sy_mean_cast[yield_data_final_2016_stress_sy_mean_cast$alias %in% plant_lines_sp3,]
+# parental cultivars
+yield_data_final_2016_stress_sy_mean_cast_parents <- 
+  yield_data_final_2016_stress_sy_mean_cast[yield_data_final_2016_stress_sy_mean_cast$alias %in% group_parents,]
+
+head(yield_data_final_2016_stress_sy_mean_cast_SP1)
+
+# DRYM
+head(drym_experiments_2016_t)
+
+drym_experiments_2016_t_parents <- drym_experiments_2016_t[rownames(drym_experiments_2016_t) %in% group_parents,]
+drym_experiments_2016_t_parents
+
+trials_plot_2016 <- c("MPI_Feld_2016","MPI_FGH_2016","JKI_Shelter_2016","Dethlingen_2016","JKI_Feld_2016","mean_2016")
+
+x_vals <- yield_data_final_2016_stress_sy_mean_cast
+y_vals <- drym_experiments_2016_t
+
+pdf("figures/valdis_drym_vs_sy_stress_per_trial_SP_2016.pdf", width=12, height=4)
+for(i in 1:5){
+
+  xlim_values <- c(min(x_vals[,i+1], na.rm = T),
+                   max(x_vals[,i+1], na.rm = T))
+  
+  ylim_values <- c(min(y_vals[,i], na.rm = T),
+                   max(y_vals[,i], na.rm = T))
+  
+  par(mfrow=c(1,3), mar=c(5,4,6,2))
+  
+  plot(yield_data_final_2016_stress_sy_mean_cast_SP1[,i+1], drym_experiments_2016_t_SP1[,i], 
+       pch = 19, main = "SP1", xlim = xlim_values, ylim = ylim_values, xlab = "SY stress", ylab = "DRYM")
+  abline(v = median(x_vals[,i+1], na.rm = T))
+  abline(h = median(y_vals[,i], na.rm = T))
+  points(yield_data_final_2016_stress_sy_mean_cast_parents[,i+1], drym_experiments_2016_t_parents[,i], col = "red", pch = 19)
+  text(yield_data_final_2016_stress_sy_mean_cast_parents[,i+1], drym_experiments_2016_t_parents[,i], col = "black", labels = c("A", "E", "R"))
+  
+  plot(yield_data_final_2016_stress_sy_mean_cast_SP2[,i+1], drym_experiments_2016_t_SP2[,i], 
+       pch = 19, main = "SP2", xlim = xlim_values, ylim = ylim_values, xlab = "SY stress", ylab = "DRYM")
+  abline(v = median(x_vals[,i+1], na.rm = T))
+  abline(h = median(y_vals[,i], na.rm = T))
+  points(yield_data_final_2016_stress_sy_mean_cast_parents[,i+1], drym_experiments_2016_t_parents[,i], col = "red", pch = 19)
+  text(yield_data_final_2016_stress_sy_mean_cast_parents[,i+1], drym_experiments_2016_t_parents[,i], col = "black", labels = c("A", "E", "R"))
+  
+  mtext(trials_plot_2016[i], side=3, line=4, adj=1)
+  
+  plot(yield_data_final_2016_stress_sy_mean_cast_SP3[,i+1], drym_experiments_2016_t_SP3[,i], 
+       pch = 19, main = "SP3", xlim = xlim_values, ylim = ylim_values, xlab = "SY stress", ylab = "DRYM")
+  abline(v = median(x_vals[,i+1], na.rm = T))
+  abline(h = median(y_vals[,i], na.rm = T))
+  points(yield_data_final_2016_stress_sy_mean_cast_parents[,i+1], drym_experiments_2016_t_parents[,i], col = "red", pch = 19)
+  text(yield_data_final_2016_stress_sy_mean_cast_parents[,i+1], drym_experiments_2016_t_parents[,i], col = "black", labels = c("A", "E", "R"))
+}
+dev.off()
+```
+
+
+# Data for Christina --> QTL mapping
+```{r data for christina}
+# remove duplicates due to double SP info
+yield_data_final_2014_all_unique <- yield_data_final_2014_all[-which(duplicated(yield_data_final_2014_all[,-12])),]
+yield_data_final_2015_all_unique <- yield_data_final_2015_all[-which(duplicated(yield_data_final_2015_all[,-c(12,18)])),]
+yield_data_final_2016_all_unique <- yield_data_final_2016_all[-which(duplicated(yield_data_final_2016_all[,-12])),]
+
+# merge yield data with drym
+yield_data_final_2014_all_unique_drym <- merge(yield_data_final_2014_all_unique, drym_table_2014_unique[,c(3,20)], by = "plant_id")
+yield_data_final_2015_all_unique_drym <- merge(yield_data_final_2015_all_unique, drym_table_2015_unique[,c(3,20)], by = "plant_id")
+yield_data_final_2016_all_unique_drym <- merge(yield_data_final_2016_all_unique, drym_table_2016_unique[,c(3,20)], by = "plant_id")
+
+
+yield_data_final_2014_all_unique_mean <- ddply(yield_data_final_2014_all_unique_drym, 
+                                               c("alias", "treatment_name", "culture"), summarise,  
+                                               starch_g_per_kg = mean(starch_g_per_kg, na.rm = T),
+                                               tuber_FW_kg_per_plant = mean(tuber_FW_kg_per_plant, na.rm = T),
+                                               starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T),
+                                               drym = mean(drym, na.rm = T))
+
+yield_data_final_2015_all_unique_mean <- ddply(yield_data_final_2015_all_unique_drym, 
+                                               c("alias", "treatment_name", "culture"), summarise,  
+                                               starch_g_per_kg = mean(starch_g_per_kg, na.rm = T),
+                                               tuber_FW_kg_per_plant = mean(tuber_FW_kg_per_plant, na.rm = T),
+                                               starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T),
+                                               drym = mean(drym, na.rm = T))
+
+yield_data_final_2016_all_unique_mean <- ddply(yield_data_final_2016_all_unique_drym, 
+                                               c("alias", "treatment_name", "culture"), summarise,  
+                                               starch_g_per_kg = mean(starch_g_per_kg, na.rm = T),
+                                               tuber_FW_kg_per_plant = mean(tuber_FW_kg_per_plant, na.rm = T),
+                                               starch_yield_g_per_plant = mean(starch_yield_g_per_plant, na.rm = T),
+                                               drym = mean(drym, na.rm = T))
+
+write.table(yield_data_final_2014_all_unique_mean, "output/yield_data_final_2014_all_unique_mean.txt", sep = "\t", row.names = F)
+write.table(yield_data_final_2015_all_unique_mean, "output/yield_data_final_2015_all_unique_mean.txt", sep = "\t", row.names = F)
+write.table(yield_data_final_2016_all_unique_mean, "output/yield_data_final_2016_all_unique_mean.txt", sep = "\t", row.names = F)
+
+write.csv(yield_data_final_2014_all_unique, "output/yield_data_final_2014_all_unique.csv", row.names = F)
+write.csv(yield_data_final_2015_all_unique, "output/yield_data_final_2015_all_unique.csv", row.names = F)
+write.csv(yield_data_final_2016_all_unique, "output/yield_data_final_2016_all_unique.csv", row.names = F)
+
+write.csv(yield_data_final_2014_all_unique_mean, "output/yield_data_final_2014_all_unique_mean.csv", row.names = F)
+write.csv(yield_data_final_2015_all_unique_mean, "output/yield_data_final_2015_all_unique_mean.csv", row.names = F)
+write.csv(yield_data_final_2016_all_unique_mean, "output/yield_data_final_2016_all_unique_mean.csv", row.names = F)
+```
+
+
+```{r boxplots overview for Karin}
+# mean values
+pdf("figures/valdis_boxplot_all_yield_parameters_mean_2014_to_2016.pdf", width = 10)
+x <- yield_data_final_2014_all_unique_mean
+boxplot(x$tuber_FW_kg_per_plant ~ x$treatment_name * x$culture, col = cols_treatment, main = "2014: tuber FW in kg/plant")
+legend("topleft", fill = cols_treatment, c("control", "drought"))
+boxplot(x$starch_g_per_kg ~ x$treatment_name * x$culture, col = cols_treatment, main = "2014: starch content in g/kg")
+boxplot(x$starch_yield_g_per_plant ~ x$treatment_name * x$culture, col = cols_treatment, main = "2014: starch yield in g/plant")
+
+x <- yield_data_final_2015_all_unique_mean
+boxplot(x$tuber_FW_kg_per_plant ~ x$treatment_name * x$culture, col = cols_treatment, main = "2015: tuber FW in kg/plant")
+boxplot(x$starch_g_per_kg ~ x$treatment_name * x$culture, col = cols_treatment, main = "2015: starch content in g/kg")
+boxplot(x$starch_yield_g_per_plant ~ x$treatment_name * x$culture, col = cols_treatment, main = "2015: starch yield in g/plant")
+
+x <- yield_data_final_2016_all_unique_mean
+boxplot(x$tuber_FW_kg_per_plant ~ x$treatment_name * x$culture, col = cols_treatment, main = "2016: tuber FW in kg/plant")
+boxplot(x$starch_g_per_kg ~ x$treatment_name * x$culture, col = cols_treatment, main = "2016: starch content in g/kg")
+boxplot(x$starch_yield_g_per_plant ~ x$treatment_name * x$culture, col = cols_treatment, main = "2016: starch yield in g/plant")
+dev.off()
+
+# original values
+pdf("figures/valdis_boxplot_all_yield_parameters_2014_to_2016.pdf", width = 10)
+x <- yield_data_final_2014_all_unique
+boxplot(x$tuber_FW_kg_per_plant ~ x$treatment_name * x$culture, col = cols_treatment, main = "2014: tuber FW in kg/plant")
+legend("topleft", fill = cols_treatment, c("control", "drought"))
+boxplot(x$starch_g_per_kg ~ x$treatment_name * x$culture, col = cols_treatment, main = "2014: starch content in g/kg")
+boxplot(x$starch_yield_g_per_plant ~ x$treatment_name * x$culture, col = cols_treatment, main = "2014: starch yield in g/plant")
+
+x <- yield_data_final_2015_all_unique
+boxplot(x$tuber_FW_kg_per_plant ~ x$treatment_name * x$culture, col = cols_treatment, main = "2015: tuber FW in kg/plant")
+boxplot(x$starch_g_per_kg ~ x$treatment_name * x$culture, col = cols_treatment, main = "2015: starch content in g/kg")
+boxplot(x$starch_yield_g_per_plant ~ x$treatment_name * x$culture, col = cols_treatment, main = "2015: starch yield in g/plant")
+
+x <- yield_data_final_2016_all_unique
+boxplot(x$tuber_FW_kg_per_plant ~ x$treatment_name * x$culture, col = cols_treatment, main = "2016: tuber FW in kg/plant")
+boxplot(x$starch_g_per_kg ~ x$treatment_name * x$culture, col = cols_treatment, main = "2016: starch content in g/kg")
+boxplot(x$starch_yield_g_per_plant ~ x$treatment_name * x$culture, col = cols_treatment, main = "2016: starch yield in g/plant")
+dev.off()
 ```
 
 

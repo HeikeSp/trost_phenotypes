@@ -1,7 +1,18 @@
-BBCH data analysis for MPI trials
-========================================================
+---
+title: "BBCH data analysis for MPI trials"
+author: "Heike Sprenger"
+date: "Wednesday, February 17, 2016"
+output:
+  html_document:
+    highlight: tango
+    number_section: yes
+    theme: cerulean
+    toc: yes
+    toc_float: true
+    toc_depth: 4
+---
 
-## Set working directory  
+# Set working directory  
 ```{r set working directory}
 getwd()
 # setwd("D:/work/repos/trost_phenotypes")
@@ -10,7 +21,7 @@ getwd()
 
 [solution for issue with working directory and knitr](https://github.com/yihui/knitr/issues/277)
 
-## Load workspace, packages and scripts
+# Load workspace, packages and scripts
 ```{r load workspace, message=FALSE}
 # load packages
 library(knitr)
@@ -32,7 +43,7 @@ opts_knit$set(root.dir = '../')
 ```
 
 
-## Source R functions
+# Source R functions
 ```{r source R functions, include=FALSE}
 source("../functions/func_get_bbch_data.R")
 source("../functions/func_modify_bbch_data.R")
@@ -46,8 +57,8 @@ source("../functions/func_multiplot_ggplot.R")
 ```
 
 
-## Execute Query from `D:\work\TROST\Database\2014-07-29-bbch_query.sql` to get information about BBCH and meta data
-### BBCH data of four TROST experiments (MPI Test1.2, MPI Test2, MPI Feld 2011, MPI Feld 2012)
+# Execute Query from `D:\work\repos\database_scripts\bbch_query-2014-07-29.sql` to get information about BBCH and meta data
+## BBCH data of four TROST experiments (MPI Test1.2, MPI Test2, MPI Feld 2011, MPI Feld 2012)
 ```{r get data from trost database}
 # use old version of function
 # bbch_trost_mpi_48656 <- func_get_bbch_data_old('48656')
@@ -59,8 +70,8 @@ dim(bbch_trost_mpi)
 # 3842 11
 ```
 
-## Execute Query from `D:\work\TROST\Database\2015-05-07-bbch_query_valdis.sql` to get information about BBCH and meta data
-### Get BBCH data for VALDIS experiments at MPI FGH 2014
+# Execute Query from `D:\work\repos\database_scripts\bbch_query_valdis-2015-05-07.sql` to get information about BBCH and meta data
+## Get BBCH data for VALDIS experiments at MPI FGH 2014
 ```{r get BBCH data for VALDIS experiments at MPI FGH 2014}
 bbch_mpi_fgh_2014 <- func_get_bbch_data2( experiment_id = '67199')
 
@@ -70,7 +81,7 @@ dim(bbch_mpi_fgh_2014)
 ```
 
 
-### Modification of BBCH dataset
+# Modification of BBCH dataset
 ```{r modification of BBCH dataset}
 # TROST data
 bbch_trost_mpi_mod <- func_modify_bbch_data(bbch_trost_mpi)
@@ -96,9 +107,9 @@ write.table(bbch_trost_mpi, "data/bbch_trost_mpi.txt", sep="\t")
 write.table(bbch_mpi_fgh_2014, "data/bbch_mpi_fgh_2014.txt", sep="\t")
 ```
 
-## no data for late timepoint in mpitest2 experiment!
+**no data for late timepoint in mpitest2 experiment!**
 
-### TROST subsets
+# TROST subsets
 ```{r TROST subsets}
 # MPI TEST 1.2
 bbch_mpi_test1_2 <- droplevels( subset(bbch_trost_mpi_mod, bbch_trost_mpi_mod$experiment_id == "48656") )
@@ -147,7 +158,7 @@ levels(bbch_mpi_feld2012_check$cultivar) <- c("Alegria", "Desiree", "Milva", "Sa
 bbch_mpi_feld2012_check$cultivar <- factor(bbch_mpi_feld2012_check$cultivar, levels = c("Alegria", "Milva", "Desiree", "Saturna"))
 ```
 
-### VALDIS subsets
+# VALDIS subsets
 ```{r VALDIS subsets}
 # MPI FGH 2014
 # ONLY LATE TIMEPOINT
@@ -156,8 +167,8 @@ bbch_mpi_fgh_2014_late <- droplevels (subset(bbch_mpi_fgh_2014_mod, bbch_mpi_fgh
 bbch_mpi_fgh_2014_early <- droplevels (subset(bbch_mpi_fgh_2014_mod, bbch_mpi_fgh_2014_mod$timepoint=="early") )
 ```
 
-
-### ggplot2 density plot
+# Plots
+## ggplot2 density plot
 ```{r ggplot2 density plot}
 bbch_mpi_test1_2_late_part <- bbch_mpi_test1_2_late[,c("treatment","bbch")]
 bbch_mpi_test1_2_early_part <- bbch_mpi_test1_2_early[,c("treatment","bbch")]
@@ -174,28 +185,29 @@ bbch_mpi_feld2012_check_late_part <- bbch_mpi_feld2012_check[,c("treatment","bbc
 table(bbch_mpi_feld2012_check_late_part$bbch)
 
 
-pdf("figures/bbch_mpi_test_1_2_late.pdf", width=6, height=6)
+pdf("figures/bbch/bbch_mpi_test_1_2_late.pdf", width=6, height=6)
 func_bbch_plots(bbch_mpi_test1_2_late_part) 
 dev.off()
 
-pdf("figures/bbch_mpi_test_1_2_early.pdf", width=6, height=6)
+pdf("figures/bbch/bbch_mpi_test_1_2_early.pdf", width=6, height=6)
 func_bbch_plots(bbch_mpi_test1_2_early_part) 
 dev.off()
 
-pdf("figures/bbch_mpi_test_2_early.pdf", width=6, height=6)
+pdf("figures/bbch/bbch_mpi_test_2_early.pdf", width=6, height=6)
 func_bbch_plots(bbch_mpi_test2_part) 
 dev.off()
 
-pdf("figures/bbch_mpi_feld_2011_check_late.pdf")
+pdf("figures/bbch/bbch_mpi_feld_2011_check_late.pdf")
 func_bbch_plots(bbch_mpi_feld2011_check_late_part) 
 dev.off()
 
-pdf("figures/bbch_mpi_feld_2012_check_late.pdf")
+pdf("figures/bbch/bbch_mpi_feld_2012_check_late.pdf")
 func_bbch_plots(bbch_mpi_feld2012_check_late_part) 
 dev.off()
 ```
 
 
+## Plots for PhD thesis
 ```{r for phd-thesis}
 # for phd-thesis:
 #pdf("~/work/Doktorarbeit/figures/bbch_mpitest1_late.pdf", width=6, height=6)
@@ -216,22 +228,23 @@ func_bbch_density_plot(bbch_mpi_feld2012_check_late_part)
 ```
 
 
+## VALDIS BBCH Plots
 ```{r valdis BBCH plots}
 bbch_mpi_fgh_2014_late_part <- bbch_mpi_fgh_2014_late[,c("treatment","bbch")]
 bbch_mpi_fgh_2014_early_part <- bbch_mpi_fgh_2014_early[,c("treatment","bbch")]
 
 
-pdf("figures/bbch_mpi_fgh_2014_mod_late.pdf", width=6, height=6)
+pdf("figures/bbch/bbch_mpi_fgh_2014_mod_late.pdf", width=6, height=6)
 func_bbch_plots(bbch_mpi_fgh_2014_late_part) 
 dev.off()
 
-pdf("figures/bbch_mpi_fgh_2014_mod_early.pdf", width=6, height=6)
+pdf("figures/bbch/bbch_mpi_fgh_2014_mod_early.pdf", width=6, height=6)
 func_bbch_plots(bbch_mpi_fgh_2014_early_part) 
 dev.off()
 ```
 
 
-### aggregate data --> median and sd
+# Aggregate data --> median and sd
 ```{r aggregate data}
 # aggregate by cultivar, experiment_id, treatment, timepoint --> median + sd
 bbch_trost_mpi_median <- aggregate(bbch_trost_mpi_mod$bbch, 
@@ -285,11 +298,11 @@ bbch_subset <- subset(bbch_trost_mpi_agg,
 dim(bbch_subset)
 pander(bbch_subset)
 
-write.table(bbch_subset, "output/bbch_late_check_cultivars.txt", sep="\t", quote=F, col.names=NA)
+write.table(bbch_subset, "output/bbch//bbch_late_check_cultivars.txt", sep="\t", quote=F, col.names=NA)
 ```
 
 
-### rank transformation
+# Rank transformation
 ```{r rank transformation}
 # MPI greenhouse trial 1.2 (late)
 dim(bbch_mpi_test1_2_late)
@@ -323,7 +336,7 @@ bbch_mpi_feld2012_check$bbch_rank <- rank(bbch_mpi_feld2012_check$bbch)
 ```
 
 
-### ggplot2 density plot of ranks
+## ggplot2 density plot of ranks
 ```{r ggplot2 density plot of ranks}
 bbch_mpi_test1_2_late_rank <- bbch_mpi_test1_2_late[,c("treatment","bbch_rank")]
 colnames(bbch_mpi_test1_2_late_rank)[2] <- "bbch"
@@ -335,36 +348,36 @@ bbch_mpi_feld2012_check_late_rank <- bbch_mpi_feld2012_check[,c("treatment","bbc
 colnames(bbch_mpi_feld2012_check_late_rank)[2] <- "bbch"
 
 
-pdf("figures/bbch_mpi_test_1_2_late_rank.pdf", width=6, height=6)
+pdf("figures/bbch/bbch_mpi_test_1_2_late_rank.pdf", width=6, height=6)
 func_bbch_plots(bbch_mpi_test1_2_late_rank, min=0, max=200, label_xaxis = "rank-transformed developmental stage (BBCH)") 
 dev.off()
 
-pdf("figures/bbch_mpi_feld_2011_check_late_rank.pdf")
+pdf("figures/bbch/bbch_mpi_feld_2011_check_late_rank.pdf")
 func_bbch_plots(bbch_mpi_feld2011_check_late_rank, min=0, max=260, label_xaxis = "rank-transformed developmental stage (BBCH)") 
 dev.off()
 
-pdf("figures/bbch_mpi_feld_2012_check_late_rank.pdf")
+pdf("figures/bbch/bbch_mpi_feld_2012_check_late_rank.pdf")
 func_bbch_plots(bbch_mpi_feld2012_check_late_rank, min=0, max=130, label_xaxis = "rank-transformed developmental stage (BBCH)") 
 dev.off()
 ```
 
 
-### plot of ranks for publication
+## plot of ranks for publication
 ```{r plot of ranks for publication}
 # make a 6x6 inch image at 600 dpi/ppi
 resolution <- 600
-tiff("figures/bbch_mpi_test_1_2_late_rank.tiff", width=6*resolution, height=6*resolution, res=resolution)
+tiff("figures/bbch/bbch_mpi_test_1_2_late_rank.tiff", width=6*resolution, height=6*resolution, res=resolution)
 func_bbch_plots(bbch_mpi_test1_2_late_rank, min = 0, max = 200, 
                 label_xaxis = "rank-transformed developmental stage (BBCH)") [1] # only first plot out of three
 dev.off()
 
-tiff("figures/bbch_mpi_feld_2011_check_late_rank.tiff", width=6*resolution, height=6*resolution, res=resolution)
+tiff("figures/bbch/bbch_mpi_feld_2011_check_late_rank.tiff", width=6*resolution, height=6*resolution, res=resolution)
 func_bbch_plots(bbch_mpi_feld2011_check_late_rank, min = 0, max = 260, 
                 label_xaxis = "rank-transformed developmental stage (BBCH)") # only first plot out of three
 dev.off()
 
 
-pdf("figures/bbch_rank_pub.pdf", width=12, height=6)
+pdf("figures/bbch/bbch_rank_pub.pdf", width=12, height=6)
 
 p1 <- func_bbch_plots(bbch_mpi_test1_2_late_rank, min = 0, max = 200, 
                 label_xaxis = "rank-transformed developmental stage (BBCH)",
@@ -381,7 +394,7 @@ dev.off()
 ```
 
 
-### ANOVA
+## ANOVA
 ```{r ANOVA of ranks}
 bbch_mpi_test1_2_late_rank_anova <- func_anova_2fac_ia(bbch_mpi_test1_2_late, "bbch_rank", "cultivar", "treatment", 0.01)
   
@@ -391,7 +404,7 @@ bbch_mpi_feld2012_check_late_rank_anova <- func_anova_2fac_ia(bbch_mpi_feld2012_
 ```
 
 
-### kruskal wallis test of ranks
+## kruskal wallis test of ranks
 ```{r kruskal wallis test of ranks}
 kruskal.test(bbch_mpi_test1_2_late$bbch_rank ~ bbch_mpi_test1_2_late$treatment)$p.value
 kruskal.test(bbch_mpi_test1_2_late$bbch_rank ~ bbch_mpi_test1_2_late$treatment)$statistic
@@ -408,11 +421,11 @@ kruskal.test(bbch_mpi_feld2012_check$bbch_rank ~ bbch_mpi_feld2012_check$cultiva
 ```
 
 
-### boxplots per treatment and cultivar of ranked BBCH
+## boxplots per treatment and cultivar of ranked BBCH
 ```{r boxplots per treatment and cultivar of ranked BBCH}
 # MPI test 1.2 late
 
-pdf("figures/bbch_mpi_test_1_2_late_rank_boxplot.pdf")
+pdf("figures/bbch/bbch_mpi_test_1_2_late_rank_boxplot.pdf")
 par(mar=c(7, 4.1, 4.1, 2.1))
 boxplot(bbch_mpi_test1_2_late$bbch_rank ~
           bbch_mpi_test1_2_late$treatment * bbch_mpi_test1_2_late$cultivar,
@@ -428,7 +441,7 @@ dev.off()
 
 # MPI field 2011 (late)
 
-pdf("figures/bbch_mpi_feld_2011_check_late_rank_boxplot.pdf")
+pdf("figures/bbch/bbch_mpi_feld_2011_check_late_rank_boxplot.pdf")
 par(mar=c(7, 4.1, 4.1, 2.1))
 boxplot(bbch_mpi_feld2011_check_late$bbch_rank ~ 
           bbch_mpi_feld2011_check_late$treatment * bbch_mpi_feld2011_check_late$cultivar,
@@ -444,7 +457,7 @@ dev.off()
 
 # MPI field 2012 (late)
 
-pdf("figures/bbch_mpi_feld_2012_check_late_rank_boxplot.pdf")
+pdf("figures/bbch/bbch_mpi_feld_2012_check_late_rank_boxplot.pdf")
 par(mar=c(7, 4.1, 4.1, 2.1))
 boxplot(bbch_mpi_feld2012_check$bbch_rank ~ 
           bbch_mpi_feld2012_check$treatment * bbch_mpi_feld2012_check$cultivar,
@@ -459,8 +472,8 @@ dev.off()
 ```
 
 
-### aggregate ranked BBCH --> median and sd
-#### aggregate by cultivar and treatment --> median + sd
+## Aggregate ranked BBCH --> median and sd
+### Aggregate by cultivar and treatment --> median + sd
 ```{r aggregate ranked BBCH}
 # MPI greenhouse trial 1.2 (late)
 bbch_mpi_test1_2_late_rank_agg <- ddply(bbch_mpi_test1_2_late, c("cultivar", "treatment"), summarise,
@@ -472,7 +485,7 @@ bbch_mpi_test1_2_late_rank_agg <- ddply(bbch_mpi_test1_2_late, c("cultivar", "tr
 
 pander(bbch_mpi_test1_2_late_rank_agg)
 write.table(bbch_mpi_test1_2_late_rank_agg, 
-            "output/bbch_mpi_test1_2_late_rank_agg.txt",
+            "output/bbch//bbch_mpi_test1_2_late_rank_agg.txt",
             sep="\t", quote=F, col.names=NA)
 
 
@@ -486,7 +499,7 @@ bbch_mpi_feld2011_check_late_rank_agg <- ddply(bbch_mpi_feld2011_check_late, c("
 
 pander(bbch_mpi_feld2011_check_late_rank_agg)
 write.table(bbch_mpi_feld2011_check_late_rank_agg, 
-            "output/bbch_mpi_feld2011_check_late_rank_agg.txt", 
+            "output/bbch//bbch_mpi_feld2011_check_late_rank_agg.txt", 
             sep="\t", quote=F, col.names=NA)
 
 
@@ -500,12 +513,12 @@ bbch_mpi_feld2012_check_late_rank_agg <- ddply(bbch_mpi_feld2012_check, c("culti
 
 pander(bbch_mpi_feld2012_check_late_rank_agg)
 write.table(bbch_mpi_feld2012_check_late_rank_agg, 
-            "output/bbch_mpi_feld2012_check_late_rank_agg.txt", 
+            "output/bbch//bbch_mpi_feld2012_check_late_rank_agg.txt", 
             sep="\t", quote=F, col.names=NA)
 ```
 
 
-### combine mean and sd
+## Combine mean and sd
 ```{r combine mean and sd}
 # G1:
 mpi_test_1_2_median_sd <- func_combine_mean_sd(bbch_mpi_test1_2_late, variable_name = "bbch_rank", func = "median")
@@ -518,7 +531,7 @@ bbch_mpi_feld2012_check_median_sd <- func_combine_mean_sd(bbch_mpi_feld2012_chec
 ```
 
 
-### compare control and stress by wilcoxon test
+## Compare control and stress by wilcoxon test
 ```{r compare control and stress by wilcoxon test}
 wilcoxon_test_res <- c(func_wilcoxon_test_treatment(bbch_mpi_test1_2_late, variable_name = "bbch_rank"), #G1
                        func_wilcoxon_test_treatment(bbch_mpi_feld2011_check_late, variable_name = "bbch_rank")) #F1
@@ -530,7 +543,7 @@ wilcoxon_test_res <- c(func_wilcoxon_test_treatment(bbch_mpi_test1_2_late, varia
 [or here](http://r.789695.n4.nabble.com/What-are-ties-Wilcox-u-test-td857059.html)
 
 
-### combine median and sd results of 2 experiments (for publication)
+## Combine median and sd results of 2 experiments (for publication)
 ```{r combine median and sd results of 2 experiments}
 
 bbch_check_median_sd <- rbind(mpi_test_1_2_median_sd, #G1
@@ -546,11 +559,12 @@ bbch_check_median_sd$p_value <- wilcoxon_test_res
 pander(bbch_check_median_sd)
 
 write.table(bbch_check_median_sd,
-            "output/bbch_check_median_sd_pub.txt",
+            "output/bbch//bbch_check_median_sd_pub.txt",
             sep="\t", quote=F, col.names = NA)
 ```
 
-### save workspace
+
+# Save workspace
 ```{r save workspace}
 save.image("BBCH.RData")
 ```

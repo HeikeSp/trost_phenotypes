@@ -1,7 +1,18 @@
-Plant height data analysis for MPI greenhouse and field trials
-========================================================
+---
+title: "Plant height data analysis for MPI greenhouse and field trials"
+author: "Heike Sprenger"
+date: "Wednesday, February 17, 2016"
+output:
+  html_document:
+    highlight: tango
+    number_section: yes
+    theme: cerulean
+    toc: yes
+    toc_float: true
+    toc_depth: 4
+---
 
-### Set working directory  
+# Set working directory  
 ```{r set working directory}
 getwd()
 #setwd("D:/work/repos/trost_phenotypes")
@@ -10,7 +21,7 @@ getwd()
 
 [solution for issue with working directory and knitr](https://github.com/yihui/knitr/issues/277)
 
-### Load workspace, packages and scripts
+# Load workspace, packages and scripts
 ```{r load workspace, message=FALSE}
 # load packages
 library(knitr)
@@ -32,7 +43,7 @@ opts_knit$set(root.dir = '../')
 ```
 
 
-### Source R functions
+# Source R functions
 ```{r source R functions, include=FALSE}
 source("../functions/colors.R")
 source("../functions/names.R")
@@ -42,8 +53,8 @@ source("../functions/func_ttest.R")
 source("../functions/func_aggregate_values.R")
 ```
 
-## Load Data
-### Execute Query from D:\work\repos\database_scripts\plant_height_query-2014-07-07.sql to get information about plant height and meta data
+# Load Data
+## Execute Query from D:\work\repos\database_scripts\plant_height_query-2014-07-07.sql to get information about plant height and meta data
 ```{r get MPI data from trost database}
 plant_height_query_result <- func_get_plant_height_data()
 
@@ -55,7 +66,7 @@ write.table(plant_height_query_result, "data/plant_height_query_result.txt", sep
 ```
 
 
-### load JKI test trial 1 data (45985)
+## Load JKI test trial 1 data (45985)
 plant height data for 7 dates, of which 15.07.2011 should be used 
 date for late/before sampling: 12.07.2011, late/after: 15.07.2011
 no BBCH data available!
@@ -81,7 +92,7 @@ plant_height_jki_test_1_late <- subset(plant_height_jki_test_1_melt, plant_heigh
 ```
 
 
-### load JKI field trial 2012 data (56875)
+## Load JKI field trial 2012 data (56875)
 BBCH and plant height data for 02.07.2012 (date for sampling)
 plant height for 6 individual plants per ID
 ```{r load JKI field trial 2012 data}
@@ -109,7 +120,7 @@ plant_height_jki_field_2012_check_melt <- melt(plant_height_jki_field_2012_check
 ```
 
 
-### MPI change factors
+## MPI change factors
 ```{r MPI change factors}
 # convert height to numeric values
 plant_height_query_result$height <- as.numeric(plant_height_query_result$height)
@@ -140,11 +151,12 @@ pander(table(plant_height_query_result$experiment_name, plant_height_query_resul
 
 # cultivar
 plant_height_query_result$cultivar <- as.factor(plant_height_query_result$cultivar)
-levels(plant_height_query_result$cultivar) <- names_cultivars
+levels(plant_height_query_result$cultivar) <- names_cultivars_34
 ```
 
 
-### MPI greenhouse subsets
+# Subsets
+## MPI greenhouse subsets
 ```{r MPI greenhouse subsets}
 # MPI TEST 
 plant_height_mpi_test1_2 <- subset(plant_height_query_result, plant_height_query_result$experiment_id == "48656")
@@ -167,7 +179,7 @@ plant_height_mpi_test2_early <- subset(plant_height_mpi_test2, plant_height_mpi_
 ```
 
 
-### MPI field subsets
+## MPI field subsets
 ```{r MPI field subsets}
 # MPI FIELD 2011
 plant_height_mpi_field2011 <- subset(plant_height_query_result, plant_height_query_result$experiment_id == "44443")
@@ -200,10 +212,10 @@ plant_height_mpi_field2012_check$cultivar <- factor(plant_height_mpi_field2012_c
 ```
 
 
-## plots
-### plot MPI test trials
+# Plots
+## Plot MPI test trials
 ```{r plot MPI test trials}
-pdf("figures/plant_height_mpi_test_trials.pdf", width=7, height=8)
+pdf("figures/plant_height/plant_height_mpi_test_trials.pdf", width=7, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
 
 # mpi test 1.2
@@ -226,9 +238,9 @@ dev.off()
 ```
 
 
-### plot MPI test trials, per cultivar
+## Plot MPI test trials, per cultivar
 ```{r plot MPI test trials per cultivar}
-pdf("figures/plant_height_mpi_test_trials_cultivar.pdf", width=12, height=8)
+pdf("figures/plant_height/plant_height_mpi_test_trials_cultivar.pdf", width=12, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
 boxplot(plant_height_mpi_test1_2$height ~ plant_height_mpi_test1_2$treatment * 
           plant_height_mpi_test1_2$timepoint * plant_height_mpi_test1_2$cultivar, 
@@ -256,7 +268,7 @@ dev.off()
 ```
 
 
-### plot MPI test trial for phd-thesis
+## Plot MPI test trial for phd-thesis
 ```{r plot MPI test trial for phd-thesis}
 # rename and reorder levels
 # levels(plant_height_mpi_test1_2_late$cultivar) <- c("Alegria", "Desiree", "Milva", "Saturna")
@@ -274,10 +286,10 @@ legend("topright", levels(plant_height_mpi_test1_2_late$treatment), fill = cols_
 ```
 
 
-### plot JKI test trial
+## Plot JKI test trial
 ```{r plot JKI test trial}
 
-pdf("figures/plant_height_jki_test_trial_1.pdf", width=7, height=8)
+pdf("figures/plant_height/plant_height_jki_test_trial_1.pdf", width=7, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
 
 # only sampling timepoint (15.07.2011)
@@ -301,9 +313,9 @@ dev.off()
 ```
 
 
-### plot MPI field trials
+## Plot MPI field trials
 ```{r plot MPI field trials}
-pdf("figures/plant_height_mpi_field_trials.pdf", width=7, height=8)
+pdf("figures/plant_height/plant_height_mpi_field_trials.pdf", width=7, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
 boxplot(plant_height_mpi_field2011_check$height ~ plant_height_mpi_field2011_check$treatment, 
         col = cols_treatment, main = "MPI field trial 2011")
@@ -318,7 +330,7 @@ dev.off()
 
 # PER CULTIVAR
 
-pdf("figures/plant_height_mpi_field_trials_cultivar.pdf", width=12, height=8)
+pdf("figures/plant_height/plant_height_mpi_field_trials_cultivar.pdf", width=12, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
 boxplot(plant_height_mpi_field2011_check$height ~ plant_height_mpi_field2011_check$treatment*
           plant_height_mpi_field2011_check$timepoint * plant_height_mpi_field2011_check$cultivar, 
@@ -336,7 +348,7 @@ dev.off()
 ```
 
 
-### plot MPI field trial for phd-thesis
+## Plot MPI field trial for phd-thesis
 ```{r plot MPI field trial for phd-thesis, fig.width=10}
 range(plant_height_mpi_field2011_check_late$height)
 range(plant_height_mpi_field2012_check$height)
@@ -368,9 +380,9 @@ legend("topleft", levels(plant_height_mpi_field2011_late$treatment), fill = cols
 ```
 
 
-### plot JKI field trial
+## Plot JKI field trial
 ```{r plot JKI field trial}
-pdf("figures/plant_height_jki_field_trial_2012.pdf", width=7, height=8)
+pdf("figures/plant_height/plant_height_jki_field_trial_2012.pdf", width=7, height=8)
 par(mar=c(7, 4.1, 4.1, 2.1))
 
 # all cultivars
@@ -392,7 +404,7 @@ dev.off()
 ```
 
 
-### aggregate data --> mean and sd
+# Aggregate data --> mean and sd
 ```{r aggregate data}
 # aggregate by cultivar, experiment_id, treatment, timepoint --> mean + sd
 plant_height_query_result_mean <- aggregate(plant_height_query_result$height, 
@@ -445,10 +457,11 @@ plant_height_subset <- subset(plant_height_query_result_agg,
 dim(plant_height_subset)
 pander(plant_height_subset)
 
-write.table(plant_height_subset, "output/plant_height_late_check_cultivars.txt", sep="\t", quote=F, col.names = NA)
+write.table(plant_height_subset, "output/plant_height/plant_height_late_check_cultivars.txt", sep="\t", quote=F, col.names = NA)
 ```
 
-#### aggregate subsets
+
+## Aggregate subsets
 ```{r aggregate subsets}
 ######################
 # aggregated subsets #
@@ -475,7 +488,7 @@ plant_height_mpi_field2012_agg <- subset(plant_height_query_result_agg,
 ```
 
 
-### ANOVA
+# ANOVA
 ```{r ANOVA}
 # MPI test 1.2/2 EARLY
 plant_height_mpi_test1_2_early_anova <- func_anova_2fac_ia(plant_height_mpi_test1_2_early, 
@@ -509,7 +522,7 @@ plant_height_jki_field_2012_check_anova <- func_anova_2fac_ia(plant_height_jki_f
 ```
 
 
-### combine ANOVA results
+## Combine ANOVA results
 ```{r combine ANOVA results}
 # combine anova results of 4 experiments (only LATE)
 plant_height_anova <- func_combine_anova_res(plant_height_mpi_test1_2_late_anova, 
@@ -519,7 +532,7 @@ plant_height_anova <- func_combine_anova_res(plant_height_mpi_test1_2_late_anova
                        "f_value","p_value", "treatment", "cultivar")
 
 rownames(plant_height_anova) <- c("mpitest1_2", "mpitest2", "mpif_field_2011", "mpi_field_2012")
-write.table(plant_height_anova, "output/plant_height_anova.txt", sep="\t", quote=F, row.names = T, col.names = NA)
+write.table(plant_height_anova, "output/plant_height/plant_height_anova.txt", sep="\t", quote=F, row.names = T, col.names = NA)
 
 ####################################################################################
 
@@ -537,7 +550,7 @@ rownames(plant_height_anova7) <- c("MPI-MP greenhouse trial 1 early", "MPI-MP gr
                                    "MPI-MP greenhouse trial 2 early", "MPI-MP greenhouse trial 2 late",
                                    "MPI-MP field trial 2011 early", "MPI-MP field trial 2011 late", 
                                    "MPI-MP field trial 2012 late")
-write.table(plant_height_anova7, "output/plant_height_anova7.txt", sep="\t", quote=F, row.names = T, col.names = NA)
+write.table(plant_height_anova7, "output/plant_height/plant_height_anova7.txt", sep="\t", quote=F, row.names = T, col.names = NA)
 
 ####################################################################################
 
@@ -551,7 +564,7 @@ plant_height_anova6 <- func_combine_anova_res6(plant_height_mpi_test1_2_late_ano
                                              "f_value","p_value", "treatment", "cultivar")
 
 rownames(plant_height_anova6) <- c("G1", "G2", "G3", "F1", "F3", "F4")
-write.table(plant_height_anova6, "output/plant_height_anova_pub.txt", sep="\t", quote=F, row.names = T, col.names = NA)
+write.table(plant_height_anova6, "output/plant_height/plant_height_anova_pub.txt", sep="\t", quote=F, row.names = T, col.names = NA)
 
 
 #### with interactions!
@@ -564,11 +577,11 @@ plant_height_anova6_ia <- func_combine_anova_res6_ia(plant_height_mpi_test1_2_la
                                              plant_height_jki_field_2012_check_anova,
                                              "f_value","p_value", "treatment", "cultivar")
 rownames(plant_height_anova6_ia) <- c("G1", "G2", "G3", "F1", "F3", "F4")
-write.table(plant_height_anova6_ia, "output/plant_height_anova_pub_with_ia.txt", sep="\t", quote=F, row.names = T, col.names = NA)
+write.table(plant_height_anova6_ia, "output/plant_height/plant_height_anova_pub_with_ia.txt", sep="\t", quote=F, row.names = T, col.names = NA)
 ```
 
 
-### aggregate with ddply
+# Aggregate with ddply
 ```{r aggregate with ddply}
 # MPI test 1.2 (late)
 plant_height_mpi_test1_2_late_agg <- ddply(plant_height_mpi_test1_2_late, c("cultivar", "treatment"), summarise,
@@ -626,7 +639,7 @@ pander(plant_height_jki_field_2012_check_agg)
 ```
 
 
-### combine aggregated data
+# Combine aggregated data
 ```{r combine aggregated data}
 plant_height_late_check_agg <- rbind(plant_height_mpi_test1_2_late_agg, #G1
                                      plant_height_mpi_test2_late_agg, #G2
@@ -639,12 +652,12 @@ plant_height_late_check_agg$trial <- c( rep("G1", 8), rep("G2", 8), rep("G3", 8)
                                         rep("F1", 8), rep("F3", 8), rep("F4", 8))
 
 write.table(plant_height_late_check_agg,
-            "output/plant_height_late_check_agg.txt",
+            "output/plant_height/plant_height_late_check_agg.txt",
             sep="\t", quote=F, col.names = NA)
 ```
 
 
-### combine mean and sd
+## Combine mean and sd
 ```{r combine mean and sd}
 plant_height_mpi_test1_2_late_mean_sd <- func_combine_mean_sd(plant_height_mpi_test1_2_late, 
                                                               variable_name = "height")
@@ -666,7 +679,7 @@ plant_height_jki_field_2012_check_mean_sd <- func_combine_mean_sd(plant_height_j
 ```
 
 
-### t-test: compare control and stress
+# t-test: compare control and stress
 ```{r t-test}
 plant_height_ttest_res <- c(func_ttest_treatment2(plant_height_mpi_test1_2_late, variable_name = "height"), #G1
                             func_ttest_treatment2(plant_height_mpi_test2_late, variable_name = "height"), #G2
@@ -677,7 +690,7 @@ plant_height_ttest_res <- c(func_ttest_treatment2(plant_height_mpi_test1_2_late,
 ```
 
 
-### combine mean and sd results of all experiments
+# Combine mean and sd results of all experiments
 ```{r combine mean and sd results of all experiments}
 
 plant_height_late_check_mean_sd <- rbind(plant_height_mpi_test1_2_late_mean_sd, #G1
@@ -700,13 +713,14 @@ pander(head(plant_height_late_check_mean_sd))
 
 
 write.table(plant_height_late_check_mean_sd,
-            "output/plant_height_late_check_mean_sd.txt",
+            "output/plant_height/plant_height_late_check_mean_sd.txt",
             sep="\t", quote=F, col.names = NA)
 ```
 
-### `plant_height_late_check_mean_sd` is used for supplementary table S2
+**`plant_height_late_check_mean_sd` is used for supplementary table S2**
 
 
+# Save workspace
 ```{r save workspace}
 save.image("plant_height.RData")
 ```

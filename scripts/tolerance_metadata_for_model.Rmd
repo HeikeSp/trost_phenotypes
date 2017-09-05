@@ -313,7 +313,7 @@ par(mfrow=c(1,1))
 # bar_res <- barplot(tolerance$mdrym_fve, ylab = "DRYM", xlab = "Cutlivar", ylim=c(-0.1, 0.15))
 # error.bar(bar_res, tolerance$mdrym_fve, tolerance$sedrym_fve)
 
-# tolerance data without Kiebit, Kolibri and Kormoran
+# tolerance data without Kiebitz, Kolibri and Kormoran
 tolerance_part <- tolerance[-c(24, 25, 26), ]
 
 # with ggplot2
@@ -581,6 +581,19 @@ write.table(tolerance_phenotyper_metadata_2sub,
 
 write.table(tolerance_phenotyper_metadata_2sub2, 
             "output/tolerance_phenotyper_metadata_2sub2.txt", sep="\t")
+```
+
+# ANOVA for maturity and tolerance
+```{r ANOVA for maturity and tolerance}
+tolerance_phenotyper_metadata_2sub$mat_fac <- factor(tolerance_phenotyper_metadata_2sub$maturity)
+levels(tolerance_phenotyper_metadata_2sub$mat_fac) <- c("early", "mid", "late")
+
+summary(aov(tolerance_phenotyper_metadata_2sub$mdrym_fve ~ tolerance_phenotyper_metadata_2sub$mat_fac))
+
+pdf("figures/boxplot_DRYM_maturity.pdf", 5, 5)
+boxplot(tolerance_phenotyper_metadata_2sub$mdrym_fve ~ tolerance_phenotyper_metadata_2sub$mat_fac, 
+        ylab = "DRYM", xlab = "maturity group")
+dev.off()
 ```
 
 

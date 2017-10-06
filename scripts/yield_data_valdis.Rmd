@@ -15,6 +15,7 @@ output:
 # Set working directory  
 ```{r set working directory}
 getwd()
+setwd("X:/mpimp/repos/trost_phenotypes")
 #setwd("D:/work/repos/trost_phenotypes")
 #setwd("~/work/repos/trost_phenotypes/")
 ```
@@ -1401,8 +1402,8 @@ head(yield_data_final_2016_all_stress_sy_mean_cast)
 ```
 
 
-## Calculate mean of NORMALIZED starch yield per line and experiment
-```{r calculate mean of NORMALIZED starch yield per line and experiment}
+## Calculate mean of NORMALIZED starch yield per line and experiment (only control)
+```{r calculate mean of NORMALIZED starch yield per line and experiment (only control)}
 # 2014
 yield_data_final_2014_control_norm_sy_mean <- ddply(yield_data_final_2014_control, c("alias", "culture"), summarise, 
                                                norm_sy = mean(normalized_starch_yield_per_plant, na.rm = T), .drop=FALSE)
@@ -1442,6 +1443,51 @@ yield_data_final_2016_control_norm_sy_mean_cast <- cast(yield_data_final_2016_co
                                                    alias ~ culture, value = "norm_sy")
 
 yield_data_final_2016_all_control_norm_sy_mean_cast <- cast(yield_data_final_2016_all_control_norm_sy_mean, 
+                                                   alias ~ culture, value = "norm_sy")
+```
+
+
+## Calculate mean of NORMALIZED starch yield per line and experiment (only stress)
+```{r calculate mean of NORMALIZED starch yield per line and experiment (only stress)}
+# 2014
+yield_data_final_2014_stress_norm_sy_mean <- ddply(yield_data_final_2014_stress, c("alias", "culture"), summarise, 
+                                               norm_sy = mean(normalized_starch_yield_per_plant, na.rm = T), .drop=FALSE)
+
+pander(head(yield_data_final_2014_stress_norm_sy_mean))
+dim(yield_data_final_2014_stress_norm_sy_mean) # 579
+
+# 2015
+yield_data_final_2015_stress_norm_sy_mean <- ddply(yield_data_final_2015_stress, c("alias", "culture"), summarise, 
+                                               norm_sy = mean(normalized_starch_yield_per_plant, na.rm = T), .drop=FALSE)
+
+pander(head(yield_data_final_2015_stress_norm_sy_mean))
+dim(yield_data_final_2015_stress_norm_sy_mean) # 252
+
+# 2016
+yield_data_final_2016_stress_norm_sy_mean <- ddply(yield_data_final_2016_stress, c("alias", "culture"), summarise, 
+                                               norm_sy = mean(normalized_starch_yield_per_plant, na.rm = T), .drop=FALSE)
+
+pander(head(yield_data_final_2016_stress_norm_sy_mean))
+dim(yield_data_final_2016_stress_norm_sy_mean) # 252
+
+# all trials 2016
+yield_data_final_2016_all_stress_norm_sy_mean <- ddply(yield_data_final_2016_all_stress, c("alias", "culture"), summarise, 
+                                                   norm_sy = mean(normalized_starch_yield_per_plant, na.rm = T), .drop=FALSE)
+dim(yield_data_final_2016_all_stress_norm_sy_mean) # 315
+
+
+# cast results, so that one column per experiment
+yield_data_final_2014_stress_norm_sy_mean_cast <- cast(yield_data_final_2014_stress_norm_sy_mean, 
+                                                   alias ~ culture, value = "norm_sy")
+
+yield_data_final_2015_stress_norm_sy_mean_cast <- cast(yield_data_final_2015_stress_norm_sy_mean, 
+                                                   alias ~ culture, value = "norm_sy")
+head(yield_data_final_2015_stress_norm_sy_mean_cast)
+
+yield_data_final_2016_stress_norm_sy_mean_cast <- cast(yield_data_final_2016_stress_norm_sy_mean, 
+                                                   alias ~ culture, value = "norm_sy")
+
+yield_data_final_2016_all_stress_norm_sy_mean_cast <- cast(yield_data_final_2016_all_stress_norm_sy_mean, 
                                                    alias ~ culture, value = "norm_sy")
 ```
 
@@ -4002,6 +4048,37 @@ write.table(control_norm_sy_only_sp, "output/control_norm_sy_only_sp_2014_2015_2
 write.table(control_sy_only_sp, "output/control_sy_only_sp_2014_2015_2016.txt", sep="\t", row.names = T)
 ```
 
+
+## export cast SY and normSY values STRESS
+```{r export cast SY and normSY values STRESS}
+stress_norm_sy_only_sp <- merge(yield_data_final_2015_stress_norm_sy_mean_cast, 
+                                 yield_data_final_2014_stress_norm_sy_mean_cast, by = "alias")
+stress_norm_sy_only_sp <- merge(yield_data_final_2016_all_stress_norm_sy_mean_cast,            # with Dethlingen 2016!
+                                 stress_norm_sy_only_sp, by = "alias")
+
+colnames(stress_norm_sy_only_sp)[2:13] <- c("MPI_FGH_2016","MPI_Feld_2016","JKI_Shelter_2016","Dethlingen_2016","JKI_Feld_2016",
+                                            "MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015",
+                                            "MPI_FGH_2014","JKI_Feld_2014","JKI_Shelter_2014")
+rownames(stress_norm_sy_only_sp) <- stress_norm_sy_only_sp$alias
+stress_norm_sy_only_sp <- stress_norm_sy_only_sp[,-1]
+head(stress_norm_sy_only_sp)
+
+
+stress_sy_only_sp <- merge(yield_data_final_2015_stress_sy_mean_cast, 
+                            yield_data_final_2014_stress_sy_mean_cast, by = "alias")
+stress_sy_only_sp <- merge(yield_data_final_2016_all_stress_sy_mean_cast, 
+                            stress_sy_only_sp, by = "alias")
+
+colnames(stress_sy_only_sp)[2:13] <- c("MPI_FGH_2016","MPI_Feld_2016","JKI_Shelter_2016","Dethlingen_2016","JKI_Feld_2016",
+                                       "MPI_FGH_2015","MPI_Feld_2015","JKI_Shelter_2015","JKI_Feld_2015",
+                                       "MPI_FGH_2014","JKI_Feld_2014","JKI_Shelter_2014")
+rownames(stress_sy_only_sp) <- stress_sy_only_sp$alias
+stress_sy_only_sp <- stress_sy_only_sp[,-1]
+head(stress_sy_only_sp)
+
+write.table(stress_norm_sy_only_sp, "output/stress_norm_sy_only_sp_2014_2015_2016.txt", sep="\t", row.names = T)
+write.table(stress_sy_only_sp, "output/stress_sy_only_sp_2014_2015_2016.txt", sep="\t", row.names = T)
+```
 
 ## Plot SSI versus normalized SY PER EXPERIMENT
 ```{r plot SSI versus normalized SY PER EXPERIMENT}
